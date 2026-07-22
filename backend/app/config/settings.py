@@ -34,6 +34,20 @@ class Settings(BaseSettings):
         case_sensitive=True,
     )
 
+    @property
+    def DATABASE_URL(self) -> str:
+        """
+        Builds the SQLAlchemy database URL.
+        """
+        return (
+            f"postgresql+psycopg2://"
+            f"{self.DATABASE_USER}:"
+            f"{self.DATABASE_PASSWORD}@"
+            f"{self.DATABASE_HOST}:"
+            f"{self.DATABASE_PORT}/"
+            f"{self.DATABASE_NAME}"
+        )
+
 
 @lru_cache
 def get_settings() -> Settings:
