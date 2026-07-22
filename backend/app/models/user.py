@@ -31,6 +31,7 @@ class User(BaseModel):
 
     phone_number: Mapped[str | None] = mapped_column(
         String(20),
+        unique=True,
         nullable=True,
     )
 
