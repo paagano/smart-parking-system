@@ -2,10 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
 
+from app.api.dependencies.services import get_auth_service
 from app.core.security import create_access_token
-from app.database.dependencies import get_db
 from app.schemas.auth import (
     RegisterResponse,
     Token,
@@ -21,26 +20,24 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
-auth_service = AuthService()
-
 
 @router.post(
     "/register",
     response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def register(
+async def register(
     user: UserCreate,
-    db: Annotated[Session, Depends(get_db)],
+    auth_service: Annotated[
+        AuthService,
+        Depends(get_auth_service),
+    ],
 ):
     """
     Register a new user.
     """
 
-    created_user = auth_service.register_user(
-        db=db,
-        user_data=user,
-    )
+    created_user = await auth_service.register_user(user)
 
     return RegisterResponse(
         message="User registered successfully.",
@@ -52,22 +49,21 @@ def register(
     "/login",
     response_model=Token,
 )
-def login(
+async def login(
     form_data: Annotated[
         OAuth2PasswordRequestForm,
         Depends(),
     ],
-    db: Annotated[
-        Session,
-        Depends(get_db),
+    auth_service: Annotated[
+        AuthService,
+        Depends(get_auth_service),
     ],
 ):
     """
     Authenticate a user and return a JWT access token.
     """
 
-    user = auth_service.authenticate_user(
-        db=db,
+    user = await auth_service.authenticate_user(
         email=form_data.username,
         password=form_data.password,
     )

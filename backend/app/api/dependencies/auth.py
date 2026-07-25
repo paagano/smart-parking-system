@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
-from app.database.dependencies import get_db
+from app.database.session import get_db
 from app.models.enums import UserRole
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -19,20 +19,14 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/login",
 )
 
-# =============================================================================
-# Repository
-# =============================================================================
-
-user_repository = UserRepository()
 
 # =============================================================================
 # Authentication
 # =============================================================================
 
-
-def get_current_user(
+async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
     """
     Retrieve the currently authenticated user.
@@ -61,10 +55,9 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = user_repository.get_by_email(
-        db=db,
-        email=email,
-    )
+    user_repository = UserRepository(db)
+
+    user = await user_repository.get_by_email(email)
 
     if user is None:
         raise credentials_exception
@@ -72,8 +65,11 @@ def get_current_user(
     return user
 
 
-def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+async def get_current_active_user(
+    current_user: Annotated[
+        User,
+        Depends(get_current_user),
+    ],
 ) -> User:
     """
     Ensure the authenticated user is active.
@@ -92,8 +88,7 @@ def get_current_active_user(
 # Authorization
 # =============================================================================
 
-
-def require_admin(
+async def require_admin(
     current_user: Annotated[
         User,
         Depends(get_current_active_user),
@@ -112,7 +107,7 @@ def require_admin(
     return current_user
 
 
-def require_attendant(
+async def require_attendant(
     current_user: Annotated[
         User,
         Depends(get_current_active_user),
@@ -134,7 +129,7 @@ def require_attendant(
     return current_user
 
 
-def require_driver(
+async def require_driver(
     current_user: Annotated[
         User,
         Depends(get_current_active_user),

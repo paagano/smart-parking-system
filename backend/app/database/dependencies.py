@@ -1,18 +1,18 @@
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.session import SessionLocal
+from app.database.session import AsyncSessionLocal
 
 
-def get_db() -> Generator[Session, None, None]:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    Database session dependency.
+    FastAPI dependency that provides an asynchronous
+    SQLAlchemy database session.
     """
 
-    db = SessionLocal()
-
-    try:
-        yield db
-    finally:
-        db.close()
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()

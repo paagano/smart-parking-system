@@ -1,6 +1,7 @@
 from typing import Any, Generic, Type, TypeVar
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 ModelType = TypeVar("ModelType")
 
@@ -10,48 +11,62 @@ class BaseRepository(Generic[ModelType]):
     Base repository providing common CRUD operations.
     """
 
-    def __init__(self, model: Type[ModelType]):
+    def __init__(
+        self,
+        db: AsyncSession,
+        model: Type[ModelType],
+    ):
+        self.db = db
         self.model = model
 
-    def get_by_id(
+    async def get_by_id(
         self,
-        db: Session,
         id: Any,
     ) -> ModelType | None:
         """
         Retrieve a record by its primary key.
         """
-        return db.get(self.model, id)
+        result = await self.db.execute(
+            select(self.model).where(self.model.id == id)
+        )
 
-    def get_all(
+        return result.scalar_one_or_none()
+
+    async def get_all(
         self,
-        db: Session,
     ) -> list[ModelType]:
         """
         Retrieve all records.
         """
-        return db.query(self.model).all()
+        result = await self.db.execute(
+            select(self.model)
+        )
 
-    def create(
+        return list(result.scalars().all())
+
+    async def create(
         self,
-        db: Session,
         obj: ModelType,
     ) -> ModelType:
         """
         Persist a new record.
         """
-        db.add(obj)
-        db.commit()
-        db.refresh(obj)
+        self.db.add(obj)
+
+        await self.db.commit()
+
+        await self.db.refresh(obj)
+
         return obj
 
-    def delete(
+    async def delete(
         self,
-        db: Session,
         obj: ModelType,
     ) -> None:
         """
         Delete a record.
         """
-        db.delete(obj)
-        db.commit()
+
+        await self.db.delete(obj)
+
+        await self.db.commit()
