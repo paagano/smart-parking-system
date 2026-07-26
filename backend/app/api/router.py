@@ -5,6 +5,9 @@ from app.api.endpoints.users import router as users_router
 from app.api.endpoints.parking_facilities import (
     router as parking_facilities_router,
 )
+from app.api.endpoints.parking_zones import (
+    router as parking_zones_router,
+)
 
 router = APIRouter()
 
@@ -25,6 +28,12 @@ router.include_router(users_router)
 # ==========================================================
 
 router.include_router(parking_facilities_router)
+
+# ==========================================================
+# Parking Zones
+# ==========================================================
+
+router.include_router(parking_zones_router)
 
 
 @router.get("/")
