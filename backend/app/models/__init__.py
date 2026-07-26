@@ -3,6 +3,7 @@ from .user import User
 from .parking_facility import ParkingFacility
 from app.models.parking_zone import ParkingZone
 from app.models.parking_bay import ParkingBay
+from app.models.parking_session import ParkingSession
 
 __all__ = [
     "BaseModel",
@@ -10,4 +11,5 @@ __all__ = [
     "ParkingFacility",
     "ParkingZone",
     "ParkingBay",
+    "ParkingSession",
 ]

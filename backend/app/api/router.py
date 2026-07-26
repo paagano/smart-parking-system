@@ -8,6 +8,9 @@ from app.api.endpoints.parking_facilities import (
 from app.api.endpoints.parking_zones import (
     router as parking_zones_router,
 )
+from app.api.endpoints.parking_bays import (
+    router as parking_bays_router,
+)
 
 router = APIRouter()
 
@@ -35,6 +38,16 @@ router.include_router(parking_facilities_router)
 
 router.include_router(parking_zones_router)
 
+# ==========================================================
+# Parking Bays
+# ==========================================================
+
+router.include_router(parking_bays_router)
+
+# ==========================================================
+# Root
+# ==========================================================
+
 
 @router.get("/")
 async def root():
@@ -43,6 +56,7 @@ async def root():
     """
 
     return {
-        "message": "Welcome to SmartPark AI 🚗",
-        "status": "Running Successfully",
+        "application": "SmartPark AI",
+        "status": "healthy",
+        "version": "1.0.0",
     }

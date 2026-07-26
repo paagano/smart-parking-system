@@ -38,6 +38,7 @@ from app.models.enums import (
 
 if TYPE_CHECKING:
     from app.models.parking_zone import ParkingZone
+    from app.models.parking_session import ParkingSession
 
 
 class ParkingBay(BaseModel):
@@ -197,6 +198,12 @@ class ParkingBay(BaseModel):
     zone: Mapped["ParkingZone"] = relationship(
         "ParkingZone",
         back_populates="bays",
+    )
+
+    sessions: Mapped[list["ParkingSession"]] = relationship(
+    "ParkingSession",
+    back_populates="parking_bay",
+    passive_deletes=True,
     )
 
     # ==========================================================
