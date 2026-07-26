@@ -127,28 +127,30 @@ class ParkingZone(BaseModel):
     # Relationships
     # ==========================================================
 
-    facility = relationship(
+    facility: Mapped["ParkingFacility"] = relationship(
         "ParkingFacility",
         back_populates="zones",
     )
 
-    parent = relationship(
+    parent: Mapped["ParkingZone | None"] = relationship(
         "ParkingZone",
         remote_side="ParkingZone.id",
         back_populates="children",
     )
 
-    children = relationship(
+    children: Mapped[list["ParkingZone"]] = relationship(
         "ParkingZone",
         back_populates="parent",
         cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
-    # Parking bays relationship will be added in Milestone 3.
-    # bays = relationship(
-    #     "ParkingBay",
-    #     back_populates="zone",
-    # )
+    bays: Mapped[list["ParkingBay"]] = relationship(
+        "ParkingBay",
+        back_populates="zone",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     # ==========================================================
     # Representation

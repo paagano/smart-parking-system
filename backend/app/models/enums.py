@@ -110,15 +110,67 @@ class ZoneType(str, Enum):
 # Parking Bays
 # ==========================================================
 
-class ParkingBayStatus(str, Enum):
+class BayType(str, Enum):
     """
-    Current operational status of a parking bay.
+    Classification of parking bays.
+
+    Defines the purpose or characteristics of a parking bay.
     """
 
-    AVAILABLE = "AVAILABLE"
-    OCCUPIED = "OCCUPIED"
-    RESERVED = "RESERVED"
-    OUT_OF_SERVICE = "OUT_OF_SERVICE"
+    STANDARD = "STANDARD"
+    ACCESSIBLE = "ACCESSIBLE"
+    EV_CHARGING = "EV_CHARGING"
+    VIP = "VIP"
+    COMPACT = "COMPACT"
+    LARGE = "LARGE"
+    MOTORCYCLE = "MOTORCYCLE"
+    STAFF = "STAFF"
+    VISITOR = "VISITOR"
+    LOADING = "LOADING"
+
+    @property
+    def label(self) -> str:
+        """
+        Human-readable version of the bay type.
+        """
+        return self.value.replace("_", " ").title()
+
+
+class VehicleType(str, Enum):
+    """
+    Vehicle categories permitted to use a parking bay.
+    """
+
+    CAR = "CAR"
+    SUV = "SUV"
+    TRUCK = "TRUCK"
+    MOTORCYCLE = "MOTORCYCLE"
+    BUS = "BUS"
+    ANY = "ANY"
+
+    @property
+    def label(self) -> str:
+        """
+        Human-readable version of the vehicle type.
+        """
+        return self.value.replace("_", " ").title()
+
+
+class BaySize(str, Enum):
+    """
+    Physical size classification of a parking bay.
+    """
+
+    SMALL = "SMALL"
+    MEDIUM = "MEDIUM"
+    LARGE = "LARGE"
+
+    @property
+    def label(self) -> str:
+        """
+        Human-readable version of the bay size.
+        """
+        return self.value.replace("_", " ").title()
 
 
 # ==========================================================
