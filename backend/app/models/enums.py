@@ -41,8 +41,69 @@ class FacilityType(str, Enum):
     HOSPITAL = "HOSPITAL"
     HOTEL = "HOTEL"
     RESIDENTIAL = "RESIDENTIAL"
+    MUNICIPAL = "MUNICIPAL"
+    STADIUM = "STADIUM"
+    TRANSPORT_HUB = "TRANSPORT_HUB"
+    INDUSTRIAL = "INDUSTRIAL"
     PUBLIC = "PUBLIC"
     OTHER = "OTHER"
+
+
+# ==========================================================
+# Parking Zones
+# ==========================================================
+
+class ZoneType(str, Enum):
+    """
+    Classification of parking zones within a parking facility.
+
+    Parking Zones provide a flexible hierarchical structure that allows
+    SmartPark AI to model a wide variety of parking environments,
+    including shopping malls, office complexes, airports, universities,
+    hospitals, residential estates, and open municipal parking.
+
+    Examples:
+        Shopping Mall
+            Basement B1 (BUILDING_LEVEL)
+                └── Aisle A (AISLE)
+
+        Nairobi City
+            CBD (DISTRICT)
+                └── Moi Avenue (STREET)
+
+        Airport
+            Terminal 1A (TERMINAL)
+                └── Long Stay (PARKING_LOT)
+    """
+
+    # Building Structures
+    BUILDING_LEVEL = "BUILDING_LEVEL"
+    WING = "WING"
+    SECTION = "SECTION"
+    AISLE = "AISLE"
+    BLOCK = "BLOCK"
+
+    # Geographic Structures
+    REGION = "REGION"
+    DISTRICT = "DISTRICT"
+    STREET = "STREET"
+
+    # Transport & Public Infrastructure
+    TERMINAL = "TERMINAL"
+    PARKING_LOT = "PARKING_LOT"
+
+    # Generic
+    CUSTOM = "CUSTOM"
+
+    @property
+    def label(self) -> str:
+        """
+        Return a human-readable version of the zone type.
+
+        Example:
+            BUILDING_LEVEL -> Building Level
+        """
+        return self.value.replace("_", " ").title()
 
 
 # ==========================================================
