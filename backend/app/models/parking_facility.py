@@ -1,5 +1,18 @@
-from sqlalchemy import Boolean, Enum, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import time
+
+from sqlalchemy import (
+    Boolean,
+    Enum,
+    Float,
+    String,
+    Text,
+    Time,
+)
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.models.base_model import BaseModel
 from app.models.enums import FacilityType
@@ -45,18 +58,8 @@ class ParkingFacility(BaseModel):
         nullable=False,
     )
 
-    address: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-    )
-
-    city: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-    )
-
-    county: Mapped[str | None] = mapped_column(
-        String(100),
+    description: Mapped[str | None] = mapped_column(
+        Text,
         nullable=True,
     )
 
@@ -66,17 +69,50 @@ class ParkingFacility(BaseModel):
         default="Kenya",
     )
 
+    county: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    city: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    address: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    postal_code: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
     latitude: Mapped[float | None] = mapped_column(
+        Float,
         nullable=True,
     )
 
     longitude: Mapped[float | None] = mapped_column(
+        Float,
         nullable=True,
     )
 
-    description: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
+    timezone: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="Africa/Nairobi",
+    )
+
+    opening_time: Mapped[time] = mapped_column(
+        Time,
+        nullable=False,
+    )
+
+    closing_time: Mapped[time] = mapped_column(
+        Time,
+        nullable=False,
     )
 
     is_active: Mapped[bool] = mapped_column(

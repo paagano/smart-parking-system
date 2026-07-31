@@ -1,5 +1,4 @@
 from datetime import datetime, time
-from decimal import Decimal
 
 from pydantic import (
     BaseModel,
@@ -76,20 +75,20 @@ class ParkingFacilityBase(BaseModel):
         max_length=20,
     )
 
-    latitude: Decimal = Field(
+    latitude: float = Field(
         ...,
         ge=-90,
         le=90,
         description="Latitude in decimal degrees.",
-        examples=[Decimal("-1.292066")],
+        examples=[-1.292066],
     )
 
-    longitude: Decimal = Field(
+    longitude: float = Field(
         ...,
         ge=-180,
         le=180,
         description="Longitude in decimal degrees.",
-        examples=[Decimal("36.821945")],
+        examples=[36.821945],
     )
 
     timezone: str = Field(
@@ -194,13 +193,13 @@ class ParkingFacilityUpdate(BaseModel):
 
     postal_code: str | None = Field(None, max_length=20)
 
-    latitude: Decimal | None = Field(
+    latitude: float | None = Field(
         None,
         ge=-90,
         le=90,
     )
 
-    longitude: Decimal | None = Field(
+    longitude: float | None = Field(
         None,
         ge=-180,
         le=180,

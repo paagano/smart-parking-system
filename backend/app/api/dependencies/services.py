@@ -14,6 +14,9 @@ from app.services.auth_service import AuthService
 from app.services.parking_facility_service import (
     ParkingFacilityService,
 )
+from app.services.parking_session_service import (
+    ParkingSessionService,
+)
 
 
 # ==========================================================
@@ -46,3 +49,17 @@ def get_parking_facility_service(
     repository = ParkingFacilityRepository(db)
 
     return ParkingFacilityService(repository)
+
+
+# ==========================================================
+# Parking Session Service
+# ==========================================================
+
+def get_parking_session_service(
+    db: AsyncSession = Depends(get_db),
+) -> ParkingSessionService:
+    """
+    Dependency that provides a ParkingSessionService instance.
+    """
+
+    return ParkingSessionService(db)

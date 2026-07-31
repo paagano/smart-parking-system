@@ -178,6 +178,24 @@ class PaymentStatus(str, Enum):
     def label(self):
         return self.value.replace("_"," ").title()
 
+
+# ==========================================================
+# Billing Tariffs | Pricing Plans
+# ==========================================================
+
+class BillingType(str, Enum):
+    """
+    Parking tariff billing strategy.
+    """
+
+    HOURLY = "HOURLY"
+    DAILY = "DAILY"
+    FLAT = "FLAT"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
 # ==========================================================
 # Sensors
 # ==========================================================

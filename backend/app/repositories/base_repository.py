@@ -1,4 +1,18 @@
-from typing import Any, Generic, Type, TypeVar
+"""
+Base Repository
+
+Provides common data access operations shared across repositories.
+
+Repositories should remain persistence-only and must not contain
+business logic.
+
+Transaction management (commit/rollback) is handled by the
+Service layer.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Generic, TypeVar
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,16 +22,20 @@ ModelType = TypeVar("ModelType")
 
 class BaseRepository(Generic[ModelType]):
     """
-    Base repository providing common CRUD operations.
+    Base repository providing common read operations.
     """
 
     def __init__(
         self,
         db: AsyncSession,
-        model: Type[ModelType],
+        model: type[ModelType],
     ):
         self.db = db
         self.model = model
+
+    # ==========================================================
+    # Read Operations
+    # ==========================================================
 
     async def get_by_id(
         self,
@@ -26,8 +44,11 @@ class BaseRepository(Generic[ModelType]):
         """
         Retrieve a record by its primary key.
         """
+
         result = await self.db.execute(
-            select(self.model).where(self.model.id == id)
+            select(self.model).where(
+                self.model.id == id
+            )
         )
 
         return result.scalar_one_or_none()
@@ -38,35 +59,44 @@ class BaseRepository(Generic[ModelType]):
         """
         Retrieve all records.
         """
+
         result = await self.db.execute(
             select(self.model)
         )
 
         return list(result.scalars().all())
 
-    async def create(
+        # ==========================================================
+    # Persistence
+    # ==========================================================
+
+    async def save(
         self,
         obj: ModelType,
     ) -> ModelType:
         """
-        Persist a new record.
+        Persist an entity.
+
+        The transaction is not committed here.
+        Commit is handled by the Service layer.
         """
+
         self.db.add(obj)
 
-        await self.db.commit()
+        await self.db.flush()
 
         await self.db.refresh(obj)
 
         return obj
 
-    async def delete(
+    async def remove(
         self,
         obj: ModelType,
     ) -> None:
         """
-        Delete a record.
+        Remove an entity.
+
+        Commit is handled by the Service layer.
         """
 
         await self.db.delete(obj)
-
-        await self.db.commit()
