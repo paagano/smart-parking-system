@@ -1,3 +1,13 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.parking_bay import ParkingBay
+    from app.models.parking_session import ParkingSession
+    from app.models.parking_reservation import ParkingReservation
+
 from datetime import time
 
 from sqlalchemy import (

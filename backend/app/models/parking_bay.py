@@ -18,6 +18,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from app.models.parking_zone import ParkingZone
+    from app.models.parking_session import ParkingSession
+    from app.models.parking_reservation import ParkingReservation
+
 from sqlalchemy import (
     Boolean,
     Enum,
@@ -35,11 +40,6 @@ from app.models.enums import (
     BayType,
     VehicleType,
 )
-
-if TYPE_CHECKING:
-    from app.models.parking_zone import ParkingZone
-    from app.models.parking_session import ParkingSession
-
 
 class ParkingBay(BaseModel):
     """
@@ -201,9 +201,16 @@ class ParkingBay(BaseModel):
     )
 
     sessions: Mapped[list["ParkingSession"]] = relationship(
-    "ParkingSession",
-    back_populates="parking_bay",
-    passive_deletes=True,
+        "ParkingSession",
+        back_populates="parking_bay",
+        passive_deletes=True,
+    )
+
+    reservations: Mapped[list["ParkingReservation"]] = relationship(
+        "ParkingReservation",
+        back_populates="parking_bay",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     # ==========================================================

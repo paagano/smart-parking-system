@@ -1,16 +1,34 @@
+"""
+Service Dependencies
+
+Dependency Injection providers for application services.
+
+This module composes service-layer dependencies by wiring
+repositories into services.
+
+Business logic belongs in services.
+Persistence belongs in repositories.
+"""
+
+from __future__ import annotations
+
+from typing import Annotated
+
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.session import get_db
-
-# Repositories
-from app.repositories.user_repository import UserRepository
-from app.repositories.parking_facility_repository import (
-    ParkingFacilityRepository,
+from app.api.dependencies.pricing import (
+    PricingServiceDep,
+)
+from app.api.dependencies.repositories import (
+    ParkingBayRepositoryDep,
+    ParkingFacilityRepositoryDep,
+    ParkingSessionRepositoryDep,
+    UserRepositoryDep,
 )
 
-# Services
-from app.services.auth_service import AuthService
+from app.services.auth_service import (
+    AuthService,
+)
 from app.services.parking_facility_service import (
     ParkingFacilityService,
 )
@@ -18,48 +36,76 @@ from app.services.parking_session_service import (
     ParkingSessionService,
 )
 
-
 # ==========================================================
 # Authentication Service
 # ==========================================================
 
+
 def get_auth_service(
-    db: AsyncSession = Depends(get_db),
+    repository: UserRepositoryDep,
 ) -> AuthService:
     """
-    Dependency that provides an AuthService instance.
+    Return an AuthService instance.
     """
 
-    repository = UserRepository(db)
-
-    return AuthService(repository)
+    return AuthService(
+        repository=repository,
+    )
 
 
 # ==========================================================
 # Parking Facility Service
 # ==========================================================
 
+
 def get_parking_facility_service(
-    db: AsyncSession = Depends(get_db),
+    repository: ParkingFacilityRepositoryDep,
 ) -> ParkingFacilityService:
     """
-    Dependency that provides a ParkingFacilityService instance.
+    Return a ParkingFacilityService instance.
     """
 
-    repository = ParkingFacilityRepository(db)
-
-    return ParkingFacilityService(repository)
+    return ParkingFacilityService(
+        repository=repository,
+    )
 
 
 # ==========================================================
 # Parking Session Service
 # ==========================================================
 
+
 def get_parking_session_service(
-    db: AsyncSession = Depends(get_db),
+    repository: ParkingSessionRepositoryDep,
+    parking_bay_repository: ParkingBayRepositoryDep,
+    pricing_service: PricingServiceDep,
 ) -> ParkingSessionService:
     """
-    Dependency that provides a ParkingSessionService instance.
+    Return a ParkingSessionService instance.
     """
 
-    return ParkingSessionService(db)
+    return ParkingSessionService(
+        repository=repository,
+        parking_bay_repository=parking_bay_repository,
+        pricing_service=pricing_service,
+    )
+
+
+# ==========================================================
+# Dependency Aliases
+# ==========================================================
+
+AuthServiceDep = Annotated[
+    AuthService,
+    Depends(get_auth_service),
+]
+
+ParkingFacilityServiceDep = Annotated[
+    ParkingFacilityService,
+    Depends(get_parking_facility_service),
+]
+
+ParkingSessionServiceDep = Annotated[
+    ParkingSessionService,
+    Depends(get_parking_session_service),
+]

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy import (
@@ -36,10 +35,12 @@ from app.models.enums import (
     VehicleType,
 )
 
-if TYPE_CHECKING:
-    from app.models.parking_bay import ParkingBay
-    from app.models.user import User
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.parking_bay import ParkingBay
+    from app.models.parking_reservation import ParkingReservation
 
 class ParkingSession(BaseModel):
     """
@@ -97,6 +98,14 @@ class ParkingSession(BaseModel):
             ondelete="RESTRICT",
         ),
         nullable=False,
+    )
+
+    customer_id: Mapped[int] = mapped_column(
+    ForeignKey(
+        "users.id",
+        ondelete="RESTRICT",
+    ),
+    nullable=False,
     )
 
     created_by: Mapped[int | None] = mapped_column(
@@ -236,8 +245,15 @@ class ParkingSession(BaseModel):
     # ==========================================================
 
     parking_bay: Mapped["ParkingBay"] = relationship(
-        "ParkingBay",
-        back_populates="sessions",
+    "ParkingBay",
+    back_populates="sessions",
+    passive_deletes=True,
+    )
+
+    customer: Mapped["User"] = relationship(
+    "User",
+    foreign_keys=[customer_id],
+    back_populates="parking_sessions",
     )
 
     created_by_user: Mapped["User | None"] = relationship(
@@ -249,3 +265,32 @@ class ParkingSession(BaseModel):
         "User",
         foreign_keys=[updated_by],
     )
+
+    reservation_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "parking_reservations.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        unique=True,
+    )
+
+    reservation: Mapped["ParkingReservation | None"] = relationship(
+    "ParkingReservation",
+    back_populates="parking_session",
+    passive_deletes=True,
+    )
+
+    # ==========================================================
+    # Representation
+    # ==========================================================
+
+    def __repr__(self) -> str:
+        return (
+            f"<ParkingSession("
+            f"id={self.id}, "
+            f"session_number='{self.session_number}', "
+            f"vehicle='{self.vehicle_registration}', "
+            f"status='{self.status.value}'"
+            f")>"
+        )

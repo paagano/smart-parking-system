@@ -19,7 +19,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+
 from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.parking_bay import ParkingBay
+    from app.models.parking_session import ParkingSession
+    from app.models.parking_reservation import ParkingReservation
 
 import sqlalchemy as sa
 from sqlalchemy import (

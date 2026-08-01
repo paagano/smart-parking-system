@@ -5,6 +5,7 @@ from .parking_tariff import ParkingTariff
 from app.models.parking_zone import ParkingZone
 from app.models.parking_bay import ParkingBay
 from app.models.parking_session import ParkingSession
+from app.models.parking_reservation import ParkingReservation
 
 __all__ = [
     "BaseModel",
@@ -14,4 +15,5 @@ __all__ = [
     "ParkingBay",
     "ParkingSession",
     "ParkingTariff",
+    "ParkingReservation",
 ]

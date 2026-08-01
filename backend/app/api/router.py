@@ -21,6 +21,9 @@ from app.api.endpoints.parking_sessions import (
 from app.api.endpoints.parking_tariffs import (
     router as parking_tariffs_router,
 )
+from app.api.endpoints.parking_reservations import (
+    router as parking_reservations_router,
+)
 
 router = APIRouter()
 
@@ -78,6 +81,14 @@ router.include_router(
 
 router.include_router(
     parking_tariffs_router,
+)
+
+# ==========================================================
+# Parking Reservations
+# ==========================================================
+
+router.include_router(
+    parking_reservations_router,
 )
 
 # ==========================================================

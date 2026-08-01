@@ -31,6 +31,9 @@ from app.repositories.parking_bay_repository import (
 from app.repositories.parking_session_repository import (
     ParkingSessionRepository,
 )
+from app.repositories.parking_reservation_repository import (
+    ParkingReservationRepository,
+)
 from app.repositories.parking_tariff_repository import (
     ParkingTariffRepository,
 )
@@ -110,6 +113,21 @@ def get_parking_session_repository(
     return ParkingSessionRepository(db)
 
 # ==========================================================
+# Parking Reservation Repository
+# ==========================================================
+
+def get_parking_reservation_repository(
+    db: DatabaseDep,
+) -> ParkingReservationRepository:
+    """
+    Return a ParkingReservationRepository.
+    """
+
+    return ParkingReservationRepository(
+        db=db,
+    )
+
+# ==========================================================
 # Parking Tariff Repository
 # ==========================================================
 
@@ -154,4 +172,9 @@ ParkingSessionRepositoryDep = Annotated[
 ParkingTariffRepositoryDep = Annotated[
     ParkingTariffRepository,
     Depends(get_parking_tariff_repository),
+]
+
+ParkingReservationRepositoryDep = Annotated[
+    ParkingReservationRepository,
+    Depends(get_parking_reservation_repository),
 ]

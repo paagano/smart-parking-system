@@ -150,17 +150,21 @@ class SessionSource(str, Enum):
 # ==========================================================
 # Reservations
 # ==========================================================
-
 class ReservationStatus(str, Enum):
-    PENDING="PENDING"
-    CONFIRMED="CONFIRMED"
-    CANCELLED="CANCELLED"
-    EXPIRED="EXPIRED"
-    COMPLETED="COMPLETED"
+    """
+    Reservation lifecycle status.
+    """
+
+    CREATED = "CREATED"
+    CONFIRMED = "CONFIRMED"
+    CHECKED_IN = "CHECKED_IN"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+    EXPIRED = "EXPIRED"
 
     @property
-    def label(self):
-        return self.value.replace("_"," ").title()
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
 
 # ==========================================================
 # Payments
