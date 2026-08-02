@@ -77,6 +77,15 @@ class ParkingSession(BaseModel):
             "ix_parking_sessions_payment_status",
             "payment_status",
         ),
+        Index(
+            "ix_parking_sessions_customer",
+            "customer_id",
+        ),
+
+        Index(
+            "ix_parking_sessions_reservation",
+            "reservation_id",
+        ),
     )
 
     # ==========================================================
@@ -100,12 +109,12 @@ class ParkingSession(BaseModel):
         nullable=False,
     )
 
-    customer_id: Mapped[int] = mapped_column(
-    ForeignKey(
-        "users.id",
-        ondelete="RESTRICT",
-    ),
-    nullable=False,
+    customer_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "users.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
     )
 
     created_by: Mapped[int | None] = mapped_column(
@@ -250,10 +259,10 @@ class ParkingSession(BaseModel):
     passive_deletes=True,
     )
 
-    customer: Mapped["User"] = relationship(
-    "User",
-    foreign_keys=[customer_id],
-    back_populates="parking_sessions",
+    customer: Mapped["User | None"] = relationship(
+        "User",
+        foreign_keys=[customer_id],
+        back_populates="parking_sessions",
     )
 
     created_by_user: Mapped["User | None"] = relationship(

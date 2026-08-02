@@ -31,6 +31,12 @@ class ParkingSessionBase(BaseModel):
 
     parking_bay_id: int = Field(..., gt=0)
 
+    customer_id: Optional[int] = Field(
+    default=None,
+    gt=0,
+    description="Registered customer. Leave null for guest walk-ins.",
+    )
+
     vehicle_registration: str = Field(
         ...,
         min_length=3,
@@ -166,4 +172,10 @@ class ParkingSessionCheckout(BaseModel):
     """
 
     vehicle_registration: str
+
     exit_method: ExitMethod
+
+    notes: Optional[str] = Field(
+        default=None,
+        max_length=1000,
+    )

@@ -19,21 +19,28 @@ from fastapi import Depends
 from app.api.dependencies.pricing import (
     PricingServiceDep,
 )
+
 from app.api.dependencies.repositories import (
     ParkingBayRepositoryDep,
     ParkingFacilityRepositoryDep,
+    ParkingReservationRepositoryDep,
     ParkingSessionRepositoryDep,
     UserRepositoryDep,
 )
-
 from app.services.auth_service import (
     AuthService,
 )
+
 from app.services.parking_facility_service import (
     ParkingFacilityService,
 )
+
 from app.services.parking_session_service import (
     ParkingSessionService,
+)
+
+from app.services.parking_reservation_service import (
+    ParkingReservationService,
 )
 
 # ==========================================================
@@ -49,7 +56,7 @@ def get_auth_service(
     """
 
     return AuthService(
-        repository=repository,
+        user_repository=repository,
     )
 
 
@@ -92,6 +99,27 @@ def get_parking_session_service(
 
 
 # ==========================================================
+# Parking Reservation Service
+# ==========================================================
+
+
+def get_parking_reservation_service(
+    repository: ParkingReservationRepositoryDep,
+    parking_bay_repository: ParkingBayRepositoryDep,
+    parking_session_service: ParkingSessionServiceDep,
+) -> ParkingReservationService:
+    """
+    Return a ParkingReservationService instance.
+    """
+
+    return ParkingReservationService(
+        repository=repository,
+        parking_bay_repository=parking_bay_repository,
+        parking_session_service=parking_session_service,
+    )
+
+
+# ==========================================================
 # Dependency Aliases
 # ==========================================================
 
@@ -108,4 +136,9 @@ ParkingFacilityServiceDep = Annotated[
 ParkingSessionServiceDep = Annotated[
     ParkingSessionService,
     Depends(get_parking_session_service),
+]
+
+ParkingReservationServiceDep = Annotated[
+    ParkingReservationService,
+    Depends(get_parking_reservation_service),
 ]

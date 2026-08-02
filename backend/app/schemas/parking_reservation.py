@@ -129,25 +129,22 @@ class ParkingReservationCreate(ReservationBase):
     Schema used when creating a parking reservation.
     """
 
-    customer_id: int = Field(
-        ...,
+    customer_id: int | None = Field(
+        default=None,
         gt=0,
         description="Customer making the reservation.",
     )
 
     @field_validator("customer_id")
     @classmethod
-    def validate_customer_id(
-        cls,
-        value: int,
-    ) -> int:
-        """
-        Validate customer identifier.
-        """
+    def validate_customer_id(cls, value):
+
+        if value is None:
+            return value
 
         if value <= 0:
             raise ValueError(
-                "customer_id must be greater than zero."
+                "Customer ID must be greater than zero."
             )
 
         return value
@@ -262,7 +259,7 @@ class ParkingReservationResponse(BaseModel):
 
     reservation_number: str
 
-    customer_id: int
+    customer_id: int | None = None
 
     parking_bay_id: int
 

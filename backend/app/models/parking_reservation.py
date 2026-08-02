@@ -96,13 +96,12 @@ class ParkingReservation(BaseModel):
     # Customer
     # ==========================================================
 
-    customer_id: Mapped[int] = mapped_column(
+    customer_id: Mapped[int | None] = mapped_column(
         ForeignKey(
             "users.id",
-            ondelete="RESTRICT",
+            ondelete="SET NULL",
         ),
-        nullable=False,
-        
+        nullable=True,
     )
 
     # ==========================================================
@@ -265,7 +264,7 @@ class ParkingReservation(BaseModel):
     # Relationships
     # ==========================================================
 
-    customer: Mapped["User"] = relationship(
+    customer: Mapped["User | None"] = relationship(
         "User",
         foreign_keys=[customer_id],
         back_populates="parking_reservations",

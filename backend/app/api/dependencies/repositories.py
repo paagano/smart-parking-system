@@ -117,7 +117,7 @@ def get_parking_session_repository(
 # ==========================================================
 
 def get_parking_reservation_repository(
-    db: DatabaseDep,
+    db: DbSession,
 ) -> ParkingReservationRepository:
     """
     Return a ParkingReservationRepository.

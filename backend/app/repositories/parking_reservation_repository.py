@@ -8,11 +8,11 @@ Responsibilities
 ----------------
 - CRUD operations
 - Reservation lookup
-- Search
 - Conflict detection
+- Search
 - Availability queries
 
-Business rules belong in the Reservation Service.
+Business rules belong exclusively in the Service layer.
 """
 
 from __future__ import annotations
@@ -22,27 +22,40 @@ from datetime import datetime
 from sqlalchemy import (
     Select,
     or_,
+    func,
     select,
 )
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enums import (
     ReservationStatus,
 )
+
 from app.models.parking_reservation import (
     ParkingReservation,
 )
+
 from app.repositories.base_repository import (
     BaseRepository,
 )
 
 
 class ParkingReservationRepository(
-    BaseRepository[ParkingReservation]
+    BaseRepository[ParkingReservation],
 ):
     """
-    Repository for ParkingReservation persistence.
+    Repository responsible for Parking Reservation persistence.
     """
+
+    # ==========================================================
+    # Repository Constants
+    # ==========================================================
+
+    ACTIVE_STATUSES = (
+        ReservationStatus.CREATED,
+        ReservationStatus.CONFIRMED,
+    )
 
     # ==========================================================
     # Construction
@@ -52,13 +65,41 @@ class ParkingReservationRepository(
         self,
         db: AsyncSession,
     ) -> None:
-        """
-        Create repository instance.
-        """
 
         super().__init__(
             db=db,
             model=ParkingReservation,
+        )
+
+    # ==========================================================
+    # Internal Query Helpers
+    # ==========================================================
+
+    def _base_query(
+        self,
+    ) -> Select:
+        """
+        Base query used throughout the repository.
+        """
+
+        return select(
+            ParkingReservation,
+        )
+
+    def _active_query(
+        self,
+    ) -> Select:
+        """
+        Query returning only active reservations.
+        """
+
+        return (
+            self._base_query()
+            .where(
+                ParkingReservation.status.in_(
+                    self.ACTIVE_STATUSES,
+                )
+            )
         )
 
     # ==========================================================
@@ -70,15 +111,14 @@ class ParkingReservationRepository(
         reservation_id: int,
     ) -> ParkingReservation | None:
         """
-        Retrieve a reservation by its identifier.
+        Retrieve reservation by primary key.
         """
 
-        statement: Select = (
-            select(
-                ParkingReservation,
-            )
+        statement = (
+            self._base_query()
             .where(
-                ParkingReservation.id == reservation_id,
+                ParkingReservation.id
+                == reservation_id
             )
         )
 
@@ -97,14 +137,12 @@ class ParkingReservationRepository(
         reservation_number: str,
     ) -> ParkingReservation | None:
         """
-        Retrieve a reservation using its business
+        Retrieve reservation using its business
         reservation number.
         """
 
-        statement: Select = (
-            select(
-                ParkingReservation,
-            )
+        statement = (
+            self._base_query()
             .where(
                 ParkingReservation.reservation_number
                 == reservation_number
@@ -125,14 +163,11 @@ class ParkingReservationRepository(
         self,
     ) -> list[ParkingReservation]:
         """
-        Retrieve all reservations ordered by
-        reservation start date.
+        Retrieve all reservations.
         """
 
-        statement: Select = (
-            select(
-                ParkingReservation,
-            )
+        statement = (
+            self._base_query()
             .order_by(
                 ParkingReservation.reserved_from.desc(),
             )
@@ -146,7 +181,7 @@ class ParkingReservationRepository(
             result.scalars().all()
         )
 
-            # ==========================================================
+    # ==========================================================
     # Search
     # ==========================================================
 
@@ -155,14 +190,16 @@ class ParkingReservationRepository(
         search_term: str,
     ) -> list[ParkingReservation]:
         """
-        Search reservations by reservation number or
-        vehicle registration.
+        Search reservations.
+
+        Matches
+
+        - Reservation Number
+        - Vehicle Registration
         """
 
-        statement: Select = (
-            select(
-                ParkingReservation,
-            )
+        statement = (
+            self._base_query()
             .where(
                 or_(
                     ParkingReservation.reservation_number.ilike(
@@ -186,7 +223,7 @@ class ParkingReservationRepository(
             result.scalars().all()
         )
 
-    # ==========================================================
+        # ==========================================================
     # Customer Queries
     # ==========================================================
 
@@ -195,13 +232,12 @@ class ParkingReservationRepository(
         customer_id: int,
     ) -> list[ParkingReservation]:
         """
-        Retrieve all reservations belonging to a customer.
+        Retrieve every reservation belonging to a
+        registered customer.
         """
 
-        statement: Select = (
-            select(
-                ParkingReservation,
-            )
+        statement = (
+            self._base_query()
             .where(
                 ParkingReservation.customer_id == customer_id,
             )
@@ -214,30 +250,21 @@ class ParkingReservationRepository(
             statement,
         )
 
-        return list(
-            result.scalars().all()
-        )
+        return list(result.scalars().all())
 
     async def get_active_by_customer(
         self,
         customer_id: int,
     ) -> list[ParkingReservation]:
         """
-        Retrieve active reservations for a customer.
+        Retrieve active reservations belonging to a
+        registered customer.
         """
 
-        statement: Select = (
-            select(
-                ParkingReservation,
-            )
+        statement = (
+            self._active_query()
             .where(
                 ParkingReservation.customer_id == customer_id,
-                ParkingReservation.status.in_(
-                    (
-                        ReservationStatus.CREATED,
-                        ReservationStatus.CONFIRMED,
-                    )
-                ),
             )
             .order_by(
                 ParkingReservation.reserved_from.asc(),
@@ -248,9 +275,63 @@ class ParkingReservationRepository(
             statement,
         )
 
-        return list(
-            result.scalars().all()
+        return list(result.scalars().all())
+
+    # ==========================================================
+    # Vehicle Queries
+    # ==========================================================
+
+    async def get_by_vehicle(
+        self,
+        vehicle_registration: str,
+    ) -> list[ParkingReservation]:
+        """
+        Retrieve every reservation for a vehicle.
+
+        Supports both guest and registered drivers.
+        """
+
+        statement = (
+            self._base_query()
+            .where(
+                ParkingReservation.vehicle_registration
+                == vehicle_registration.upper(),
+            )
+            .order_by(
+                ParkingReservation.reserved_from.desc(),
+            )
         )
+
+        result = await self.db.execute(
+            statement,
+        )
+
+        return list(result.scalars().all())
+
+    async def get_active_by_vehicle(
+        self,
+        vehicle_registration: str,
+    ) -> list[ParkingReservation]:
+        """
+        Retrieve active reservations for a vehicle.
+        """
+
+        statement = (
+            self._active_query()
+            .where(
+                ParkingReservation.vehicle_registration
+                == vehicle_registration.upper(),
+            )
+            .order_by(
+                ParkingReservation.reserved_from.asc(),
+            )
+        )
+
+        result = await self.db.execute(
+            statement,
+        )
+
+        return list(result.scalars().all())
 
     # ==========================================================
     # Parking Bay Queries
@@ -261,13 +342,11 @@ class ParkingReservationRepository(
         parking_bay_id: int,
     ) -> list[ParkingReservation]:
         """
-        Retrieve all reservations for a parking bay.
+        Retrieve every reservation for a parking bay.
         """
 
-        statement: Select = (
-            select(
-                ParkingReservation,
-            )
+        statement = (
+            self._base_query()
             .where(
                 ParkingReservation.parking_bay_id
                 == parking_bay_id,
@@ -281,9 +360,7 @@ class ParkingReservationRepository(
             statement,
         )
 
-        return list(
-            result.scalars().all()
-        )
+        return list(result.scalars().all())
 
     async def get_active_by_parking_bay(
         self,
@@ -293,19 +370,11 @@ class ParkingReservationRepository(
         Retrieve active reservations for a parking bay.
         """
 
-        statement: Select = (
-            select(
-                ParkingReservation,
-            )
+        statement = (
+            self._active_query()
             .where(
                 ParkingReservation.parking_bay_id
                 == parking_bay_id,
-                ParkingReservation.status.in_(
-                    (
-                        ReservationStatus.CREATED,
-                        ReservationStatus.CONFIRMED,
-                    )
-                ),
             )
             .order_by(
                 ParkingReservation.reserved_from.asc(),
@@ -316,11 +385,9 @@ class ParkingReservationRepository(
             statement,
         )
 
-        return list(
-            result.scalars().all()
-        )
+        return list(result.scalars().all())
 
-            # ==========================================================
+        # ==========================================================
     # Reservation Conflict Detection
     # ==========================================================
 
@@ -332,47 +399,28 @@ class ParkingReservationRepository(
         exclude_reservation_id: int | None = None,
     ) -> list[ParkingReservation]:
         """
-        Find reservations that overlap the supplied
-        reservation period for the same parking bay.
-
-        Overlap Rule
-        ------------
-
-        Existing: |--------|
-
-        New:          |--------|
-
-        OR
-
-        Existing:     |--------|
-
-        New:      |--------------|
+        Find reservations overlapping the supplied period.
 
         Only active reservations participate in
         conflict detection.
         """
 
         statement = (
-            select(
-                ParkingReservation,
-            )
+            self._active_query()
             .where(
                 ParkingReservation.parking_bay_id
                 == parking_bay_id,
-                ParkingReservation.status.in_(
-                    (
-                        ReservationStatus.CREATED,
-                        ReservationStatus.CONFIRMED,
-                    )
-                ),
+
                 ParkingReservation.reserved_from
                 < reserved_until,
+
                 ParkingReservation.reserved_until
                 > reserved_from,
             )
         )
 
         if exclude_reservation_id is not None:
+
             statement = statement.where(
                 ParkingReservation.id
                 != exclude_reservation_id,
@@ -400,25 +448,85 @@ class ParkingReservationRepository(
         effective_at: datetime,
     ) -> ParkingReservation | None:
         """
-        Find the active reservation occupying a bay
-        at the supplied point in time.
+        Find the reservation occupying a bay at a
+        particular point in time.
         """
 
         statement = (
-            select(
-                ParkingReservation,
-            )
+            self._active_query()
             .where(
                 ParkingReservation.parking_bay_id
                 == parking_bay_id,
-                ParkingReservation.status.in_(
-                    (
-                        ReservationStatus.CREATED,
-                        ReservationStatus.CONFIRMED,
-                    )
-                ),
+
                 ParkingReservation.reserved_from
                 <= effective_at,
+
+                ParkingReservation.reserved_until
+                >= effective_at,
+            )
+            .order_by(
+                ParkingReservation.reserved_from.asc(),
+            )
+        )
+
+        result = await self.db.execute(
+            statement,
+        )
+
+        return result.scalar_one_or_none()
+
+    # ==========================================================
+    # Reservation Check-in
+    # ==========================================================
+
+    async def find_due_for_checkin(
+        self,
+        reservation_number: str,
+    ) -> ParkingReservation | None:
+        """
+        Retrieve a reservation that is eligible
+        for check-in.
+        """
+
+        statement = (
+            self._active_query()
+            .where(
+                ParkingReservation.reservation_number
+                == reservation_number,
+            )
+        )
+
+        result = await self.db.execute(
+            statement,
+        )
+
+        return result.scalar_one_or_none()
+
+    async def find_vehicle_reservation(
+        self,
+        vehicle_registration: str,
+        effective_at: datetime,
+    ) -> ParkingReservation | None:
+        """
+        Find the reservation belonging to a vehicle
+        at the supplied point in time.
+
+        Used by:
+
+        - QR Code
+        - ANPR
+        - Attendant Check-in
+        """
+
+        statement = (
+            self._active_query()
+            .where(
+                ParkingReservation.vehicle_registration
+                == vehicle_registration.upper(),
+
+                ParkingReservation.reserved_from
+                <= effective_at,
+
                 ParkingReservation.reserved_until
                 >= effective_at,
             )
@@ -442,23 +550,16 @@ class ParkingReservationRepository(
         as_of: datetime,
     ) -> list[ParkingReservation]:
         """
-        Retrieve reservations that have expired but
-        have not yet been marked as EXPIRED.
+        Retrieve reservations that should now expire.
         """
 
         statement = (
-            select(
-                ParkingReservation,
-            )
+            self._active_query()
             .where(
-                ParkingReservation.status.in_(
-                    (
-                        ReservationStatus.CREATED,
-                        ReservationStatus.CONFIRMED,
-                    )
-                ),
                 ParkingReservation.expires_at.is_not(None),
-                ParkingReservation.expires_at < as_of,
+
+                ParkingReservation.expires_at
+                < as_of,
             )
             .order_by(
                 ParkingReservation.expires_at.asc(),
@@ -481,21 +582,11 @@ class ParkingReservationRepository(
         self,
     ) -> list[ParkingReservation]:
         """
-        Retrieve all active reservations.
+        Retrieve every active reservation.
         """
 
         statement = (
-            select(
-                ParkingReservation,
-            )
-            .where(
-                ParkingReservation.status.in_(
-                    (
-                        ReservationStatus.CREATED,
-                        ReservationStatus.CONFIRMED,
-                    )
-                ),
-            )
+            self._active_query()
             .order_by(
                 ParkingReservation.reserved_from.asc(),
             )
@@ -509,7 +600,7 @@ class ParkingReservationRepository(
             result.scalars().all()
         )
 
-            # ==========================================================
+        # ==========================================================
     # Reservation Statistics
     # ==========================================================
 
@@ -517,22 +608,16 @@ class ParkingReservationRepository(
         self,
     ) -> int:
         """
-        Count active reservations.
-
-        Active reservations are those currently in either
-        CREATED or CONFIRMED status.
+        Count all active reservations.
         """
 
         statement = (
             select(
-                ParkingReservation,
+                func.count(ParkingReservation.id)
             )
             .where(
                 ParkingReservation.status.in_(
-                    (
-                        ReservationStatus.CREATED,
-                        ReservationStatus.CONFIRMED,
-                    )
+                    self.ACTIVE_STATUSES,
                 )
             )
         )
@@ -541,9 +626,7 @@ class ParkingReservationRepository(
             statement,
         )
 
-        return len(
-            result.scalars().all()
-        )
+        return result.scalar_one()
 
     async def count_customer_reservations(
         self,
@@ -555,7 +638,7 @@ class ParkingReservationRepository(
 
         statement = (
             select(
-                ParkingReservation,
+                func.count(ParkingReservation.id)
             )
             .where(
                 ParkingReservation.customer_id
@@ -567,9 +650,33 @@ class ParkingReservationRepository(
             statement,
         )
 
-        return len(
-            result.scalars().all()
+        return result.scalar_one()
+
+    async def count_vehicle_reservations(
+        self,
+        vehicle_registration: str,
+    ) -> int:
+        """
+        Count reservations belonging to a vehicle.
+
+        Supports guest and registered customers.
+        """
+
+        statement = (
+            select(
+                func.count(ParkingReservation.id)
+            )
+            .where(
+                ParkingReservation.vehicle_registration
+                == vehicle_registration.upper(),
+            )
         )
+
+        result = await self.db.execute(
+            statement,
+        )
+
+        return result.scalar_one()
 
     # ==========================================================
     # Convenience Methods
@@ -580,15 +687,15 @@ class ParkingReservationRepository(
         reservation_number: str,
     ) -> bool:
         """
-        Determine whether a reservation number already
-        exists.
+        Determine whether a reservation exists.
         """
 
-        reservation = await self.get_by_reservation_number(
-            reservation_number,
+        return (
+            await self.get_by_reservation_number(
+                reservation_number,
+            )
+            is not None
         )
-
-        return reservation is not None
 
     async def has_conflicts(
         self,
@@ -598,18 +705,37 @@ class ParkingReservationRepository(
         exclude_reservation_id: int | None = None,
     ) -> bool:
         """
-        Determine whether the supplied reservation
-        conflicts with any existing reservation.
+        Determine whether a reservation conflicts
+        with existing reservations.
         """
 
-        conflicts = await self.find_conflicting_reservations(
-            parking_bay_id=parking_bay_id,
-            reserved_from=reserved_from,
-            reserved_until=reserved_until,
-            exclude_reservation_id=exclude_reservation_id,
+        conflicts = (
+            await self.find_conflicting_reservations(
+                parking_bay_id=parking_bay_id,
+                reserved_from=reserved_from,
+                reserved_until=reserved_until,
+                exclude_reservation_id=exclude_reservation_id,
+            )
         )
 
-        return len(conflicts) > 0
+        return bool(conflicts)
+
+    async def has_active_vehicle_reservation(
+        self,
+        vehicle_registration: str,
+    ) -> bool:
+        """
+        Determine whether a vehicle currently has an
+        active reservation.
+        """
+
+        reservations = (
+            await self.get_active_by_vehicle(
+                vehicle_registration,
+            )
+        )
+
+        return bool(reservations)
 
     # ==========================================================
     # Representation
@@ -618,11 +744,82 @@ class ParkingReservationRepository(
     def __repr__(
         self,
     ) -> str:
-        """
-        Developer-friendly representation.
-        """
 
         return (
             f"{self.__class__.__name__}"
             f"(model={self.model.__name__})"
         )
+
+    # ==========================================================
+    # Bay State Management
+    # ==========================================================
+
+    async def reserve_bay(
+        self,
+        parking_bay_id: int,
+    ) -> None:
+        """
+        Mark a parking bay as reserved.
+        """
+
+        bay = await self.get_by_id(parking_bay_id)
+
+        if bay is None:
+            raise ValueError(
+                "Parking bay not found."
+            )
+
+        bay.is_available = False
+
+        await self.db.flush()
+
+
+    async def release_bay(
+        self,
+        parking_bay_id: int,
+    ) -> None:
+        """
+        Release a parking bay.
+
+        Used when:
+        - reservation is cancelled
+        - reservation expires
+        - session completes
+        """
+
+        bay = await self.get_by_id(parking_bay_id)
+
+        if bay is None:
+            raise ValueError(
+                "Parking bay not found."
+            )
+
+        bay.is_available = True
+
+        if hasattr(bay, "is_occupied"):
+            bay.is_occupied = False
+
+        await self.db.flush()
+
+
+    async def mark_occupied(
+        self,
+        parking_bay_id: int,
+    ) -> None:
+        """
+        Mark a parking bay as occupied.
+        """
+
+        bay = await self.get_by_id(parking_bay_id)
+
+        if bay is None:
+            raise ValueError(
+                "Parking bay not found."
+            )
+
+        bay.is_available = False
+
+        if hasattr(bay, "is_occupied"):
+            bay.is_occupied = True
+
+        await self.db.flush()

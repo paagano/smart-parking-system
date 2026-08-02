@@ -20,37 +20,24 @@ Persistence belongs in repositories.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 
-from app.models.enums import (
-    ReservationStatus,
-)
-
-from app.models.parking_reservation import (
-    ParkingReservation,
-)
-
-from app.repositories.parking_bay_repository import (
-    ParkingBayRepository,
-)
-
+from app.models.enums import ReservationStatus
+from app.models.parking_reservation import ParkingReservation
+from app.repositories.parking_bay_repository import ParkingBayRepository
 from app.repositories.parking_reservation_repository import (
     ParkingReservationRepository,
 )
-
 from app.schemas.parking_reservation import (
     ParkingReservationCreate,
     ParkingReservationUpdate,
 )
+from app.services.parking_session_service import ParkingSessionService
+from app.services.pricing_service import PricingService
+from app.utils.datetime import utc_now
 
-from app.services.pricing_service import (
-    PricingService,
-)
-
-from app.services.parking_session_service import (
-    ParkingSessionService,
-)
+from app.models.enums import BillingType
 
 
 class ParkingReservationService:
@@ -72,46 +59,28 @@ class ParkingReservationService:
         """
         Create a Reservation Service.
         """
-
         self.repository = repository
-
-        self.parking_bay_repository = (
-            parking_bay_repository
-        )
-
+        self.parking_bay_repository = parking_bay_repository
         self.pricing_service = pricing_service
-
-        self.parking_session_service = (
-            parking_session_service
-        )
+        self.parking_session_service = parking_session_service
 
     # ==========================================================
     # Reservation Number
     # ==========================================================
 
-    async def _generate_reservation_number(
-        self,
-    ) -> str:
+    async def _generate_reservation_number(self) -> str:
         """
         Generate a unique reservation number.
 
         Example
-
+        -------
         RES-8A2C6D91
         """
-
         while True:
-
-            reservation_number = (
-                f"RES-{uuid4().hex[:8].upper()}"
+            reservation_number = f"RES-{uuid4().hex[:8].upper()}"
+            exists = await self.repository.reservation_exists(
+                reservation_number,
             )
-
-            exists = (
-                await self.repository.reservation_exists(
-                    reservation_number,
-                )
-            )
-
             if not exists:
                 return reservation_number
 
@@ -119,35 +88,22 @@ class ParkingReservationService:
     # Validation
     # ==========================================================
 
-    async def _validate_parking_bay(
-        self,
-        parking_bay_id: int,
-    ):
+    async def _validate_parking_bay(self, parking_bay_id: int):
         """
-        Validate that the parking bay exists
-        and is reservable.
+        Validate that the parking bay exists and is reservable.
         """
-
-        bay = (
-            await self.parking_bay_repository.get_by_id(
-                parking_bay_id,
-            )
+        bay = await self.parking_bay_repository.get_by_id(
+            parking_bay_id,
         )
 
         if bay is None:
-            raise ValueError(
-                "Parking bay does not exist."
-            )
+            raise ValueError("Parking bay does not exist.")
 
         if not bay.is_active:
-            raise ValueError(
-                "Parking bay is inactive."
-            )
+            raise ValueError("Parking bay is inactive.")
 
         if not bay.is_reservable:
-            raise ValueError(
-                "Parking bay cannot be reserved."
-            )
+            raise ValueError("Parking bay cannot be reserved.")
 
         return bay
 
@@ -159,25 +115,40 @@ class ParkingReservationService:
         exclude_reservation_id: int | None = None,
     ) -> None:
         """
-        Ensure there are no overlapping reservations.
+        Ensure the parking bay is available for reservation.
+
+        A bay is unavailable if:
+
+        - it already has an ACTIVE parking session
+        - it has an overlapping active reservation
         """
 
-        conflicts = (
-            await self.repository.find_conflicting_reservations(
-                parking_bay_id=parking_bay_id,
-                reserved_from=reserved_from,
-                reserved_until=reserved_until,
-                exclude_reservation_id=exclude_reservation_id,
+        #
+        # Active parking session
+        #
+        if await self.parking_session_service.has_active_session(
+            parking_bay_id,
+        ):
+            raise ValueError(
+                "The parking bay is currently occupied."
             )
+
+        #
+        # Overlapping reservation
+        #
+        conflicts = await self.repository.find_conflicting_reservations(
+            parking_bay_id=parking_bay_id,
+            reserved_from=reserved_from,
+            reserved_until=reserved_until,
+            exclude_reservation_id=exclude_reservation_id,
         )
 
         if conflicts:
             raise ValueError(
-                "The parking bay is already reserved "
-                "for the requested period."
+                "The parking bay is already reserved for the requested period."
             )
 
-            # ==========================================================
+    # ==========================================================
     # Create Reservation
     # ==========================================================
 
@@ -188,11 +159,8 @@ class ParkingReservationService:
         """
         Create a new parking reservation.
         """
-
         # Validate parking bay
-        await self._validate_parking_bay(
-            data.parking_bay_id,
-        )
+        await self._validate_parking_bay(data.parking_bay_id)
 
         # Check for overlapping reservations
         await self._validate_no_conflicts(
@@ -202,9 +170,19 @@ class ParkingReservationService:
         )
 
         # Generate reservation number
-        reservation_number = (
-            await self._generate_reservation_number()
+        reservation_number = await self._generate_reservation_number()
+
+        expires_at = data.reserved_from - timedelta(minutes=30)
+
+        # Calculate estimated amount once
+        pricing = await self.pricing_service.estimate_price(
+            vehicle_type=data.vehicle_type,
+            billing_type=BillingType.HOURLY,
+            entry_time=data.reserved_from,
+            exit_time=data.reserved_until,
         )
+
+        estimated_amount = pricing.total_amount
 
         reservation = ParkingReservation(
             reservation_number=reservation_number,
@@ -214,19 +192,14 @@ class ParkingReservationService:
             vehicle_type=data.vehicle_type,
             reserved_from=data.reserved_from,
             reserved_until=data.reserved_until,
+            estimated_amount=estimated_amount,
             notes=data.notes,
+            expires_at=expires_at,
             status=ReservationStatus.CREATED,
         )
 
-        await self.repository.save(
-            reservation,
-        )
-
+        await self.repository.save(reservation)
         await self.repository.commit()
-
-        await self.repository.refresh(
-            reservation,
-        )
 
         return reservation
 
@@ -241,10 +214,7 @@ class ParkingReservationService:
         """
         Retrieve a reservation by ID.
         """
-
-        return await self.repository.get_by_id(
-            reservation_id,
-        )
+        return await self.repository.get_by_id(reservation_id)
 
     async def get_by_reservation_number(
         self,
@@ -253,20 +223,14 @@ class ParkingReservationService:
         """
         Retrieve a reservation by reservation number.
         """
-
-        return (
-            await self.repository.get_by_reservation_number(
-                reservation_number,
-            )
+        return await self.repository.get_by_reservation_number(
+            reservation_number,
         )
 
-    async def get_all(
-        self,
-    ) -> list[ParkingReservation]:
+    async def get_all(self) -> list[ParkingReservation]:
         """
         Retrieve all reservations.
         """
-
         return await self.repository.get_all()
 
     async def search(
@@ -276,10 +240,7 @@ class ParkingReservationService:
         """
         Search reservations.
         """
-
-        return await self.repository.search(
-            search_term,
-        )
+        return await self.repository.search(search_term)
 
     # ==========================================================
     # Update Reservation
@@ -293,38 +254,24 @@ class ParkingReservationService:
         """
         Update an existing reservation.
         """
-
-        reservation = (
-            await self.repository.get_by_id(
-                reservation_id,
-            )
-        )
+        reservation = await self.repository.get_by_id(reservation_id)
 
         if reservation is None:
             return None
 
-        update_data = data.model_dump(
-            exclude_unset=True,
-        )
+        update_data = data.model_dump(exclude_unset=True)
 
         parking_bay_id = update_data.get(
-            "parking_bay_id",
-            reservation.parking_bay_id,
+            "parking_bay_id", reservation.parking_bay_id
         )
-
         reserved_from = update_data.get(
-            "reserved_from",
-            reservation.reserved_from,
+            "reserved_from", reservation.reserved_from
         )
-
         reserved_until = update_data.get(
-            "reserved_until",
-            reservation.reserved_until,
+            "reserved_until", reservation.reserved_until
         )
 
-        await self._validate_parking_bay(
-            parking_bay_id,
-        )
+        await self._validate_parking_bay(parking_bay_id)
 
         await self._validate_no_conflicts(
             parking_bay_id=parking_bay_id,
@@ -334,23 +281,38 @@ class ParkingReservationService:
         )
 
         for field, value in update_data.items():
-            setattr(
-                reservation,
-                field,
-                value,
+            setattr(reservation, field, value)
+
+        # Update expires_at if reserved_from changed
+        if "reserved_from" in update_data:
+            reservation.expires_at = (
+                reservation.reserved_from - timedelta(minutes=30)
             )
 
-        reservation.updated_at = datetime.utcnow()
+        # Recalculate estimated amount if dates or bay changed
+        if any(
+            field in update_data
+            for field in [
+                "parking_bay_id",
+                "vehicle_type",
+                "reserved_from",
+                "reserved_until",
+            ]
+        ):
+            pricing = await self.pricing_service.estimate_price(
+                vehicle_type=reservation.vehicle_type,
+                billing_type=BillingType.HOURLY,
+                entry_time=reservation.reserved_from,
+                exit_time=reservation.reserved_until,
+            )
 
-        await self.repository.save(
-            reservation,
-        )
+            reservation.estimated_amount = pricing.total_amount
 
+        reservation.updated_at = utc_now()
+
+        await self.repository.save(reservation)
         await self.repository.commit()
-
-        await self.repository.refresh(
-            reservation,
-        )
+        await self.repository.refresh(reservation)
 
         return reservation
 
@@ -358,32 +320,21 @@ class ParkingReservationService:
     # Delete Reservation
     # ==========================================================
 
-    async def delete_reservation(
-        self,
-        reservation_id: int,
-    ) -> bool:
+    async def delete_reservation(self, reservation_id: int) -> bool:
         """
         Delete a reservation.
         """
-
-        reservation = (
-            await self.repository.get_by_id(
-                reservation_id,
-            )
-        )
+        reservation = await self.repository.get_by_id(reservation_id)
 
         if reservation is None:
             return False
 
-        await self.repository.remove(
-            reservation,
-        )
-
+        await self.repository.remove(reservation)
         await self.repository.commit()
 
         return True
 
-            # ==========================================================
+    # ==========================================================
     # Confirm Reservation
     # ==========================================================
 
@@ -394,32 +345,21 @@ class ParkingReservationService:
         """
         Confirm a reservation.
         """
-
-        reservation = await self.repository.get_by_id(
-            reservation_id,
-        )
+        reservation = await self.repository.get_by_id(reservation_id)
 
         if reservation is None:
             return None
 
         if reservation.status != ReservationStatus.CREATED:
-            raise ValueError(
-                "Only CREATED reservations can be confirmed."
-            )
+            raise ValueError("Only CREATED reservations can be confirmed.")
 
         reservation.status = ReservationStatus.CONFIRMED
-        reservation.confirmed_at = datetime.utcnow()
-        reservation.updated_at = datetime.utcnow()
+        reservation.confirmed_at = utc_now()
+        reservation.updated_at = utc_now()
 
-        await self.repository.save(
-            reservation,
-        )
-
+        await self.repository.save(reservation)
         await self.repository.commit()
-
-        await self.repository.refresh(
-            reservation,
-        )
+        await self.repository.refresh(reservation)
 
         return reservation
 
@@ -434,10 +374,7 @@ class ParkingReservationService:
         """
         Cancel a reservation.
         """
-
-        reservation = await self.repository.get_by_id(
-            reservation_id,
-        )
+        reservation = await self.repository.get_by_id(reservation_id)
 
         if reservation is None:
             return None
@@ -447,23 +384,17 @@ class ParkingReservationService:
             ReservationStatus.COMPLETED,
         ):
             raise ValueError(
-                "Completed or checked-in reservations "
-                "cannot be cancelled."
+                "Completed or checked-in reservations cannot be cancelled."
             )
 
         reservation.status = ReservationStatus.CANCELLED
-        reservation.cancelled_at = datetime.utcnow()
-        reservation.updated_at = datetime.utcnow()
+        reservation.cancelled_at = utc_now()
+        reservation.updated_at = utc_now()
 
-        await self.repository.save(
-            reservation,
-        )
+        await self.repository.save(reservation)
 
         await self.repository.commit()
-
-        await self.repository.refresh(
-            reservation,
-        )
+        await self.repository.refresh(reservation)
 
         return reservation
 
@@ -478,10 +409,7 @@ class ParkingReservationService:
         """
         Mark a reservation as expired.
         """
-
-        reservation = await self.repository.get_by_id(
-            reservation_id,
-        )
+        reservation = await self.repository.get_by_id(reservation_id)
 
         if reservation is None:
             return None
@@ -493,17 +421,11 @@ class ParkingReservationService:
             return reservation
 
         reservation.status = ReservationStatus.EXPIRED
-        reservation.updated_at = datetime.utcnow()
+        reservation.updated_at = utc_now()
 
-        await self.repository.save(
-            reservation,
-        )
-
+        await self.repository.save(reservation)
         await self.repository.commit()
-
-        await self.repository.refresh(
-            reservation,
-        )
+        await self.repository.refresh(reservation)
 
         return reservation
 
@@ -511,9 +433,7 @@ class ParkingReservationService:
     # Expire Overdue Reservations
     # ==========================================================
 
-    async def expire_overdue_reservations(
-        self,
-    ) -> int:
+    async def expire_overdue_reservations(self) -> int:
         """
         Expire all overdue reservations.
 
@@ -522,26 +442,25 @@ class ParkingReservationService:
         int
             Number of reservations expired.
         """
-
         expired = await self.repository.find_expired_reservations(
-            datetime.utcnow(),
+            utc_now(),
         )
 
         count = 0
-
         for reservation in expired:
-
             reservation.status = ReservationStatus.EXPIRED
-            reservation.updated_at = datetime.utcnow()
-
-            await self.repository.save(
-                reservation,
-            )
-
+            reservation.updated_at = utc_now()
+            await self.repository.save(reservation)
             count += 1
 
         if count > 0:
             await self.repository.commit()
+
+            # Release all expired bays
+            for reservation in expired:
+                await self.parking_bay_repository.release_bay(
+                    reservation.parking_bay_id,
+                )
 
         return count
 
@@ -556,10 +475,7 @@ class ParkingReservationService:
         """
         Retrieve all reservations for a customer.
         """
-
-        return await self.repository.get_by_customer(
-            customer_id,
-        )
+        return await self.repository.get_by_customer(customer_id)
 
     async def get_active_customer_reservations(
         self,
@@ -568,12 +484,53 @@ class ParkingReservationService:
         """
         Retrieve active reservations for a customer.
         """
+        return await self.repository.get_active_by_customer(customer_id)
 
-        return await self.repository.get_active_by_customer(
-            customer_id,
+    async def get_by_vehicle(
+        self,
+        vehicle_registration: str,
+    ) -> list[ParkingReservation]:
+        """
+        Retrieve all reservations for a vehicle registration.
+        """
+        return await self.repository.get_by_vehicle(
+            vehicle_registration,
         )
 
-        # ==========================================================
+    async def get_active_by_vehicle(
+        self,
+        vehicle_registration: str,
+    ) -> list[ParkingReservation]:
+        """
+        Retrieve active reservations for a vehicle.
+        """
+        return await self.repository.get_active_by_vehicle(
+            vehicle_registration,
+        )
+
+    async def get_by_parking_bay(
+        self,
+        parking_bay_id: int,
+    ) -> list[ParkingReservation]:
+        """
+        Retrieve all reservations for a parking bay.
+        """
+        return await self.repository.get_by_parking_bay(
+            parking_bay_id,
+        )
+
+    async def get_active_by_parking_bay(
+        self,
+        parking_bay_id: int,
+    ) -> list[ParkingReservation]:
+        """
+        Retrieve active reservations for a parking bay.
+        """
+        return await self.repository.get_active_by_parking_bay(
+            parking_bay_id,
+        )
+
+    # ==========================================================
     # Check In
     # ==========================================================
 
@@ -584,13 +541,9 @@ class ParkingReservationService:
         """
         Check in a reservation.
 
-        The reservation is converted into an active
-        Parking Session.
+        The reservation is converted into an active Parking Session.
         """
-
-        reservation = await self.repository.get_by_id(
-            reservation_id,
-        )
+        reservation = await self.repository.get_by_id(reservation_id)
 
         if reservation is None:
             return None
@@ -600,29 +553,33 @@ class ParkingReservationService:
             ReservationStatus.CONFIRMED,
         ):
             raise ValueError(
-                "Only CREATED or CONFIRMED reservations "
-                "can be checked in."
+                "Only CREATED or CONFIRMED reservations can be checked in."
             )
 
-        session = await self.parking_session_service.create_from_reservation(
+        now = utc_now()
+
+        if now < reservation.reserved_from - timedelta(minutes=30):
+            raise ValueError(
+                "Vehicles can only be checked in 30 minutes before their reserved time."
+            )
+
+        if now > reservation.reserved_until:
+            raise ValueError(
+                "Vehicles cannot be checked in after their reserved time."
+            )
+
+        # Create parking session from reservation
+        await self.parking_session_service.create_from_reservation(
             reservation,
         )
 
         reservation.status = ReservationStatus.CHECKED_IN
+        reservation.checked_in_at = utc_now()
+        reservation.updated_at = utc_now()
 
-        reservation.checked_in_at = datetime.utcnow()
-
-        reservation.updated_at = datetime.utcnow()
-
-        await self.repository.save(
-            reservation,
-        )
-
+        await self.repository.save(reservation)
         await self.repository.commit()
-
-        await self.repository.refresh(
-            reservation,
-        )
+        await self.repository.refresh(reservation)
 
         return reservation
 
@@ -630,42 +587,39 @@ class ParkingReservationService:
     # Reservation Statistics
     # ==========================================================
 
-    async def count_active_reservations(
-        self,
-    ) -> int:
+    async def count_active_reservations(self) -> int:
         """
         Count active reservations.
         """
+        return await self.repository.count_active_reservations()
 
-        return (
-            await self.repository.count_active_reservations()
-        )
-
-    async def count_customer_reservations(
-        self,
-        customer_id: int,
-    ) -> int:
+    async def count_customer_reservations(self, customer_id: int) -> int:
         """
         Count reservations belonging to a customer.
         """
+        return await self.repository.count_customer_reservations(customer_id)
 
-        return (
-            await self.repository.count_customer_reservations(
-                customer_id,
-            )
+
+
+    async def count_vehicle_reservations(
+        self,
+        vehicle_registration: str,
+    ) -> int:
+        """
+        Count reservations belonging to a vehicle.
+        """
+        return await self.repository.count_vehicle_reservations(
+            vehicle_registration
         )
 
     # ==========================================================
     # Representation
     # ==========================================================
 
-    def __repr__(
-        self,
-    ) -> str:
+    def __repr__(self) -> str:
         """
         Developer representation.
         """
-
         return (
             f"{self.__class__.__name__}("
             f"repository={self.repository.__class__.__name__}"

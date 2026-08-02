@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from app.services.pricing.tariff_snapshot import TariffSnapshot
 
@@ -34,15 +34,6 @@ class PricingRequest(BaseModel):
     entry_time: datetime
 
     exit_time: datetime
-
-    # ==========================================================
-    # Vehicle
-    # ==========================================================
-
-    vehicle_registration: str = Field(
-        min_length=1,
-        max_length=20,
-    )
 
     # ==========================================================
     # Tariff

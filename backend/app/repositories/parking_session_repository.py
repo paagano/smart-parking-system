@@ -191,6 +191,34 @@ class ParkingSessionRepository(BaseRepository[ParkingSession]):
         return list(result.scalars().all())
 
     # ==========================================================
+    # Availability
+    # ==========================================================
+
+    async def has_active_session(
+        self,
+        parking_bay_id: int,
+    ) -> bool:
+        """
+        Determine whether the parking bay currently has
+        an active parking session.
+        """
+
+        statement = (
+            select(ParkingSession.id)
+            .where(
+                ParkingSession.parking_bay_id == parking_bay_id,
+                ParkingSession.status == SessionStatus.ACTIVE,
+            )
+            .limit(1)
+        )
+
+        result = await self.db.execute(
+            statement,
+        )
+
+        return result.scalar_one_or_none() is not None
+
+    # ==========================================================
     # Completed Sessions
     # ==========================================================
 

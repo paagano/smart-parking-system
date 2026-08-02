@@ -33,6 +33,10 @@ from app.services.parking_reservation_service import (
     ParkingReservationService,
 )
 
+from app.api.dependencies.pricing import (
+    PricingServiceDep,
+)
+
 # ==========================================================
 # Parking Reservation Service
 # ==========================================================
@@ -41,6 +45,7 @@ from app.services.parking_reservation_service import (
 def get_parking_reservation_service(
     repository: ParkingReservationRepositoryDep,
     parking_bay_repository: ParkingBayRepositoryDep,
+    pricing_service: PricingServiceDep,
     parking_session_service: ParkingSessionServiceDep,
 ) -> ParkingReservationService:
     """
@@ -50,6 +55,7 @@ def get_parking_reservation_service(
     return ParkingReservationService(
         repository=repository,
         parking_bay_repository=parking_bay_repository,
+        pricing_service=pricing_service,
         parking_session_service=parking_session_service,
     )
 

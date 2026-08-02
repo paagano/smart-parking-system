@@ -22,14 +22,14 @@ ModelType = TypeVar("ModelType")
 
 class BaseRepository(Generic[ModelType]):
     """
-    Base repository providing common read operations.
+    Base repository providing common CRUD and persistence operations.
     """
 
     def __init__(
         self,
         db: AsyncSession,
         model: type[ModelType],
-    ):
+    ) -> None:
         self.db = db
         self.model = model
 
@@ -66,7 +66,7 @@ class BaseRepository(Generic[ModelType]):
 
         return list(result.scalars().all())
 
-        # ==========================================================
+    # ==========================================================
     # Persistence
     # ==========================================================
 
@@ -100,3 +100,33 @@ class BaseRepository(Generic[ModelType]):
         """
 
         await self.db.delete(obj)
+
+    async def commit(
+        self,
+    ) -> None:
+        """
+        Commit the current transaction.
+        """
+
+        await self.db.commit()
+
+    async def rollback(
+        self,
+    ) -> None:
+        """
+        Roll back the current transaction.
+        """
+
+        await self.db.rollback()
+
+    async def refresh(
+        self,
+        obj: ModelType,
+    ) -> ModelType:
+        """
+        Refresh an entity from the database.
+        """
+
+        await self.db.refresh(obj)
+
+        return obj

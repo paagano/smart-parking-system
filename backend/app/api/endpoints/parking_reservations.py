@@ -123,6 +123,251 @@ async def search_parking_reservations(
     )
 
 # ==========================================================
+# Reservation Statistics
+# ==========================================================
+
+
+@router.get(
+    "/statistics/active-count",
+    summary="Count Active Reservations",
+)
+async def count_active_reservations(
+    service: ParkingReservationServiceDep,
+) -> dict[str, int]:
+    """
+    Return the number of active reservations.
+    """
+
+    count = await service.count_active_reservations()
+
+    return {
+        "active_reservations": count,
+    }
+
+
+@router.get(
+    "/statistics/customer/{customer_id}",
+    summary="Count Customer Reservations",
+)
+async def count_customer_reservations(
+    customer_id: int,
+    service: ParkingReservationServiceDep,
+) -> dict[str, int]:
+    """
+    Return the number of reservations belonging
+    to a customer.
+    """
+
+    count = await service.count_customer_reservations(
+        customer_id,
+    )
+
+    return {
+        "customer_id": customer_id,
+        "reservations": count,
+    }
+
+
+@router.get(
+    "/statistics/vehicle/{vehicle_registration}",
+    summary="Count Vehicle Reservations",
+)
+
+async def count_vehicle_reservations(
+    vehicle_registration: str,
+    service: ParkingReservationServiceDep,
+) -> dict[str, str | int]:
+    """
+    Return the number of reservations
+    for a vehicle.
+    """
+
+    count = await service.count_vehicle_reservations(
+        vehicle_registration,
+    )
+
+    return {
+        "vehicle_registration": vehicle_registration.upper(),
+        "reservations": count,
+    }
+
+
+# ==========================================================
+# Health
+# ==========================================================
+
+
+@router.get(
+    "/health",
+    summary="Reservation Module Health",
+)
+async def reservation_health() -> dict[str, str]:
+    """
+    Health endpoint.
+    """
+
+    return {
+        "status": "healthy",
+        "module": "parking_reservations",
+    }
+
+
+# ==========================================================
+# Customer Reservations
+# ==========================================================
+
+
+@router.get(
+    "/customer/{customer_id}",
+    response_model=ParkingReservationListResponse,
+    summary="Customer Reservations",
+)
+async def get_customer_reservations(
+    customer_id: int,
+    service: ParkingReservationServiceDep,
+) -> ParkingReservationListResponse:
+    """
+    Retrieve all reservations belonging to a customer.
+    """
+
+    reservations = await service.get_customer_reservations(
+        customer_id,
+    )
+
+    return ParkingReservationListResponse(
+        items=reservations,
+        total=len(reservations),
+    )
+
+
+@router.get(
+    "/customer/{customer_id}/active",
+    response_model=ParkingReservationListResponse,
+    summary="Customer Active Reservations",
+)
+async def get_active_customer_reservations(
+    customer_id: int,
+    service: ParkingReservationServiceDep,
+) -> ParkingReservationListResponse:
+    """
+    Retrieve active reservations for a customer.
+    """
+
+    reservations = (
+        await service.get_active_customer_reservations(
+            customer_id,
+        )
+    )
+
+    return ParkingReservationListResponse(
+        items=reservations,
+        total=len(reservations),
+    )
+
+
+# ==========================================================
+# Vehicle Reservations
+# ==========================================================
+
+
+@router.get(
+    "/vehicle/{vehicle_registration}",
+    response_model=ParkingReservationListResponse,
+    summary="Vehicle Reservations",
+)
+async def get_vehicle_reservations(
+    vehicle_registration: str,
+    service: ParkingReservationServiceDep,
+) -> ParkingReservationListResponse:
+    """
+    Retrieve all reservations for a vehicle.
+    """
+
+    reservations = await service.get_by_vehicle(
+        vehicle_registration,
+    )
+
+    return ParkingReservationListResponse(
+        items=reservations,
+        total=len(reservations),
+    )
+
+
+@router.get(
+    "/vehicle/{vehicle_registration}/active",
+    response_model=ParkingReservationListResponse,
+    summary="Active Vehicle Reservations",
+)
+async def get_active_vehicle_reservations(
+    vehicle_registration: str,
+    service: ParkingReservationServiceDep,
+) -> ParkingReservationListResponse:
+    """
+    Retrieve active reservations for a vehicle.
+    """
+
+    reservations = await service.get_active_by_vehicle(
+        vehicle_registration,
+    )
+
+    return ParkingReservationListResponse(
+        items=reservations,
+        total=len(reservations),
+    )
+
+
+# ==========================================================
+# Parking Bay Reservations
+# ==========================================================
+
+
+@router.get(
+    "/parking-bay/{parking_bay_id}",
+    response_model=ParkingReservationListResponse,
+    summary="Parking Bay Reservations",
+)
+async def get_parking_bay_reservations(
+    parking_bay_id: int,
+    service: ParkingReservationServiceDep,
+) -> ParkingReservationListResponse:
+    """
+    Retrieve reservations for a parking bay.
+    """
+
+    reservations = await service.get_by_parking_bay(
+        parking_bay_id,
+    )
+
+    return ParkingReservationListResponse(
+        items=reservations,
+        total=len(reservations),
+    )
+
+
+@router.get(
+    "/parking-bay/{parking_bay_id}/active",
+    response_model=ParkingReservationListResponse,
+    summary="Active Parking Bay Reservations",
+)
+async def get_active_parking_bay_reservations(
+    parking_bay_id: int,
+    service: ParkingReservationServiceDep,
+) -> ParkingReservationListResponse:
+    """
+    Retrieve active reservations for a parking bay.
+    """
+
+    reservations = await service.get_active_by_parking_bay(
+        parking_bay_id,
+    )
+
+    return ParkingReservationListResponse(
+        items=reservations,
+        total=len(reservations),
+    )
+
+
+# ==========================================================
 # Get Reservation by ID
 # ==========================================================
 
@@ -151,7 +396,6 @@ async def get_parking_reservation(
         )
 
     return reservation
-
 
 # ==========================================================
 # Update Reservation
@@ -215,6 +459,7 @@ async def delete_parking_reservation(
         )
 
     return None
+
 
 # ==========================================================
 # Confirm Reservation
@@ -293,7 +538,7 @@ async def expire_parking_reservation(
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
-    Mark a reservation as expired.
+    Mark a parking reservation as expired.
     """
 
     reservation = await service.expire_reservation(
@@ -308,6 +553,81 @@ async def expire_parking_reservation(
 
     return reservation
 
+# ==========================================================
+# Expire Overdue Reservations
+# ==========================================================
+
+
+@router.post(
+    "/expire-overdue",
+    summary="Expire Overdue Reservations",
+)
+async def expire_overdue_reservations(
+    service: ParkingReservationServiceDep,
+) -> dict:
+    """
+    Expire all overdue reservations.
+    """
+
+    count = await service.expire_overdue_reservations()
+
+    return {
+        "expired_reservations": count,
+    }
+
+
+# ==========================================================
+
+@router.get(
+    "/customer/{customer_id}",
+    response_model=ParkingReservationListResponse,
+    summary="Customer Reservations",
+)
+async def get_customer_reservations(
+    customer_id: int,
+    service: ParkingReservationServiceDep,
+) -> ParkingReservationListResponse:
+    """
+    Retrieve all reservations belonging to a customer.
+    """
+
+    reservations = await service.get_customer_reservations(
+        customer_id,
+    )
+
+    return ParkingReservationListResponse(
+        items=reservations,
+        total=len(reservations),
+    )
+
+
+# ==========================================================
+# Customer Active Reservations
+# ==========================================================
+
+
+@router.get(
+    "/customer/{customer_id}/active",
+    response_model=ParkingReservationListResponse,
+    summary="Customer Active Reservations",
+)
+async def get_active_customer_reservations(
+    customer_id: int,
+    service: ParkingReservationServiceDep,
+) -> ParkingReservationListResponse:
+    """
+    Retrieve active reservations for a customer.
+    """
+
+    reservations = await service.get_active_customer_reservations(
+        customer_id,
+    )
+
+    return ParkingReservationListResponse(
+        items=reservations,
+        total=len(reservations),
+    )
+
 
 # ==========================================================
 # Check In Reservation
@@ -319,13 +639,12 @@ async def expire_parking_reservation(
     response_model=ParkingReservationResponse,
     summary="Check In Reservation",
 )
-async def check_in_parking_reservation(
+async def check_in_reservation(
     reservation_id: int,
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
-    Check in a reservation and convert it into
-    an active parking session.
+    Check in a reservation and create an active parking session.
     """
 
     reservation = await service.check_in(
@@ -340,77 +659,23 @@ async def check_in_parking_reservation(
 
     return reservation
 
-# ==========================================================
-# Customer Reservations
-# ==========================================================
 
-
+# ==========================================================
+# Statistics
+# ==========================================================
 @router.get(
-    "/customer/{customer_id}",
-    response_model=ParkingReservationListResponse,
-    summary="Get Customer Reservations",
+    "/statistics/active-count",
+    summary="Active Reservation Count",
 )
-async def get_customer_reservations(
-    customer_id: int,
-    service: ParkingReservationServiceDep,
-) -> ParkingReservationListResponse:
-    """
-    Retrieve all reservations for a customer.
-    """
-
-    reservations = await service.get_customer_reservations(
-        customer_id,
-    )
-
-    return ParkingReservationListResponse(
-        items=reservations,
-        total=len(reservations),
-    )
-
-
-@router.get(
-    "/customer/{customer_id}/active",
-    response_model=ParkingReservationListResponse,
-    summary="Get Active Customer Reservations",
-)
-async def get_active_customer_reservations(
-    customer_id: int,
-    service: ParkingReservationServiceDep,
-) -> ParkingReservationListResponse:
-    """
-    Retrieve active reservations for a customer.
-    """
-
-    reservations = (
-        await service.get_active_customer_reservations(
-            customer_id,
-        )
-    )
-
-    return ParkingReservationListResponse(
-        items=reservations,
-        total=len(reservations),
-    )
-
-
-# ==========================================================
-# Reservation Statistics
-# ==========================================================
-
-
-@router.get(
-    "/statistics",
-    summary="Reservation Statistics",
-)
-async def reservation_statistics(
+async def get_active_reservation_count(
     service: ParkingReservationServiceDep,
 ) -> dict:
     """
-    Retrieve reservation statistics.
+    Retrieve the number of active reservations.
     """
 
-    active = await service.count_active_reservations()
+    count = await service.count_active_reservations()
 
     return {
-        "active_reservations": active,
+        "active_reservations": count,
     }
