@@ -24,6 +24,9 @@ from app.api.endpoints.parking_tariffs import (
 from app.api.endpoints.parking_reservations import (
     router as parking_reservations_router,
 )
+from app.api.endpoints.payments import (
+    router as payments_router,
+)
 
 router = APIRouter()
 
@@ -89,6 +92,14 @@ router.include_router(
 
 router.include_router(
     parking_reservations_router,
+)
+
+# ==========================================================
+# Payment Transactions
+# ==========================================================
+
+router.include_router(
+    payments_router,
 )
 
 # ==========================================================

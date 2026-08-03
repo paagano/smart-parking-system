@@ -167,20 +167,129 @@ class ReservationStatus(str, Enum):
         return self.value.replace("_", " ").title()
 
 # ==========================================================
+# Reservation Payment Status
+# ==========================================================
+
+class ReservationPaymentStatus(str, Enum):
+    """
+    Payment status of a parking reservation.
+
+    This is intentionally separate from PaymentStatus.
+    A reservation only needs to know whether it has
+    been paid, partially paid, refunded, or is still
+    awaiting payment.
+    """
+
+    PENDING = "PENDING"
+    PAID = "PAID"
+    PARTIALLY_PAID = "PARTIALLY_PAID"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
+
+# ==========================================================
 # Payments
 # ==========================================================
 
-class PaymentStatus(str, Enum):
-    PENDING="PENDING"
-    PARTIAL="PARTIAL"
-    PAID="PAID"
-    FAILED="FAILED"
-    WAIVED="WAIVED"
-    REFUNDED="REFUNDED"
+class PaymentMethod(str, Enum):
+    """
+    Supported payment methods.
+    """
+
+    WALLET = "WALLET"
+    MPESA = "MPESA"
+    AIRTEL_MONEY = "AIRTEL_MONEY"
+    CASH = "CASH"
+    BANK_CARD = "BANK_CARD"
+    BANK_TRANSFER = "BANK_TRANSFER"
 
     @property
     def label(self):
-        return self.value.replace("_"," ").title()
+        return self.value.replace("_", " ").title()
+
+
+class PaymentStatus(str, Enum):
+    """
+    Payment transaction lifecycle.
+    """
+
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    SUCCESSFUL = "SUCCESSFUL"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    REFUNDED = "REFUNDED"
+    PARTIALLY_REFUNDED = "PARTIALLY_REFUNDED"
+    VOIDED = "VOIDED"
+
+    @property
+    def label(self):
+        return self.value.replace("_", " ").title()
+
+
+class PaymentPurpose(str, Enum):
+    """
+    Business purpose of the payment.
+    """
+
+    RESERVATION = "RESERVATION"
+    PARKING_SESSION = "PARKING_SESSION"
+    WALLET_TOPUP = "WALLET_TOPUP"
+    WALLET_REFUND = "WALLET_REFUND"
+    PENALTY = "PENALTY"
+    SUBSCRIPTION = "SUBSCRIPTION"
+
+    @property
+    def label(self):
+        return self.value.replace("_", " ").title()
+
+
+class PaymentProvider(str, Enum):
+    """
+    Financial service provider.
+    """
+
+    INTERNAL = "INTERNAL"
+    SAFARICOM = "SAFARICOM"
+    AIRTEL = "AIRTEL"
+    VISA = "VISA"
+    MASTERCARD = "MASTERCARD"
+    BANK = "BANK"
+    OTHER = "OTHER"
+
+class PaymentType(str, Enum):
+    """
+    Financial transaction type.
+    """
+
+    PAYMENT = "PAYMENT"
+    REFUND = "REFUND"
+    ADJUSTMENT = "ADJUSTMENT"
+    REVERSAL = "REVERSAL"
+    CREDIT = "CREDIT"
+    DEBIT = "DEBIT"
+    LOYALTY_REWARD = "LOYALTY_REWARD"
+    LOYALTY_REDEMPTION = "LOYALTY_REDEMPTION"
+    WALLET_TOPUP = "WALLET_TOPUP"
+    WALLET_DEDUCTION = "WALLET_DEDUCTION"
+
+    @property
+    def label(self):
+        return self.value.replace("_", " ").title()
+
+
+class Currency(str, Enum):
+    """
+    Supported currencies.
+    """
+
+    KES = "KES"
+    USD = "USD"
+    EUR = "EUR"
+    GBP = "GBP"
+
+    @property
+    def label(self):
+        return self.value
 
 
 # ==========================================================

@@ -57,6 +57,8 @@ from sqlalchemy.orm import (
 from app.models.base_model import BaseModel
 
 from app.models.enums import (
+    Currency,
+    ReservationPaymentStatus,
     ReservationStatus,
     VehicleType,
 )
@@ -67,6 +69,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.parking_bay import ParkingBay
     from app.models.parking_session import ParkingSession
+    from app.models.payment_transaction import PaymentTransaction
 
 class ParkingReservation(BaseModel):
     """
@@ -168,7 +171,7 @@ class ParkingReservation(BaseModel):
     )
 
     # ==========================================================
-    # Reservation Status
+    # Reservation Status (DB Fields)
     # ==========================================================
 
     status: Mapped[ReservationStatus] = mapped_column(
@@ -180,6 +183,35 @@ class ParkingReservation(BaseModel):
         default=ReservationStatus.CREATED,
         server_default=ReservationStatus.CREATED.value,
         
+    )
+
+    payment_status: Mapped[
+        ReservationPaymentStatus
+    ] = mapped_column(
+        Enum(
+            ReservationPaymentStatus,
+            name="reservation_payment_status",
+        ),
+        default=ReservationPaymentStatus.PENDING,
+        server_default="PENDING",
+        nullable=False,
+    )
+
+    last_payment_transaction_id: Mapped[
+        int | None
+    ] = mapped_column(
+        ForeignKey(
+            "payment_transactions.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+    )
+
+    paid_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
     # ==========================================================
@@ -221,7 +253,7 @@ class ParkingReservation(BaseModel):
     )
 
     # ==========================================================
-    # Audit Fields
+    # Audit DB Fields
     # ==========================================================
 
     is_active: Mapped[bool] = mapped_column(
@@ -291,6 +323,27 @@ class ParkingReservation(BaseModel):
         foreign_keys=[updated_by],
     )
 
+    #
+    # All payments made against this reservation
+    #
+    payments: Mapped[list["PaymentTransaction"]] = relationship(
+        "PaymentTransaction",
+        back_populates="reservation",
+        foreign_keys="PaymentTransaction.reservation_id",
+        cascade="save-update, merge",
+    )
+
+    #
+    # Most recent successful payment
+    #
+    last_payment_transaction: Mapped[
+        "PaymentTransaction | None"
+    ] = relationship(
+        "PaymentTransaction",
+        foreign_keys=[last_payment_transaction_id],
+        post_update=True,
+    )
+
     # ==========================================================
     # Table Indexes
     # ==========================================================
@@ -348,9 +401,15 @@ class ParkingReservation(BaseModel):
             "expires_at",
         ),
 
+        # Payment Status
+        Index(
+            "ix_reservation_payment_status",
+            "payment_status",
+        ),
+
     )
 
-        # ==========================================================
+    # ==========================================================
     # Helper Properties
     # ==========================================================
 
@@ -440,6 +499,30 @@ class ParkingReservation(BaseModel):
         return (
             self.status
             == ReservationStatus.CANCELLED
+        )
+
+    @property
+    def is_paid(self) -> bool:
+        """
+        Return True if the reservation
+        has been fully paid.
+        """
+
+        return (
+            self.payment_status
+            == ReservationPaymentStatus.PAID
+        )
+
+    @property
+    def can_check_in(self) -> bool:
+        """
+        Return True if the reservation
+        can be checked in.
+        """
+
+        return (
+            self.status == ReservationStatus.CONFIRMED
+            and self.is_paid
         )
 
     # ==========================================================

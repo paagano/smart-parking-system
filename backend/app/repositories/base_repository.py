@@ -47,7 +47,7 @@ class BaseRepository(Generic[ModelType]):
 
         result = await self.db.execute(
             select(self.model).where(
-                self.model.id == id
+                self.model.id == id,
             )
         )
 
@@ -64,7 +64,9 @@ class BaseRepository(Generic[ModelType]):
             select(self.model)
         )
 
-        return list(result.scalars().all())
+        return list(
+            result.scalars().all()
+        )
 
     # ==========================================================
     # Persistence
@@ -77,15 +79,22 @@ class BaseRepository(Generic[ModelType]):
         """
         Persist an entity.
 
-        The transaction is not committed here.
-        Commit is handled by the Service layer.
+        Notes
+        -----
+        - Adds the entity to the current session.
+        - Flushes pending changes so database-generated
+          values (e.g. primary keys) become immediately
+          available.
+        - Does NOT commit the transaction.
+        - Does NOT refresh the entity.
+
+        Transaction management is the responsibility of
+        the Service layer.
         """
 
         self.db.add(obj)
 
         await self.db.flush()
-
-        await self.db.refresh(obj)
 
         return obj
 
@@ -99,7 +108,13 @@ class BaseRepository(Generic[ModelType]):
         Commit is handled by the Service layer.
         """
 
-        await self.db.delete(obj)
+        await self.db.delete(
+            obj,
+        )
+
+    # ==========================================================
+    # Transaction Management
+    # ==========================================================
 
     async def commit(
         self,
@@ -125,8 +140,26 @@ class BaseRepository(Generic[ModelType]):
     ) -> ModelType:
         """
         Refresh an entity from the database.
+
+        This should normally be called by the Service
+        layer after a successful commit when the latest
+        database state is required.
         """
 
-        await self.db.refresh(obj)
+        await self.db.refresh(
+            obj,
+        )
 
         return obj
+
+    # ==========================================================
+    # Representation
+    # ==========================================================
+
+    def __repr__(
+        self,
+    ) -> str:
+        return (
+            f"{self.__class__.__name__}"
+            f"(model={self.model.__name__})"
+        )
