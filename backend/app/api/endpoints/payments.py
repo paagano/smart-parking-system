@@ -49,6 +49,10 @@ from app.repositories.parking_reservation_repository import (
     ParkingReservationRepository,
 )
 
+from app.repositories.parking_session_repository import (
+    ParkingSessionRepository,
+)
+
 from app.schemas.payment import (
     PaymentResponse,
     RefundCreate,
@@ -72,7 +76,6 @@ router = APIRouter(
 # Dependency Injection
 # ==========================================================
 
-
 async def get_payment_service(
     db: AsyncSession = Depends(
         get_db,
@@ -90,10 +93,16 @@ async def get_payment_service(
         db,
     )
 
+    session_repository = ParkingSessionRepository(
+        db,
+    )
+
     return PaymentService(
         repository=payment_repository,
         reservation_repository=reservation_repository,
+        session_repository=session_repository,
     )
+
 
 PaymentServiceDep = Annotated[
     PaymentService,
@@ -134,6 +143,7 @@ def _payment_or_404(
     status_code=status.HTTP_201_CREATED,
     summary="Process Reservation Payment",
 )
+
 async def process_reservation_payment(
     payment: ReservationPaymentCreate,
     service: PaymentServiceDep,
@@ -167,17 +177,25 @@ async def process_reservation_payment(
 async def process_session_payment(
     payment: SessionPaymentCreate,
     service: PaymentServiceDep,
-):
+) -> PaymentResponse:
     """
-    Process payment for an active parking session.
+    Process payment for a completed parking session.
     """
 
     try:
-        return await service.process_session_payment(
-            payment,
+
+        payment_transaction = (
+            await service.process_session_payment(
+                payment,
+            )
+        )
+
+        return PaymentResponse.model_validate(
+            payment_transaction,
         )
 
     except ValueError as exc:
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),

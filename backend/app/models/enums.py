@@ -187,7 +187,30 @@ class ReservationPaymentStatus(str, Enum):
     REFUNDED = "REFUNDED"
 
 # ==========================================================
-# Payments
+# Session Payment Status Enum
+# ==========================================================
+
+class SessionPaymentStatus(str, Enum):
+    """
+    Payment status of a parking session.
+
+    Mirrors the existing PostgreSQL enum
+    'payment_status'.
+    """
+
+    PENDING = "PENDING"
+    PARTIAL = "PARTIAL"
+    PAID = "PAID"
+    FAILED = "FAILED"
+    WAIVED = "WAIVED"
+    REFUNDED = "REFUNDED"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+# ==========================================================
+# Payments Enums
 # ==========================================================
 
 class PaymentMethod(str, Enum):
@@ -205,7 +228,6 @@ class PaymentMethod(str, Enum):
     @property
     def label(self):
         return self.value.replace("_", " ").title()
-
 
 class PaymentStatus(str, Enum):
     """
@@ -225,7 +247,6 @@ class PaymentStatus(str, Enum):
     def label(self):
         return self.value.replace("_", " ").title()
 
-
 class PaymentPurpose(str, Enum):
     """
     Business purpose of the payment.
@@ -241,7 +262,6 @@ class PaymentPurpose(str, Enum):
     @property
     def label(self):
         return self.value.replace("_", " ").title()
-
 
 class PaymentProvider(str, Enum):
     """
@@ -276,7 +296,6 @@ class PaymentType(str, Enum):
     def label(self):
         return self.value.replace("_", " ").title()
 
-
 class Currency(str, Enum):
     """
     Supported currencies.
@@ -310,7 +329,7 @@ class BillingType(str, Enum):
         return self.value.replace("_", " ").title()
 
 # ==========================================================
-# Sensors
+# Sensors | IoT Devices 
 # ==========================================================
 
 class SensorStatus(str, Enum):

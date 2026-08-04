@@ -381,17 +381,14 @@ class PaymentTransaction(BaseModel):
         foreign_keys=[reservation_id],
     )
 
-    #
     # Parking session this payment belongs to.
-    #
     parking_session: Mapped["ParkingSession | None"] = relationship(
         "ParkingSession",
         foreign_keys=[parking_session_id],
+        back_populates="payments",
     )
 
-    #
     # Parent payment (used for refunds, reversals, adjustments).
-    #
     parent_transaction: Mapped["PaymentTransaction | None"] = relationship(
         "PaymentTransaction",
         remote_side=lambda: [PaymentTransaction.id],

@@ -15,6 +15,8 @@ from decimal import Decimal
 
 import sqlalchemy as sa
 from sqlalchemy import (
+    DateTime,
+    ForeignKey,
     Enum,
     ForeignKey,
     Index,
@@ -22,14 +24,20 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Enum as SQLEnum,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.models.base_model import BaseModel
+
 from app.models.enums import (
     EntryMethod,
     ExitMethod,
-    PaymentStatus,
+    SessionPaymentStatus,
     SessionSource,
     SessionStatus,
     VehicleType,
@@ -41,6 +49,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.parking_bay import ParkingBay
     from app.models.parking_reservation import ParkingReservation
+    from app.models.payment_transaction import PaymentTransaction
 
 class ParkingSession(BaseModel):
     """
@@ -98,6 +107,22 @@ class ParkingSession(BaseModel):
     )
 
     # ==========================================================
+    # Computed Properties
+    # ==========================================================
+
+    @property
+    def is_paid(self) -> bool:
+        """
+        Returns True when the parking session
+        has been fully paid.
+        """
+
+        return (
+            self.payment_status
+            == SessionPaymentStatus.PAID
+        )
+
+    # ==========================================================
     # Relationships
     # ==========================================================
 
@@ -131,6 +156,13 @@ class ParkingSession(BaseModel):
             ondelete="SET NULL",
         ),
         nullable=True,
+    )
+
+    last_payment_transaction: Mapped[
+        "PaymentTransaction | None"
+    ] = relationship(
+        "PaymentTransaction",
+        foreign_keys="ParkingSession.last_payment_transaction_id",
     )
 
     # ==========================================================
@@ -230,14 +262,38 @@ class ParkingSession(BaseModel):
         server_default=sa.text("0.00"),
     )
 
-    payment_status: Mapped[PaymentStatus] = mapped_column(
-        Enum(
-            PaymentStatus,
+    # ==========================================================
+    # Payment Tracking
+    # ==========================================================
+
+    payment_status: Mapped[
+        SessionPaymentStatus
+    ] = mapped_column(
+        SQLEnum(
+            SessionPaymentStatus,
             name="payment_status",
         ),
         nullable=False,
-        default=PaymentStatus.PENDING,
+        default=SessionPaymentStatus.PENDING,
         server_default=sa.text("'PENDING'"),
+        index=True,
+    )
+
+    last_payment_transaction_id: Mapped[
+        int | None
+    ] = mapped_column(
+        ForeignKey(
+            "payment_transactions.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+    )
+
+    paid_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
     # ==========================================================
@@ -288,6 +344,15 @@ class ParkingSession(BaseModel):
     "ParkingReservation",
     back_populates="parking_session",
     passive_deletes=True,
+    )
+
+    payments: Mapped[
+        list["PaymentTransaction"]
+    ] = relationship(
+        "PaymentTransaction",
+        foreign_keys="PaymentTransaction.parking_session_id",
+        back_populates="parking_session",
+        cascade="save-update, merge",
     )
 
     # ==========================================================

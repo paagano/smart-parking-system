@@ -28,11 +28,14 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from app.models.enums import PaymentStatus, ReservationPaymentStatus, ReservationStatus
+from app.models.enums import PaymentStatus, ReservationPaymentStatus, ReservationStatus, SessionPaymentStatus, SessionStatus
 from app.models.payment_transaction import PaymentTransaction
 from app.repositories.payment_repository import PaymentRepository
 from app.repositories.parking_reservation_repository import (
     ParkingReservationRepository,
+)
+from app.repositories.parking_session_repository import (
+    ParkingSessionRepository,
 )
 from app.schemas.payment import (
     PaymentCreate,
@@ -47,14 +50,23 @@ class PaymentService:
     """
     Business logic for payment transactions.
     """
-
+    
     def __init__(
         self,
         repository: PaymentRepository,
         reservation_repository: ParkingReservationRepository,
+        session_repository: ParkingSessionRepository,
     ) -> None:
+
         self.repository = repository
-        self.reservation_repository = reservation_repository
+
+        self.reservation_repository = (
+            reservation_repository
+        )
+
+        self.session_repository = (
+            session_repository
+        )
 
     # ==========================================================
     # Internal Helpers
@@ -496,21 +508,131 @@ class PaymentService:
         payment: SessionPaymentCreate,
     ) -> PaymentTransaction:
         """
-        Process payment for an active parking session.
+        Process payment for a completed parking session.
+
+        Workflow
+
+        Parking Session
+                ↓
+        Validate
+                ↓
+        Validate Amount
+                ↓
+        Create Payment
+                ↓
+        Mark Session Paid
+                ↓
+        Commit Transaction
         """
+
         if payment.parking_session_id is None:
-            raise ValueError("Parking session ID is required.")
+            raise ValueError(
+                "Parking session ID is required."
+            )
 
         #
-        # Future
+        # Retrieve parking session.
         #
-        # - Validate session exists
-        # - Close parking session
-        # - Generate receipt
-        # - Award loyalty points
-        #
+        parking_session = (
+            await self.session_repository.get_by_id(
+                payment.parking_session_id,
+            )
+        )
 
-        return await self._create_payment(payment)
+        if parking_session is None:
+            raise ValueError(
+                "Parking session not found."
+            )
+
+        #
+        # Prevent duplicate payments.
+        #
+        if parking_session.is_paid:
+            raise ValueError(
+                "Parking session has already been paid."
+            )
+
+        #
+        # Only completed sessions may be paid.
+        #
+        if parking_session.status != SessionStatus.COMPLETED:
+            raise ValueError(
+                "Only COMPLETED parking sessions can be paid."
+            )
+
+        #
+        # Validate payment amount.
+        #
+        expected_amount = (
+            parking_session.calculated_amount.quantize(
+                Decimal("0.01"),
+            )
+        )
+
+        received_amount = (
+            payment.total_amount.quantize(
+                Decimal("0.01"),
+            )
+        )
+
+        if expected_amount != received_amount:
+            raise ValueError(
+                "Payment amount does not match the calculated parking fee."
+            )
+
+        try:
+
+            #
+            # Create payment transaction.
+            #
+            payment_transaction = (
+                await self._create_payment(
+                    payment,
+                )
+            )
+
+            #
+            # Update parking session.
+            #
+            parking_session.payment_status = (
+                SessionPaymentStatus.PAID
+            )
+
+            parking_session.paid_amount = (
+                payment_transaction.total_amount
+            )
+
+            parking_session.last_payment_transaction_id = (
+                payment_transaction.id
+            )
+
+            parking_session.paid_at = (
+                payment_transaction.paid_at
+            )
+
+            #
+            # Commit everything together.
+            #
+            await self.repository.commit()
+
+            #
+            # Refresh ORM entities.
+            #
+            await self.repository.refresh(
+                payment_transaction,
+            )
+
+            await self.session_repository.refresh(
+                parking_session,
+            )
+
+            return payment_transaction
+
+        except Exception:
+
+            await self.repository.rollback()
+
+            raise
 
     # ==========================================================
     # Wallet Top-up

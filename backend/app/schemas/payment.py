@@ -290,22 +290,26 @@ class ReservationPaymentCreate(PaymentBase):
 
 class SessionPaymentCreate(PaymentBase):
     """
-    Create a payment for a completed
-    parking session.
+    Request model for settling a completed parking session.
+
+    The payment amount must match the calculated parking fee
+    for the specified parking session.
     """
 
     parking_session_id: int = Field(
         ...,
         gt=0,
-        description="Parking session being settled.",
+        description="Unique identifier of the parking session being settled.",
     )
 
     customer_id: int | None = Field(
         default=None,
         gt=0,
-        description="Registered customer.",
+        description=(
+            "Registered customer making the payment. "
+            "Optional for anonymous or drive-in customers."
+        ),
     )
-
 
 # ==========================================================
 # Wallet Top-up
