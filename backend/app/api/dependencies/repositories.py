@@ -19,23 +19,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.dependencies import get_db
 
 from app.repositories.user_repository import UserRepository
+
 from app.repositories.parking_facility_repository import (
     ParkingFacilityRepository,
 )
+
 from app.repositories.parking_zone_repository import (
     ParkingZoneRepository,
 )
+
 from app.repositories.parking_bay_repository import (
     ParkingBayRepository,
 )
+
 from app.repositories.parking_session_repository import (
     ParkingSessionRepository,
 )
+
 from app.repositories.parking_reservation_repository import (
     ParkingReservationRepository,
 )
+
 from app.repositories.parking_tariff_repository import (
     ParkingTariffRepository,
+)
+
+from app.repositories.payment_repository import (
+    PaymentRepository,
 )
 
 # ==========================================================
@@ -60,6 +70,7 @@ def get_user_repository(
 
     return UserRepository(db)
 
+
 # ==========================================================
 # Parking Facility Repository
 # ==========================================================
@@ -72,6 +83,7 @@ def get_parking_facility_repository(
     """
 
     return ParkingFacilityRepository(db)
+
 
 # ==========================================================
 # Parking Zone Repository
@@ -86,6 +98,7 @@ def get_parking_zone_repository(
 
     return ParkingZoneRepository(db)
 
+
 # ==========================================================
 # Parking Bay Repository
 # ==========================================================
@@ -99,6 +112,7 @@ def get_parking_bay_repository(
 
     return ParkingBayRepository(db)
 
+
 # ==========================================================
 # Parking Session Repository
 # ==========================================================
@@ -111,6 +125,7 @@ def get_parking_session_repository(
     """
 
     return ParkingSessionRepository(db)
+
 
 # ==========================================================
 # Parking Reservation Repository
@@ -127,6 +142,7 @@ def get_parking_reservation_repository(
         db=db,
     )
 
+
 # ==========================================================
 # Parking Tariff Repository
 # ==========================================================
@@ -139,6 +155,23 @@ def get_parking_tariff_repository(
     """
 
     return ParkingTariffRepository(db)
+
+
+# ==========================================================
+# Payment Repository
+# ==========================================================
+
+def get_payment_repository(
+    db: DbSession,
+) -> PaymentRepository:
+    """
+    Return a PaymentRepository instance.
+    """
+
+    return PaymentRepository(
+        db=db,
+    )
+
 
 # ==========================================================
 # Dependency Aliases
@@ -169,12 +202,17 @@ ParkingSessionRepositoryDep = Annotated[
     Depends(get_parking_session_repository),
 ]
 
+ParkingReservationRepositoryDep = Annotated[
+    ParkingReservationRepository,
+    Depends(get_parking_reservation_repository),
+]
+
 ParkingTariffRepositoryDep = Annotated[
     ParkingTariffRepository,
     Depends(get_parking_tariff_repository),
 ]
 
-ParkingReservationRepositoryDep = Annotated[
-    ParkingReservationRepository,
-    Depends(get_parking_reservation_repository),
+PaymentRepositoryDep = Annotated[
+    PaymentRepository,
+    Depends(get_payment_repository),
 ]

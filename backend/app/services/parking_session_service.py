@@ -270,7 +270,7 @@ class ParkingSessionService:
             registration
         )
 
-        # ==========================================================
+    # ==========================================================
     # Walk-in Check-In
     # ==========================================================
 
@@ -335,8 +335,17 @@ class ParkingSessionService:
         #
         # Bay becomes OCCUPIED
         #
-        await self.parking_bay_repository.mark_occupied(
+        parking_bay = await self.parking_bay_repository.get_by_id(
             parking_session.parking_bay_id,
+        )
+
+        if parking_bay is None:
+            raise ValueError(
+                "Parking bay not found."
+            )
+
+        await self.parking_bay_repository.mark_occupied(
+            parking_bay,
         )
 
         await self.repository.db.commit()

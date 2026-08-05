@@ -21,12 +21,19 @@ from app.api.dependencies.pricing import (
 )
 
 from app.api.dependencies.repositories import (
+    DbSession,
     ParkingBayRepositoryDep,
     ParkingFacilityRepositoryDep,
     ParkingReservationRepositoryDep,
     ParkingSessionRepositoryDep,
+    PaymentRepositoryDep,
     UserRepositoryDep,
 )
+
+from app.api.dependencies.wallet import (
+    WalletServiceDep,
+)
+
 from app.services.auth_service import (
     AuthService,
 )
@@ -43,6 +50,10 @@ from app.services.parking_reservation_service import (
     ParkingReservationService,
 )
 
+from app.services.payment_service import (
+    PaymentService,
+)
+
 # ==========================================================
 # Authentication Service
 # ==========================================================
@@ -50,6 +61,7 @@ from app.services.parking_reservation_service import (
 
 def get_auth_service(
     repository: UserRepositoryDep,
+    wallet_service: WalletServiceDep,
 ) -> AuthService:
     """
     Return an AuthService instance.
@@ -57,6 +69,7 @@ def get_auth_service(
 
     return AuthService(
         user_repository=repository,
+        wallet_service=wallet_service,
     )
 
 
@@ -120,6 +133,31 @@ def get_parking_reservation_service(
 
 
 # ==========================================================
+# Payment Service
+# ==========================================================
+
+
+def get_payment_service(
+    db: DbSession,
+    repository: PaymentRepositoryDep,
+    reservation_repository: ParkingReservationRepositoryDep,
+    session_repository: ParkingSessionRepositoryDep,
+    wallet_service: WalletServiceDep,
+) -> PaymentService:
+    """
+    Return a PaymentService instance.
+    """
+
+    return PaymentService(
+        db=db,
+        repository=repository,
+        reservation_repository=reservation_repository,
+        session_repository=session_repository,
+        wallet_service=wallet_service,
+    )
+
+
+# ==========================================================
 # Dependency Aliases
 # ==========================================================
 
@@ -141,4 +179,9 @@ ParkingSessionServiceDep = Annotated[
 ParkingReservationServiceDep = Annotated[
     ParkingReservationService,
     Depends(get_parking_reservation_service),
+]
+
+PaymentServiceDep = Annotated[
+    PaymentService,
+    Depends(get_payment_service),
 ]

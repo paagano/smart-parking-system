@@ -342,3 +342,99 @@ class SensorStatus(str, Enum):
     def label(self):
         return self.value.replace("_"," ").title()
 
+# ==========================================================
+# Wallet Status
+# ==========================================================
+
+class WalletStatus(str, Enum):
+    """
+    Wallet lifecycle.
+    """
+
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
+    CLOSED = "CLOSED"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+
+# ==========================================================
+# Wallet Transaction Type
+# ==========================================================
+
+class WalletTransactionType(str, Enum):
+    """
+    Business meaning of a wallet ledger entry.
+
+    Unlike PaymentType, these values describe how the
+    customer's wallet balance changed.
+    """
+
+    # ======================================================
+    # Funding
+    # ======================================================
+
+    TOP_UP = "TOP_UP"
+    OPENING_BALANCE = "OPENING_BALANCE"
+    CREDIT = "CREDIT"
+
+    # ======================================================
+    # Spending
+    # ======================================================
+
+    DEBIT = "DEBIT"
+    PAYMENT = "PAYMENT"
+
+    # ======================================================
+    # Reservations / Holds
+    # ======================================================
+
+    RESERVATION_HOLD = "RESERVATION_HOLD"
+    RESERVATION_RELEASE = "RESERVATION_RELEASE"
+
+    # ======================================================
+    # Refunds / Reversals
+    # ======================================================
+
+    REFUND = "REFUND"
+    REVERSAL = "REVERSAL"
+
+    # ======================================================
+    # Administration
+    # ======================================================
+
+    ADJUSTMENT = "ADJUSTMENT"
+    SYSTEM_CORRECTION = "SYSTEM_CORRECTION"
+
+    # ======================================================
+    # Loyalty
+    # ======================================================
+
+    LOYALTY_REWARD = "LOYALTY_REWARD"
+    LOYALTY_REDEMPTION = "LOYALTY_REDEMPTION"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+
+# ==========================================================
+# Wallet Transaction Status
+# ==========================================================
+
+class WalletTransactionStatus(str, Enum):
+    """
+    Wallet transaction lifecycle.
+    """
+
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    REVERSED = "REVERSED"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()

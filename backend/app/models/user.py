@@ -19,6 +19,7 @@ from app.models.enums import UserRole
 if TYPE_CHECKING:
     from app.models.parking_reservation import ParkingReservation
     from app.models.parking_session import ParkingSession
+    from app.models.wallet import Wallet
 
 
 class User(BaseModel):
@@ -93,6 +94,7 @@ class User(BaseModel):
     # Relationships
     # ==========================================================
 
+    # Parking Reservations
     parking_reservations: Mapped[
         list["ParkingReservation"]
     ] = relationship(
@@ -102,12 +104,21 @@ class User(BaseModel):
         cascade="all, delete-orphan",
     )
 
+    # Parking Sessions
     parking_sessions: Mapped[
         list["ParkingSession"]
     ] = relationship(
         "ParkingSession",
         foreign_keys="ParkingSession.customer_id",
         back_populates="customer",
+    )
+
+    # Wallet
+    wallet: Mapped["Wallet | None"] = relationship(
+        "Wallet",
+        back_populates="customer",
+        uselist=False,
+        passive_deletes=True,
     )
 
     # ==========================================================

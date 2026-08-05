@@ -65,51 +65,18 @@ from app.services.payment_service import (
     PaymentService,
 )
 
+from app.api.dependencies.services import (
+    PaymentServiceDep,
+)
+
+from app.api.dependencies.wallet import WalletServiceDep
+
 router = APIRouter(
     prefix="/payments",
     tags=[
         "Payments",
     ],
 )
-
-# ==========================================================
-# Dependency Injection
-# ==========================================================
-
-async def get_payment_service(
-    db: AsyncSession = Depends(
-        get_db,
-    ),
-) -> PaymentService:
-    """
-    Construct the Payment Service.
-    """
-
-    payment_repository = PaymentRepository(
-        db,
-    )
-
-    reservation_repository = ParkingReservationRepository(
-        db,
-    )
-
-    session_repository = ParkingSessionRepository(
-        db,
-    )
-
-    return PaymentService(
-        repository=payment_repository,
-        reservation_repository=reservation_repository,
-        session_repository=session_repository,
-    )
-
-
-PaymentServiceDep = Annotated[
-    PaymentService,
-    Depends(
-        get_payment_service,
-    ),
-]
 
 # ==========================================================
 # Helpers

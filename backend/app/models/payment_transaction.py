@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.parking_session import ParkingSession
     from app.models.parking_reservation import ParkingReservation
+    from app.models.wallet_transaction import WalletTransaction
 
 from sqlalchemy import (
     JSON,
@@ -404,6 +405,17 @@ class PaymentTransaction(BaseModel):
         foreign_keys=[parent_transaction_id],
         back_populates="parent_transaction",
         cascade="save-update, merge",
+    )
+
+    # 
+    # Wallet Relationships
+    # 
+    wallet_transactions: Mapped[
+        list["WalletTransaction"]
+    ] = relationship(
+        "WalletTransaction",
+        foreign_keys="WalletTransaction.payment_transaction_id",
+        back_populates="payment_transaction",
     )
 
     # ==========================================================

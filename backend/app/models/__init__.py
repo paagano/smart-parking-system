@@ -2,11 +2,13 @@ from .base_model import BaseModel
 from .user import User
 from .parking_facility import ParkingFacility
 from .parking_tariff import ParkingTariff
-from app.models.parking_zone import ParkingZone
-from app.models.parking_bay import ParkingBay
-from app.models.parking_session import ParkingSession
-from app.models.parking_reservation import ParkingReservation
-from app.models.payment_transaction import PaymentTransaction
+from .parking_zone import ParkingZone
+from .parking_bay import ParkingBay
+from .parking_session import ParkingSession
+from .parking_reservation import ParkingReservation
+from .payment_transaction import PaymentTransaction
+from .wallet import Wallet
+from .wallet_transaction import WalletTransaction
 
 __all__ = [
     "BaseModel",
@@ -17,5 +19,7 @@ __all__ = [
     "ParkingSession",
     "ParkingTariff",
     "ParkingReservation",
-    "PaymentTransaction"
+    "PaymentTransaction",
+    "Wallet",
+    "WalletTransaction",
 ]

@@ -152,6 +152,18 @@ class BaseRepository(Generic[ModelType]):
 
         return obj
 
+    async def exists(
+        self,
+        id: Any,
+    ) -> bool:
+        """
+        Determine whether an entity exists.
+        """
+
+        return (
+            await self.get_by_id(id)
+        ) is not None
+
     # ==========================================================
     # Representation
     # ==========================================================

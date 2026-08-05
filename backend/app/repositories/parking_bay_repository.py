@@ -187,6 +187,47 @@ class ParkingBayRepository:
         await self.db.commit()
 
     # ==========================================================
+    # Bay Occupancy
+    # ==========================================================
+
+    async def mark_occupied(
+        self,
+        parking_bay: ParkingBay,
+    ) -> ParkingBay:
+        """
+        Mark a parking bay as occupied.
+
+        Currently ParkingBay has no occupancy column,
+        so this simply persists the entity.
+
+        This method exists so the service layer has a
+        stable API and future occupancy tracking can
+        be added without changing business logic.
+        """
+
+        return await self.update(
+            parking_bay,
+        )
+
+    async def mark_available(
+        self,
+        parking_bay: ParkingBay,
+    ) -> ParkingBay:
+        """
+        Mark a parking bay as available.
+
+        Currently ParkingBay has no occupancy column,
+        so this simply persists the entity.
+
+        Future occupancy flags can be added here
+        without affecting services.
+        """
+
+        return await self.update(
+            parking_bay,
+        )
+
+    # ==========================================================
     # State
     # ==========================================================
 

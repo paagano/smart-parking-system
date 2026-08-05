@@ -733,3 +733,280 @@ class PaymentRepository(
         )
 
         return payment
+
+        # ==========================================================
+    # Retrieval Operations
+    # ==========================================================
+
+    async def get_by_id(
+        self,
+        payment_id: int,
+    ) -> PaymentTransaction:
+        """
+        Retrieve a payment transaction by ID.
+        """
+
+        payment = await self.repository.get_by_id(
+            payment_id,
+        )
+
+        if payment is None:
+            raise ValueError(
+                "Payment transaction not found."
+            )
+
+        return payment
+
+    async def get_by_transaction_number(
+        self,
+        transaction_number: str,
+    ) -> PaymentTransaction:
+        """
+        Retrieve a payment transaction using its
+        internal transaction number.
+        """
+
+        payment = await (
+            self.repository.get_by_transaction_number(
+                transaction_number,
+            )
+        )
+
+        if payment is None:
+            raise ValueError(
+                "Payment transaction not found."
+            )
+
+        return payment
+
+    async def get_by_receipt_number(
+        self,
+        receipt_number: str,
+    ) -> PaymentTransaction:
+        """
+        Retrieve a payment using its receipt number.
+        """
+
+        payment = await (
+            self.repository.get_by_receipt_number(
+                receipt_number,
+            )
+        )
+
+        if payment is None:
+            raise ValueError(
+                "Receipt not found."
+            )
+
+        return payment
+
+    async def get_by_provider_transaction_id(
+        self,
+        provider_transaction_id: str,
+    ) -> PaymentTransaction:
+        """
+        Retrieve a payment using the external
+        provider transaction identifier.
+        """
+
+        payment = await (
+            self.repository.get_by_provider_transaction_id(
+                provider_transaction_id,
+            )
+        )
+
+        if payment is None:
+            raise ValueError(
+                "Payment transaction not found."
+            )
+
+        return payment
+
+    async def get_by_external_reference(
+        self,
+        external_reference: str,
+    ) -> PaymentTransaction:
+        """
+        Retrieve a payment using its external
+        reference.
+        """
+
+        payment = await (
+            self.repository.get_by_external_reference(
+                external_reference,
+            )
+        )
+
+        if payment is None:
+            raise ValueError(
+                "Payment transaction not found."
+            )
+
+        return payment
+
+    async def get_customer_payments(
+        self,
+        customer_id: int,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve payment history for a customer.
+        """
+
+        return await (
+            self.repository.get_customer_payments(
+                customer_id=customer_id,
+                limit=limit,
+                offset=offset,
+            )
+        )
+
+    async def get_reservation_payments(
+        self,
+        reservation_id: int,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve payments belonging to a reservation.
+        """
+
+        return await (
+            self.repository.get_reservation_payments(
+                reservation_id=reservation_id,
+                limit=limit,
+                offset=offset,
+            )
+        )
+
+    async def get_session_payments(
+        self,
+        parking_session_id: int,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve payments belonging to a parking
+        session.
+        """
+
+        return await (
+            self.repository.get_session_payments(
+                parking_session_id=parking_session_id,
+                limit=limit,
+                offset=offset,
+            )
+        )
+
+    async def get_recent_payments(
+        self,
+        *,
+        limit: int = 20,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve the most recent payments.
+        """
+
+        return await (
+            self.repository.get_recent_payments(
+                limit=limit,
+            )
+        )
+
+    async def get_unreconciled_payments(
+        self,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve payments awaiting reconciliation.
+        """
+
+        return await (
+            self.repository.get_unreconciled_payments(
+                limit=limit,
+                offset=offset,
+            )
+        )
+
+    async def get_child_transactions(
+        self,
+        parent_transaction_id: int,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve child payment transactions.
+
+        Typical example:
+
+            Payment
+                ↓
+            Refund
+                ↓
+            Refund Adjustment
+        """
+
+        return await (
+            self.repository.get_child_transactions(
+                parent_transaction_id,
+            )
+        )
+
+    async def payment_exists(
+        self,
+        payment_id: int,
+    ) -> bool:
+        """
+        Determine whether a payment exists.
+        """
+
+        return await self.repository.exists(
+            payment_id,
+        )
+
+    # ==========================================================
+    # Validation Helpers
+    # ==========================================================
+
+    @staticmethod
+    def _validate_amount(
+        amount: Decimal,
+    ) -> None:
+        """
+        Ensure the payment amount is valid.
+        """
+
+        if amount <= Decimal("0.00"):
+            raise ValueError(
+                "Payment amount must be greater than zero."
+            )
+
+    @staticmethod
+    def _ensure_completed(
+        payment: PaymentTransaction,
+    ) -> None:
+        """
+        Ensure the payment completed successfully.
+        """
+
+        if payment.status != PaymentStatus.SUCCESSFUL:
+            raise ValueError(
+                "Payment has not completed successfully."
+            )
+
+    @staticmethod
+    def _ensure_not_refunded(
+        payment: PaymentTransaction,
+    ) -> None:
+        """
+        Prevent duplicate refunds.
+        """
+
+        if payment.payment_type == PaymentType.REFUND:
+            raise ValueError(
+                "Payment has already been refunded."
+            )
