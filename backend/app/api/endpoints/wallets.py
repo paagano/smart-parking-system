@@ -23,6 +23,10 @@ from app.schemas.wallet_transaction import (
     WalletTransactionResponse,
 )
 
+from app.schemas.wallet import (
+    WalletStatisticsResponse,
+)
+
 router = APIRouter(
     prefix="/wallets",
     tags=[
@@ -107,6 +111,58 @@ async def get_wallet_transactions(
     try:
 
         return await service.get_customer_wallet_transactions(
+            customer_id,
+        )
+
+    except ValueError as exc:
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+@router.get(
+    "/transaction/{transaction_number}",
+    response_model=WalletTransactionResponse,
+    summary="Get Wallet Transaction",
+)
+async def get_wallet_transaction(
+    transaction_number: str,
+    service: WalletServiceDep,
+):
+    """
+    Retrieve a wallet transaction.
+    """
+
+    try:
+
+        return await service.get_wallet_transaction(
+            transaction_number,
+        )
+
+    except ValueError as exc:
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+@router.get(
+    "/statistics/{customer_id}",
+    response_model=WalletStatisticsResponse,
+    summary="Wallet Statistics",
+)
+async def get_wallet_statistics(
+    customer_id: int,
+    service: WalletServiceDep,
+):
+    """
+    Retrieve wallet statistics.
+    """
+
+    try:
+
+        return await service.get_wallet_statistics(
             customer_id,
         )
 

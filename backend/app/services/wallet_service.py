@@ -50,6 +50,7 @@ from app.repositories.wallet_transaction_repository import (
 
 from app.schemas.wallet import (
     WalletBalanceResponse,
+    WalletStatisticsResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -1162,6 +1163,29 @@ class WalletService:
 
         return wallet.available_balance
 
+    async def get_wallet_transaction(
+        self,
+        transaction_number: str,
+    ) -> WalletTransaction:
+        """
+        Retrieve a wallet transaction.
+        """
+
+        transaction = (
+            await self.wallet_transaction_repository
+            .get_by_transaction_number(
+                transaction_number,
+            )
+        )
+
+        if transaction is None:
+
+            raise ValueError(
+                "Wallet transaction not found.",
+            )
+
+        return transaction
+
 
     async def get_customer_wallet_transactions(
         self,
@@ -1229,4 +1253,65 @@ class WalletService:
             f"ledger_repository="
             f"{self.wallet_transaction_repository.__class__.__name__}"
             f")"
+        )
+
+    async def get_wallet_statistics(
+        self,
+        customer_id: int,
+    ) -> WalletStatisticsResponse:
+        """
+        Retrieve wallet statistics.
+        """
+
+        wallet = await self.get_wallet_by_customer(
+            customer_id,
+        )
+
+        transactions = (
+            await self.wallet_transaction_repository
+            .get_by_wallet(
+                wallet.id,
+            )
+        )
+
+        total_credits = sum(
+
+            t.amount
+
+            for t in transactions
+
+            if t.amount > 0
+
+        )
+
+        total_debits = sum(
+
+            abs(t.amount)
+
+            for t in transactions
+
+            if t.amount < 0
+
+        )
+
+        return WalletStatisticsResponse(
+
+            wallet_id=wallet.id,
+
+            total_transactions=len(
+                transactions,
+            ),
+
+            total_credits=total_credits,
+
+            total_debits=total_debits,
+
+            available_balance=wallet.available_balance,
+
+            reserved_balance=wallet.reserved_balance,
+
+            current_balance=(
+                wallet.available_balance
+                + wallet.reserved_balance
+            ),
         )
