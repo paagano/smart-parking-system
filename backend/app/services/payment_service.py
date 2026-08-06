@@ -64,6 +64,7 @@ from app.repositories.parking_session_repository import (
 from app.schemas.payment import (
     PaymentCreate,
     RefundCreate,
+    ReversalCreate,
     ReservationPaymentCreate,
     SessionPaymentCreate,
     WalletTopUpCreate,
@@ -306,7 +307,7 @@ class PaymentService:
 
         return payment_transaction
 
-        # ==========================================================
+    # ==========================================================
     # Wallet Top-up
     # ==========================================================
 
@@ -375,6 +376,8 @@ class PaymentService:
                 ),
             )
 
+            payment_transaction.status = PaymentStatus.SUCCESSFUL
+
             #
             # Commit payment transaction.
             #
@@ -385,6 +388,10 @@ class PaymentService:
             #
             await self.repository.refresh(
                 payment_transaction,
+            )
+
+            await self.repository.refresh(
+                original_payment,
             )
 
             return payment_transaction
@@ -855,6 +862,30 @@ class PaymentService:
             )
 
         #
+        # Prevent duplicate refunds.
+        #
+        if original_payment.status == PaymentStatus.REFUNDED:
+            raise ValueError(
+                "This payment has already been refunded."
+            )
+
+        #
+        # Only successful payments may be refunded.
+        #
+        if original_payment.status != PaymentStatus.SUCCESSFUL:
+            raise ValueError(
+                "Only SUCCESSFUL payments can be refunded."
+            )
+
+        #
+        # Validate refund amount.
+        #
+        if payment.total_amount > original_payment.total_amount:
+            raise ValueError(
+                "Refund amount cannot exceed the original payment amount."
+            )
+
+        #
         # Customer wallet.
         #
         wallet = await self._get_customer_wallet(
@@ -893,6 +924,25 @@ class PaymentService:
 
             )
 
+            #
+            # Update original payment status.
+            #
+            if payment.total_amount == original_payment.total_amount:
+
+                original_payment.status = (
+                    PaymentStatus.REFUNDED
+                )
+
+            else:
+
+                original_payment.status = (
+                    PaymentStatus.PARTIALLY_REFUNDED
+                )
+
+            await self.repository.save(
+                original_payment,
+            )
+
             await self.repository.commit()
 
             await self.repository.refresh(
@@ -906,3 +956,371 @@ class PaymentService:
             await self.repository.rollback()
 
             raise
+
+    # ==========================================================
+    # Refund
+    # ==========================================================
+
+    async def process_reversal(
+        self,
+        payment: ReversalCreate,
+    ) -> PaymentTransaction:
+        """
+        Process a reversal transaction.
+        """
+
+        if payment.parent_transaction_id is None:
+            raise ValueError(
+                "Parent transaction ID is required."
+            )
+
+        #
+        # Retrieve original payment.
+        #
+        original_payment = await self.repository.get_by_id(
+            payment.parent_transaction_id,
+        )
+
+        if original_payment is None:
+            raise ValueError(
+                "Original payment not found."
+            )
+
+        #
+        # Prevent duplicate reversal.
+        #
+        if original_payment.status == PaymentStatus.VOIDED:
+            raise ValueError(
+                "This payment has already been reversed."
+            )
+
+        #
+        # Only successful payments may be reversed.
+        #
+        if original_payment.status != PaymentStatus.SUCCESSFUL:
+            raise ValueError(
+                "Only SUCCESSFUL payments can be reversed."
+            )
+
+        #
+        # Validate reversal amount.
+        #
+        if payment.total_amount > original_payment.total_amount:
+            raise ValueError(
+                "Refund amount cannot exceed the original payment amount."
+            )
+
+        #
+        # Customer wallet.
+        #
+        wallet = await self._get_customer_wallet(
+            original_payment.customer_id,
+        )
+
+        try:
+
+            #
+            # Create refund payment transaction.
+            #
+            payment_transaction = (
+                await self._create_payment(
+                    payment,
+                )
+            )
+
+            #
+            # Refund customer's wallet.
+            #
+            await self.wallet_service.credit_wallet(
+
+                wallet_id=wallet.id,
+
+                amount=payment.total_amount,
+
+                transaction_type=WalletTransactionType.REVERSAL,
+
+                payment_transaction_id=payment_transaction.id,
+
+                created_by=original_payment.customer_id,
+
+                reference=original_payment.transaction_number,
+
+                description="Payment reversal",
+
+            )
+
+            #
+            # Update original payment status.
+            #
+            original_payment.status = (
+                PaymentStatus.VOIDED
+            )
+
+            await self.repository.save(
+                original_payment,
+            )
+
+            await self.repository.commit()
+
+            await self.repository.refresh(
+                payment_transaction,
+            )
+
+            return payment_transaction
+
+        except Exception:
+
+            await self.repository.rollback()
+
+            raise  
+    # ==========================================================
+    # Payment Query Operations
+    # ==========================================================
+
+    async def get_payment(
+        self,
+        payment_id: int,
+    ) -> PaymentTransaction | None:
+        """
+        Retrieve a payment transaction by ID.
+        """
+
+        return await self.repository.get_by_id(
+            payment_id,
+        )
+
+
+    async def get_transaction(
+        self,
+        transaction_number: str,
+    ) -> PaymentTransaction | None:
+        """
+        Retrieve a payment using its transaction number.
+        """
+
+        return await self.repository.get_by_transaction_number(
+            transaction_number,
+        )
+
+
+    async def get_receipt(
+        self,
+        receipt_number: str,
+    ) -> PaymentTransaction | None:
+        """
+        Retrieve a payment using its receipt number.
+        """
+
+        return await self.repository.get_by_receipt_number(
+            receipt_number,
+        )
+
+
+    async def get_all_payments(
+        self,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve all payment transactions.
+        """
+
+        return await self.repository.get_all()
+
+    async def get_customer_payments(
+        self,
+        customer_id: int,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve all payments for a customer.
+        """
+
+        return await self.repository.get_customer_payments(
+            customer_id=customer_id,
+            limit=limit,
+            offset=offset,
+        )
+
+
+    async def get_reservation_payments(
+        self,
+        reservation_id: int,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve all payments for a reservation.
+        """
+
+        return await self.repository.get_reservation_payments(
+            reservation_id=reservation_id,
+            limit=limit,
+            offset=offset,
+        )
+
+
+    async def get_session_payments(
+        self,
+        parking_session_id: int,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve all payments for a parking session.
+        """
+
+        return await self.repository.get_session_payments(
+            parking_session_id=parking_session_id,
+            limit=limit,
+            offset=offset,
+        )
+
+
+    async def get_recent_payments(
+        self,
+        *,
+        limit: int = 20,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve the most recent payments.
+        """
+
+        return await self.repository.get_recent_payments(
+            limit=limit,
+        )
+
+
+    async def get_unreconciled_payments(
+        self,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PaymentTransaction]:
+        """
+        Retrieve payments awaiting reconciliation.
+        """
+
+        return await self.repository.get_unreconciled_payments(
+            limit=limit,
+            offset=offset,
+        )
+
+    async def payment_exists(
+        self,
+        payment_id: int,
+    ) -> bool:
+        """
+        Determine whether a payment exists.
+        """
+
+        return await self.repository.exists(
+            payment_id,
+        )
+
+    # ==========================================================
+    # Payment Statistics Operations
+    # ==========================================================
+
+    async def total_payments(
+        self,
+    ) -> int:
+        """
+        Return total payment count.
+        """
+
+        return await self.repository.count_all()
+
+
+    async def total_successful_payments(
+        self,
+    ) -> int:
+        """
+        Return total successful payments.
+        """
+
+        return await self.repository.count_by_status(
+            PaymentStatus.SUCCESSFUL,
+        )
+
+
+    async def total_pending_payments(
+        self,
+    ) -> int:
+        """
+        Return total pending payments.
+        """
+
+        return await self.repository.count_by_status(
+            PaymentStatus.PENDING,
+        )
+
+
+    async def total_failed_payments(
+        self,
+    ) -> int:
+        """
+        Return total failed payments.
+        """
+
+        return await self.repository.count_by_status(
+            PaymentStatus.FAILED,
+        )
+
+
+    async def total_revenue(
+        self,
+    ):
+        """
+        Return total successful revenue.
+        """
+
+        return await self.repository.total_revenue()
+
+
+    async def total_refunds(
+        self,
+    ):
+        """
+        Return total refunded amount.
+        """
+
+        return await self.repository.total_refunds()
+
+
+    async def total_customer_payments(
+        self,
+        customer_id: int,
+    ) -> int:
+        """
+        Return payment count for a customer.
+        """
+
+        return await self.repository.count_customer_payments(
+            customer_id,
+        )
+
+
+    async def total_customer_revenue(
+        self,
+        customer_id: int,
+    ):
+        """
+        Return total revenue for a customer.
+        """
+
+        return await self.repository.total_customer_revenue(
+            customer_id,
+        )
+
+
+    async def unreconciled_count(
+        self,
+    ) -> int:
+        """
+        Return unreconciled payment count.
+        """
+
+        return await self.repository.count_unreconciled()

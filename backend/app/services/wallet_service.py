@@ -48,6 +48,10 @@ from app.repositories.wallet_transaction_repository import (
     WalletTransactionRepository,
 )
 
+from app.schemas.wallet import (
+    WalletBalanceResponse,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -1106,6 +1110,75 @@ class WalletService:
             self.wallet_transaction_repository
             .get_recent_transactions(
                 limit=limit,
+            )
+        )
+
+    # ==========================================================
+    # Wallet Query Operations
+    # ==========================================================
+
+    async def get_customer_wallet(
+        self,
+        customer_id: int,
+    ) -> Wallet:
+        """
+        Retrieve a customer's wallet.
+        """
+
+        return await self.get_wallet_by_customer(
+            customer_id,
+        )
+
+
+    async def get_customer_wallet_balance(
+        self,
+        customer_id: int,
+    ) -> WalletBalanceResponse:
+        """
+        Retrieve a customer's wallet balance.
+        """
+
+        wallet = await self.get_wallet_by_customer(
+            customer_id,
+        )
+
+        return WalletBalanceResponse(
+
+            wallet_id=wallet.id,
+
+            wallet_number=wallet.wallet_number,
+
+            currency=wallet.currency,
+
+            available_balance=wallet.available_balance,
+
+            reserved_balance=wallet.reserved_balance,
+
+            current_balance=(
+                wallet.available_balance
+                + wallet.reserved_balance
+            ),
+        )
+
+        return wallet.available_balance
+
+
+    async def get_customer_wallet_transactions(
+        self,
+        customer_id: int,
+    ) -> list[WalletTransaction]:
+        """
+        Retrieve every wallet transaction
+        belonging to a customer.
+        """
+
+        wallet = await self.get_wallet_by_customer(
+            customer_id,
+        )
+
+        return await (
+            self.wallet_transaction_repository.get_by_wallet(
+                wallet.id,
             )
         )
 

@@ -332,7 +332,7 @@ class WalletTopUpCreate(PaymentBase):
 
 
 # ==========================================================
-# Refund
+# Refund | Reversal
 # ==========================================================
 
 class RefundCreate(PaymentBase):
@@ -354,6 +354,24 @@ class RefundCreate(PaymentBase):
         min_length=5,
         max_length=500,
         description="Reason for the refund.",
+    )
+
+class ReversalCreate(PaymentBase):
+    """
+    Reverse an existing payment transaction.
+    """
+
+    parent_transaction_id: int = Field(
+        ...,
+        gt=0,
+        description="Original payment transaction.",
+    )
+
+    reason: str = Field(
+        ...,
+        min_length=5,
+        max_length=500,
+        description="Reason for reversal.",
     )
 
 

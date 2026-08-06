@@ -56,6 +56,7 @@ from app.repositories.parking_session_repository import (
 from app.schemas.payment import (
     PaymentResponse,
     RefundCreate,
+    ReversalCreate,
     ReservationPaymentCreate,
     SessionPaymentCreate,
     WalletTopUpCreate,
@@ -233,6 +234,34 @@ async def process_refund(
             detail=str(exc),
         ) from exc
 
+# ==========================================================
+# Reversal
+# ==========================================================
+
+@router.post(
+    "/reversal",
+    response_model=PaymentResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Process Reversal",
+)
+async def process_reversal(
+    payment: ReversalCreate,
+    service: PaymentServiceDep,
+):
+    """
+    Reverse a payment transaction.
+    """
+
+    try:
+        return await service.process_reversal(
+            payment,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
 
 # ==========================================================
 # Transaction Lookup

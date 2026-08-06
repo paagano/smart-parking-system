@@ -133,18 +133,7 @@ class ParkingSessionService:
             )
 
         return registration
-
-    async def _validate_bay(
-        self,
-        parking_bay_id: int,
-    ) -> None:
-        """
-        Ensure parking bay exists.
-        """
-
-        await self.parking_bay_repository.get_by_id(
-            parking_bay_id
-        )
+    
 
     async def _ensure_vehicle_not_parked(
         self,
@@ -681,12 +670,35 @@ class ParkingSessionService:
         parking_bay_id: int,
     ) -> None:
         """
-        Validate that the parking bay exists.
+        Validate that the parking bay may be used.
+
+        Validation Rules
+        ----------------
+        - Parking bay must exist.
+        - Parking bay must be active.
+        - Parking bay must be reservable.
         """
 
-        await self.parking_bay_repository.get_by_id(
-            parking_bay_id,
+        parking_bay = (
+            await self.parking_bay_repository.get_by_id(
+                parking_bay_id,
+            )
         )
+
+        if parking_bay is None:
+            raise NotFoundException(
+                "Parking bay not found."
+            )
+
+        if not parking_bay.is_active:
+            raise BadRequestException(
+                "Parking bay is inactive."
+            )
+
+        if not parking_bay.is_reservable:
+            raise BadRequestException(
+                "Parking bay is currently not reservable."
+            )
 
     async def has_active_session(
         self,

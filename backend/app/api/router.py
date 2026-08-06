@@ -28,6 +28,10 @@ from app.api.endpoints.payments import (
     router as payments_router,
 )
 
+from app.api.endpoints.wallets import (
+    router as wallets_router,
+)
+
 router = APIRouter()
 
 # ==========================================================
@@ -100,6 +104,14 @@ router.include_router(
 
 router.include_router(
     payments_router,
+)
+
+# ==========================================================
+# Wallets 
+# ==========================================================
+
+router.include_router(
+    wallets_router,
 )
 
 # ==========================================================

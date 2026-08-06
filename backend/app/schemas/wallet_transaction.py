@@ -18,6 +18,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.wallet import Wallet
 from app.repositories.base_repository import BaseRepository
 
+from datetime import datetime
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+)
+
+from app.models.enums import (
+    WalletTransactionType,
+)
+
 
 class WalletRepository(BaseRepository[Wallet]):
     """
@@ -450,3 +461,40 @@ class WalletRepository(BaseRepository[Wallet]):
             f"{self.__class__.__name__}"
             f"(model={self.model.__name__})"
         )
+
+# ==========================================================
+# Wallet Transaction Response
+# ==========================================================
+
+class WalletTransactionResponse(BaseModel):
+    """
+    Wallet transaction response.
+    """
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+    id: int
+
+    transaction_number: str
+
+    wallet_id: int
+
+    payment_transaction_id: int | None = None
+
+    transaction_type: WalletTransactionType
+
+    amount: Decimal
+
+    balance_before: Decimal
+
+    balance_after: Decimal
+
+    reference: str | None = None
+
+    description: str | None = None
+
+    created_by: int | None = None
+
+    created_at: datetime
