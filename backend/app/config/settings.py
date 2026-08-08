@@ -58,6 +58,18 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: str
 
     # ==========================================================
+    # M-Pesa (Daraja API)
+    # ==========================================================
+
+    MPESA_BASE_URL: str
+    MPESA_CONSUMER_KEY: str
+    MPESA_CONSUMER_SECRET: str
+    MPESA_SHORTCODE: str
+    MPESA_PASSKEY: str
+    MPESA_CALLBACK_URL: str
+    MPESA_TIMEOUT_SECONDS: int = 30
+
+    # ==========================================================
     # Machine Learning
     # ==========================================================
 

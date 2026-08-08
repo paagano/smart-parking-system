@@ -26,9 +26,9 @@ from app.services.payment_providers.internal import (
     InternalProvider,
 )
 
-# from app.services.payment_providers.mpesa import (
-#     MpesaProvider,
-# )
+from app.services.payment_providers.mpesa import (
+    MpesaProvider,
+)
 
 # from app.services.payment_providers.airtel import (
 #     AirtelProvider,
@@ -62,7 +62,7 @@ _PROVIDERS: dict[
 
     PaymentProvider.INTERNAL: InternalProvider,
 
-    # PaymentProvider.MPESA: MpesaProvider,
+    PaymentProvider.SAFARICOM: MpesaProvider,
 
     # PaymentProvider.AIRTEL: AirtelProvider,
 

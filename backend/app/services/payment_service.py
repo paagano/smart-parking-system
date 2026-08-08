@@ -32,7 +32,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enums import (
     PaymentMethod,
+    PaymentPurpose,
     PaymentStatus,
+    PaymentProvider,
     ReservationPaymentStatus,
     ReservationStatus,
     SessionPaymentStatus,
@@ -48,6 +50,7 @@ from app.repositories.parking_reservation_repository import (
 from app.repositories.parking_session_repository import (
     ParkingSessionRepository,
 )
+from app.schemas.mpesa_callback import MpesaCallbackRequest
 from app.schemas.payment import (
     PaymentCreate,
     RefundCreate,
@@ -56,15 +59,9 @@ from app.schemas.payment import (
     SessionPaymentCreate,
     WalletTopUpCreate,
 )
+from app.schemas.payment_provider import PaymentProviderResponse
+from app.services.payment_providers.factory import PaymentProviderFactory
 from app.services.wallet_service import WalletService
-
-from app.schemas.payment_provider import (
-    PaymentProviderResponse,
-)
-
-from app.services.payment_providers.factory import (
-    PaymentProviderFactory,
-)
 
 
 class PaymentService:
@@ -188,16 +185,33 @@ class PaymentService:
             payer_name=payment.payer_name,
             payer_phone=payment.payer_phone,
             payer_email=payment.payer_email,
-            # ==================================================
+            #
+            # Provider Information
+            #
+            provider_transaction_id=(
+                provider_response.provider_reference
+                if provider_response is not None
+                else None
+            ),
+            provider_status_message=(
+                provider_response.message
+                if provider_response is not None
+                else None
+            ),
+            provider_response=(
+                provider_response.raw_response
+                if provider_response is not None
+                else None
+            ),
+            #
             # Audit
-            # ==================================================
+            #
             notes=payment.notes,
             status=(
                 provider_response.status
                 if provider_response is not None
                 else status
             ),
-
             paid_at=(
                 datetime.now(timezone.utc)
                 if (
@@ -257,18 +271,48 @@ class PaymentService:
             payment_transaction = await self._create_payment(payment)
 
             #
-            # Credit customer wallet.
+            # INTERNAL payments complete immediately.
             #
-            await self.wallet_service.credit_wallet(
-                wallet_id=wallet.id,
-                amount=payment.total_amount,
-                payment_transaction_id=payment_transaction.id,
-                created_by=payment.customer_id,
-                description="Wallet Top-up",
-                reference=payment_transaction.transaction_number,
-            )
+            if payment.payment_provider == PaymentProvider.INTERNAL:
+                await self.wallet_service.credit_wallet(
+                    wallet_id=wallet.id,
+                    amount=payment.total_amount,
+                    payment_transaction_id=payment_transaction.id,
+                    created_by=payment.customer_id,
+                    description="Wallet Top-up",
+                    reference=payment_transaction.transaction_number,
+                )
 
-            payment_transaction.status = PaymentStatus.SUCCESSFUL
+            #
+            # MPESA / CARD / BANK transfers are asynchronous.
+            #
+            else:
+                provider = PaymentProviderFactory.get_provider(
+                    payment.payment_provider,
+                )
+
+                provider_response = await provider.process_payment(
+                    payment=payment,
+                )
+
+                if not provider_response.success:
+                    raise ValueError(
+                        provider_response.message
+                        or "Payment provider rejected the payment."
+                    )
+
+                payment_transaction.status = provider_response.status
+                payment_transaction.provider_transaction_id = (
+                    provider_response.provider_reference
+                )
+                payment_transaction.provider_status_message = (
+                    provider_response.message
+                )
+                payment_transaction.provider_response = (
+                    provider_response.raw_response
+                )
+
+                await self.repository.save(payment_transaction)
 
             #
             # Commit payment transaction.
@@ -373,17 +417,48 @@ class PaymentService:
                 )
 
             #
-            # Update parking session.
+            # ======================================================
+            # Resolve Payment Provider
+            # ======================================================
             #
-            parking_session.payment_status = SessionPaymentStatus.PAID
-            parking_session.paid_amount = payment_transaction.total_amount
-            parking_session.last_payment_transaction_id = payment_transaction.id
-            parking_session.paid_at = payment_transaction.paid_at
+            provider = PaymentProviderFactory.get_provider(
+                payment.payment_provider,
+            )
+
+            provider_response = await provider.process_payment(
+                payment=payment_transaction,
+            )
+
+            if not provider_response.success:
+                raise ValueError(
+                    provider_response.message
+                    or "Payment provider rejected the payment."
+                )
 
             #
-            # Persist session updates.
+            # Persist provider response.
             #
-            await self.session_repository.save(parking_session)
+            payment_transaction.provider_transaction_id = (
+                provider_response.provider_reference
+            )
+            payment_transaction.provider_status_message = (
+                provider_response.message
+            )
+            payment_transaction.provider_response = (
+                provider_response.raw_response
+            )
+            payment_transaction.status = provider_response.status
+
+            await self.repository.save(payment_transaction)
+
+            #
+            # INTERNAL payments complete immediately.
+            #
+            if payment.payment_provider == PaymentProvider.INTERNAL:
+                await self._complete_session_payment(
+                    payment=payment_transaction,
+                    paid_at=payment_transaction.paid_at,
+                )
 
             #
             # Commit everything.
@@ -403,7 +478,7 @@ class PaymentService:
             raise
 
     # ==========================================================
-    # Reservation Payment
+    # Reservation Payments
     # ==========================================================
 
     async def process_reservation_payment(
@@ -435,11 +510,8 @@ class PaymentService:
             ↓
         Commit Transaction
         """
-
         if payment.reservation_id is None:
-            raise ValueError(
-                "Reservation ID is required."
-            )
+            raise ValueError("Reservation ID is required.")
 
         #
         # Retrieve reservation.
@@ -449,40 +521,27 @@ class PaymentService:
         )
 
         if reservation is None:
-            raise ValueError(
-                "Reservation not found."
-            )
+            raise ValueError("Reservation not found.")
 
         #
         # Prevent duplicate payments.
         #
         if reservation.is_paid:
-            raise ValueError(
-                "Reservation has already been paid."
-            )
+            raise ValueError("Reservation has already been paid.")
 
         #
         # Only CREATED reservations may be paid.
         #
         if reservation.status != ReservationStatus.CREATED:
-            raise ValueError(
-                "Only CREATED reservations can be paid."
-            )
+            raise ValueError("Only CREATED reservations can be paid.")
 
         #
         # Validate payment amount.
         #
-        expected_amount = (
-            reservation.estimated_amount.quantize(
-                Decimal("0.01"),
-            )
+        expected_amount = reservation.estimated_amount.quantize(
+            Decimal("0.01"),
         )
-
-        received_amount = (
-            payment.total_amount.quantize(
-                Decimal("0.01"),
-            )
-        )
+        received_amount = payment.total_amount.quantize(Decimal("0.01"))
 
         if expected_amount != received_amount:
             raise ValueError(
@@ -490,21 +549,15 @@ class PaymentService:
             )
 
         try:
-
             # ======================================================
             # Resolve Payment Provider
             # ======================================================
-
-            provider = (
-                PaymentProviderFactory.get_provider(
-                    payment.payment_provider,
-                )
+            provider = PaymentProviderFactory.get_provider(
+                payment.payment_provider,
             )
 
-            provider_response = (
-                await provider.process_payment(
-                    payment=payment,
-                )
+            provider_response = await provider.process_payment(
+                payment=payment,
             )
 
             if not provider_response.success:
@@ -516,76 +569,57 @@ class PaymentService:
             # ======================================================
             # Create Payment Transaction
             # ======================================================
-
-            payment_transaction = (
-                await self._create_payment(
-                    payment,
-                    provider_response=provider_response,
-                )
+            payment_transaction = await self._create_payment(
+                payment,
+                provider_response=provider_response,
             )
+
+            # ======================================================
+            # Asynchronous Payment Provider
+            # ======================================================
+            if provider_response.status == PaymentStatus.PENDING:
+                reservation.payment_status = ReservationPaymentStatus.PENDING
+                reservation.last_payment_transaction = payment_transaction
+                reservation.last_payment_transaction_id = payment_transaction.id
+
+                await self.reservation_repository.save(reservation)
+                await self.repository.commit()
+                await self.repository.refresh(payment_transaction)
+                await self.reservation_repository.refresh(reservation)
+
+                return payment_transaction
 
             # ======================================================
             # Wallet Payment
             # ======================================================
-
-            if (
-                payment.payment_method
-                == PaymentMethod.WALLET
-            ):
-
-                wallet = await self._get_customer_wallet(
-                    payment.customer_id,
-                )
+            if payment.payment_method == PaymentMethod.WALLET:
+                wallet = await self._get_customer_wallet(payment.customer_id)
 
                 await self.wallet_service.debit_wallet(
-
                     wallet_id=wallet.id,
-
                     amount=payment.total_amount,
-
                     payment_transaction_id=payment_transaction.id,
-
                     created_by=payment.customer_id,
-
                     reference=payment_transaction.transaction_number,
-
                     description="Reservation payment",
                 )
 
-            now = datetime.now(
-                timezone.utc,
-            )
+            now = datetime.now(timezone.utc)
 
             # ======================================================
             # Update Reservation
             # ======================================================
-
-            reservation.payment_status = (
-                ReservationPaymentStatus.PAID
-            )
-
-            reservation.status = (
-                ReservationStatus.CONFIRMED
-            )
-
+            reservation.payment_status = ReservationPaymentStatus.PAID
+            reservation.status = ReservationStatus.CONFIRMED
             reservation.confirmed_at = now
-
             reservation.paid_at = now
-
-            reservation.last_payment_transaction = (
-                payment_transaction
-            )
-
-            reservation.last_payment_transaction_id = (
-                payment_transaction.id
-            )
+            reservation.last_payment_transaction = payment_transaction
+            reservation.last_payment_transaction_id = payment_transaction.id
 
             #
             # Persist reservation.
             #
-            await self.reservation_repository.save(
-                reservation,
-            )
+            await self.reservation_repository.save(reservation)
 
             #
             # Commit.
@@ -595,21 +629,257 @@ class PaymentService:
             #
             # Refresh.
             #
-            await self.repository.refresh(
-                payment_transaction,
-            )
-
-            await self.reservation_repository.refresh(
-                reservation,
-            )
+            await self.repository.refresh(payment_transaction)
+            await self.reservation_repository.refresh(reservation)
 
             return payment_transaction
 
         except Exception:
-
             await self.repository.rollback()
-
             raise
+
+    # ==========================================================
+    # M-Pesa Callback
+    # ==========================================================
+
+    async def process_mpesa_callback(
+        self,
+        callback: MpesaCallbackRequest,
+    ) -> PaymentTransaction:
+        """
+        Process an asynchronous Safaricom STK Push callback.
+
+        This completes a previously initiated M-Pesa payment.
+
+        The callback processor is provider-agnostic and
+        dispatches the business workflow according to the
+        payment purpose.
+        """
+        stk = callback.body.stk_callback
+
+        print("\n========== CALLBACK ==========")
+        print("ResultCode:", stk.result_code)
+        print("ResultDesc:", stk.result_desc)
+        print("Receipt:", stk.receipt_number)
+        print("Amount:", stk.amount)
+        print("Phone:", stk.phone_number)
+        print("==============================")
+
+        #
+        # Retrieve payment transaction.
+        #
+        payment = await self.repository.get_by_provider_transaction_id(
+            stk.checkout_request_id,
+        )
+
+        if payment is None:
+            raise ValueError("Payment transaction not found.")
+
+        #
+        # Duplicate callbacks are safe.
+        #
+        if payment.status == PaymentStatus.SUCCESSFUL:
+            return payment
+
+        if payment.status == PaymentStatus.FAILED:
+            return payment
+
+        try:
+            now = datetime.now(timezone.utc)
+
+            #
+            # Persist the full provider callback.
+            #
+            payment.provider_response = callback.model_dump(
+                by_alias=True,
+            )
+            payment.provider_status_message = stk.result_desc
+            payment.provider_message = stk.result_desc
+
+            #
+            # ======================================================
+            # PAYMENT FAILED
+            # ======================================================
+            #
+            if stk.result_code != 0:
+                payment.status = PaymentStatus.FAILED
+
+                await self.repository.save(payment)
+                await self.repository.commit()
+                await self.repository.refresh(payment)
+
+                return payment
+
+            #
+            # ======================================================
+            # PAYMENT SUCCESS
+            # ======================================================
+            #
+            payment.status = PaymentStatus.SUCCESSFUL
+            payment.paid_at = now
+            payment.receipt_number = stk.receipt_number
+            payment.external_reference = stk.receipt_number
+
+            #
+            # Persist payment first.
+            #
+            await self.repository.save(payment)
+
+            #
+            # Dispatch business workflow.
+            #
+            if payment.payment_purpose == PaymentPurpose.RESERVATION:
+                await self._complete_reservation_payment(
+                    payment=payment,
+                    paid_at=now,
+                )
+
+            elif payment.payment_purpose == PaymentPurpose.PARKING_SESSION:
+                await self._complete_session_payment(
+                    payment=payment,
+                    paid_at=now,
+                )
+
+            elif payment.payment_purpose == PaymentPurpose.WALLET_TOPUP:
+                await self._complete_wallet_topup(
+                    payment=payment,
+                    paid_at=now,
+                )
+
+            else:
+                raise ValueError(
+                    f"Unsupported payment purpose: "
+                    f"{payment.payment_purpose}"
+                )
+
+            #
+            # Commit everything as one transaction.
+            #
+            await self.repository.commit()
+
+            #
+            # Refresh payment.
+            #
+            await self.repository.refresh(payment)
+
+            return payment
+
+        except Exception:
+            await self.repository.rollback()
+            raise
+
+    # ==========================================================
+    # Internal Completion Helpers
+    # ==========================================================
+
+    async def _complete_reservation_payment(
+        self,
+        *,
+        payment: PaymentTransaction,
+        paid_at: datetime,
+    ) -> None:
+        """
+        Complete a successful reservation payment.
+
+        This method is called after an asynchronous
+        payment provider (e.g. M-Pesa) confirms that
+        payment has been received.
+        """
+        reservation = await self.reservation_repository.get_by_id(
+            payment.reservation_id,
+        )
+
+        if reservation is None:
+            raise ValueError("Reservation not found.")
+
+        reservation.payment_status = ReservationPaymentStatus.PAID
+        reservation.status = ReservationStatus.CONFIRMED
+        reservation.confirmed_at = paid_at
+        reservation.paid_at = paid_at
+        reservation.last_payment_transaction = payment
+        reservation.last_payment_transaction_id = payment.id
+
+        await self.reservation_repository.save(reservation)
+        await self.reservation_repository.refresh(reservation)
+
+    async def _complete_session_payment(
+        self,
+        *,
+        payment: PaymentTransaction,
+        paid_at: datetime,
+    ) -> None:
+        """
+        Complete a successful parking session payment.
+
+        This method is called after an asynchronous
+        payment provider confirms payment.
+        """
+        parking_session = await self.session_repository.get_by_id(
+            payment.parking_session_id,
+        )
+
+        if parking_session is None:
+            raise ValueError("Parking session not found.")
+
+        parking_session.payment_status = SessionPaymentStatus.PAID
+        parking_session.paid_amount = payment.total_amount
+        parking_session.last_payment_transaction = payment
+        parking_session.last_payment_transaction_id = payment.id
+        parking_session.paid_at = paid_at
+
+        await self.session_repository.save(parking_session)
+        await self.session_repository.refresh(parking_session)
+
+    async def _complete_wallet_topup(
+        self,
+        *,
+        payment: PaymentTransaction,
+        paid_at: datetime,
+    ) -> None:
+        """
+        Complete a successful wallet top-up.
+
+        This method is called after an asynchronous
+        payment provider (e.g. M-Pesa) confirms that
+        payment has been received.
+        """
+        wallet = await self._get_customer_wallet(payment.customer_id)
+
+        await self.wallet_service.credit_wallet(
+            wallet_id=wallet.id,
+            amount=payment.total_amount,
+            payment_transaction_id=payment.id,
+            created_by=payment.customer_id,
+            description="Wallet Top-up",
+            reference=payment.transaction_number,
+        )
+
+    async def _complete_wallet_topup(
+        self,
+        *,
+        payment: PaymentTransaction,
+        paid_at: datetime,
+    ) -> None:
+        """
+        Complete a successful wallet top-up.
+
+        This method is called after an asynchronous
+        payment provider (e.g. M-Pesa) confirms that
+        payment has been received.
+        """
+
+        wallet = await self._get_customer_wallet(
+            payment.customer_id,
+        )
+
+        await self.wallet_service.credit_wallet(
+            wallet_id=wallet.id,
+            amount=payment.total_amount,
+            payment_transaction_id=payment.id,
+            created_by=payment.customer_id,
+            description="Wallet Top-up",
+            reference=payment.transaction_number,
+        )
 
     # ==========================================================
     # Refund

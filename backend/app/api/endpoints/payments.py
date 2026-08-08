@@ -72,6 +72,11 @@ from app.api.dependencies.services import (
 
 from app.api.dependencies.wallet import WalletServiceDep
 
+from app.schemas.mpesa_callback import (
+    MpesaCallbackRequest,
+)
+
+# Router Definition
 router = APIRouter(
     prefix="/payments",
     tags=[
@@ -729,4 +734,42 @@ async def unreconciled_count(
     return {
         "unreconciled":
             await service.unreconciled_count(),
+    }
+
+@router.post(
+    "/mpesa/callback",
+    summary="Safaricom M-Pesa Callback",
+)
+async def mpesa_callback(
+    callback: MpesaCallbackRequest,
+    service: PaymentServiceDep,
+):
+    """
+    Receive asynchronous STK Push callbacks
+    from Safaricom Daraja.
+    """
+
+    try:
+
+        #
+        # Complete the pending payment.
+        #
+        await service.process_mpesa_callback(
+            callback,
+        )
+
+    except Exception as ex:
+
+        #
+        # Logging just for now - For Debugging.
+        #
+        print("\n========== CALLBACK ERROR ==========")
+        print(ex)
+
+    #
+    # Acknowledge receipt to Safaricom.
+    #
+    return {
+        "ResultCode": 0,
+        "ResultDesc": "Accepted",
     }
