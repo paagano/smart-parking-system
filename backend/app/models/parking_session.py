@@ -355,6 +355,16 @@ class ParkingSession(BaseModel):
         cascade="save-update, merge",
     )
 
+    # vehicle_id = mapped_column(
+    # ForeignKey("vehicles.id"),
+    # nullable=False,
+    # )
+
+    # vehicle = relationship(
+    #     "Vehicle",
+    #     back_populates="parking_sessions",
+    # )
+
     # ==========================================================
     # Representation
     # ==========================================================

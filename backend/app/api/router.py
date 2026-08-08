@@ -3,27 +3,35 @@ from fastapi import APIRouter
 from app.api.endpoints.auth import (
     router as auth_router,
 )
+
 from app.api.endpoints.users import (
     router as users_router,
 )
+
 from app.api.endpoints.parking_facilities import (
     router as parking_facilities_router,
 )
+
 from app.api.endpoints.parking_zones import (
     router as parking_zones_router,
 )
+
 from app.api.endpoints.parking_bays import (
     router as parking_bays_router,
 )
+
 from app.api.endpoints.parking_sessions import (
     router as parking_sessions_router,
 )
+
 from app.api.endpoints.parking_tariffs import (
     router as parking_tariffs_router,
 )
+
 from app.api.endpoints.parking_reservations import (
     router as parking_reservations_router,
 )
+
 from app.api.endpoints.payments import (
     router as payments_router,
 )
@@ -32,7 +40,13 @@ from app.api.endpoints.wallets import (
     router as wallets_router,
 )
 
+from app.api.endpoints.vehicles import (
+    router as vehicles_router,
+)
+
+
 router = APIRouter()
+
 
 # ==========================================================
 # Authentication
@@ -42,6 +56,7 @@ router.include_router(
     auth_router,
 )
 
+
 # ==========================================================
 # Users
 # ==========================================================
@@ -49,6 +64,7 @@ router.include_router(
 router.include_router(
     users_router,
 )
+
 
 # ==========================================================
 # Parking Facilities
@@ -58,6 +74,7 @@ router.include_router(
     parking_facilities_router,
 )
 
+
 # ==========================================================
 # Parking Zones
 # ==========================================================
@@ -65,6 +82,7 @@ router.include_router(
 router.include_router(
     parking_zones_router,
 )
+
 
 # ==========================================================
 # Parking Bays
@@ -74,6 +92,7 @@ router.include_router(
     parking_bays_router,
 )
 
+
 # ==========================================================
 # Parking Sessions
 # ==========================================================
@@ -81,6 +100,7 @@ router.include_router(
 router.include_router(
     parking_sessions_router,
 )
+
 
 # ==========================================================
 # Parking Tariffs
@@ -90,6 +110,7 @@ router.include_router(
     parking_tariffs_router,
 )
 
+
 # ==========================================================
 # Parking Reservations
 # ==========================================================
@@ -97,6 +118,7 @@ router.include_router(
 router.include_router(
     parking_reservations_router,
 )
+
 
 # ==========================================================
 # Payment Transactions
@@ -106,18 +128,28 @@ router.include_router(
     payments_router,
 )
 
+
 # ==========================================================
-# Wallets 
+# Wallets
 # ==========================================================
 
 router.include_router(
     wallets_router,
 )
 
+
+# ==========================================================
+# Vehicles
+# ==========================================================
+
+router.include_router(
+    vehicles_router,
+)
+
+
 # ==========================================================
 # Root
 # ==========================================================
-
 
 @router.get(
     "/",

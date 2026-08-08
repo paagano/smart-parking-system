@@ -28,6 +28,7 @@ from app.api.dependencies.repositories import (
     ParkingSessionRepositoryDep,
     PaymentRepositoryDep,
     UserRepositoryDep,
+    VehicleRepositoryDep,
 )
 
 from app.api.dependencies.wallet import (
@@ -52,6 +53,10 @@ from app.services.parking_reservation_service import (
 
 from app.services.payment_service import (
     PaymentService,
+)
+
+from app.services.vehicle_service import (
+    VehicleService,
 )
 
 # ==========================================================
@@ -156,6 +161,21 @@ def get_payment_service(
         wallet_service=wallet_service,
     )
 
+# ==========================================================
+# Vehicle Service
+# ==========================================================
+
+def get_vehicle_service(
+    repository: VehicleRepositoryDep,
+) -> VehicleService:
+    """
+    Return a VehicleService instance.
+    """
+
+    return VehicleService(
+        repository=repository,
+    )
+
 
 # ==========================================================
 # Dependency Aliases
@@ -184,4 +204,9 @@ ParkingReservationServiceDep = Annotated[
 PaymentServiceDep = Annotated[
     PaymentService,
     Depends(get_payment_service),
+]
+
+VehicleServiceDep = Annotated[
+    VehicleService,
+    Depends(get_vehicle_service),
 ]

@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from app.models.parking_reservation import ParkingReservation
+    from app.models.parking_session import ParkingSession
+    from app.models.wallet import Wallet
+    from app.models.vehicle import Vehicle
+
 from sqlalchemy import (
     Boolean,
     Enum,
@@ -16,10 +22,7 @@ from sqlalchemy.orm import (
 from app.models.base_model import BaseModel
 from app.models.enums import UserRole
 
-if TYPE_CHECKING:
-    from app.models.parking_reservation import ParkingReservation
-    from app.models.parking_session import ParkingSession
-    from app.models.wallet import Wallet
+
 
 
 class User(BaseModel):
@@ -119,6 +122,11 @@ class User(BaseModel):
         back_populates="customer",
         uselist=False,
         passive_deletes=True,
+    )
+
+    vehicles: Mapped[list["Vehicle"]] = relationship(
+        "Vehicle",
+        back_populates="customer",
     )
 
     # ==========================================================

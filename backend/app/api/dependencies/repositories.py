@@ -47,6 +47,9 @@ from app.repositories.parking_tariff_repository import (
 from app.repositories.payment_repository import (
     PaymentRepository,
 )
+from app.repositories.vehicle_repository import (
+    VehicleRepository,
+)
 
 # ==========================================================
 # Database Dependency
@@ -172,6 +175,21 @@ def get_payment_repository(
         db=db,
     )
 
+# ==========================================================
+# Vehicle Repository
+# ==========================================================
+
+def get_vehicle_repository(
+    db: DbSession,
+) -> VehicleRepository:
+    """
+    Return a VehicleRepository instance.
+    """
+
+    return VehicleRepository(
+        db=db,
+    )
+
 
 # ==========================================================
 # Dependency Aliases
@@ -215,4 +233,9 @@ ParkingTariffRepositoryDep = Annotated[
 PaymentRepositoryDep = Annotated[
     PaymentRepository,
     Depends(get_payment_repository),
+]
+
+VehicleRepositoryDep = Annotated[
+    VehicleRepository,
+    Depends(get_vehicle_repository),
 ]

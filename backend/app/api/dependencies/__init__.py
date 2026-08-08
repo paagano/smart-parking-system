@@ -41,6 +41,8 @@ from .services import *
 
 from .wallet import *
 
+from .vehicles import *
+
 __all__ = [
     #
     # Re-export everything from the dependency modules.

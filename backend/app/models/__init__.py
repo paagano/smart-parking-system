@@ -9,6 +9,7 @@ from .parking_reservation import ParkingReservation
 from .payment_transaction import PaymentTransaction
 from .wallet import Wallet
 from .wallet_transaction import WalletTransaction
+from .vehicle import Vehicle
 
 __all__ = [
     "BaseModel",
@@ -22,4 +23,5 @@ __all__ = [
     "PaymentTransaction",
     "Wallet",
     "WalletTransaction",
+    "Vehicle",
 ]

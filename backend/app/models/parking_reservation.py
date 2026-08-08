@@ -344,6 +344,16 @@ class ParkingReservation(BaseModel):
         post_update=True,
     )
 
+    # vehicle_id = mapped_column(
+    # ForeignKey("vehicles.id"),
+    # nullable=False,
+    # )
+
+    # vehicle = relationship(
+    #     "Vehicle",
+    #     back_populates="reservations",
+    # )
+
     # ==========================================================
     # Table Indexes
     # ==========================================================

@@ -89,6 +89,32 @@ class VehicleType(str, Enum):
     def label(self):
         return self.value.replace("_"," ").title()
 
+# ==========================================================
+# Vehicle Parking Profile
+# ==========================================================
+class ParkingProfile(str, Enum):
+    """
+    Vehicle parking profile.
+
+    Used to determine parking preferences,
+    eligibility and future smart parking
+    recommendations.
+    """
+
+    STANDARD = "STANDARD"
+    ELECTRIC = "ELECTRIC"
+    ACCESSIBLE = "ACCESSIBLE"
+    VIP = "VIP"
+    COMMERCIAL = "COMMERCIAL"
+    EMERGENCY = "EMERGENCY"
+
+    @property
+    def label(self):
+        return self.value.replace(
+            "_",
+            " ",
+        ).title()
+
 class BaySize(str, Enum):
     SMALL="SMALL"
     MEDIUM="MEDIUM"
