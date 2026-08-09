@@ -14,6 +14,16 @@ Business logic belongs in ParkingReservationService.
 
 from __future__ import annotations
 
+from typing import Annotated
+
+from fastapi import Depends
+
+from app.api.dependencies.auth import (
+    get_current_active_user,
+)
+
+from app.models.user import User
+
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -41,7 +51,6 @@ router = APIRouter(
 # Create Reservation
 # ==========================================================
 
-
 @router.post(
     "",
     response_model=ParkingReservationResponse,
@@ -50,6 +59,10 @@ router = APIRouter(
 )
 async def create_parking_reservation(
     reservation_data: ParkingReservationCreate,
+    current_user: Annotated[
+        User,
+        Depends(get_current_active_user),
+    ],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
@@ -57,7 +70,8 @@ async def create_parking_reservation(
     """
 
     reservation = await service.create_reservation(
-        reservation_data,
+        data=reservation_data,
+        customer_id=current_user.id,
     )
 
     return reservation

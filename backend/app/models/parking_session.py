@@ -35,6 +35,7 @@ from sqlalchemy.orm import (
 from app.models.base_model import BaseModel
 
 from app.models.enums import (
+    BillingType,
     EntryMethod,
     ExitMethod,
     SessionPaymentStatus,
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
     from app.models.parking_bay import ParkingBay
     from app.models.parking_reservation import ParkingReservation
     from app.models.payment_transaction import PaymentTransaction
+    from app.models.vehicle import Vehicle
 
 class ParkingSession(BaseModel):
     """
@@ -169,6 +171,15 @@ class ParkingSession(BaseModel):
     # Vehicle Information
     # ==========================================================
 
+    vehicle_id: Mapped[int | None] = mapped_column(
+    ForeignKey(
+        "vehicles.id",
+        ondelete="SET NULL",
+    ),
+    nullable=True,
+    index=True,
+    )
+
     vehicle_registration: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
@@ -181,6 +192,15 @@ class ParkingSession(BaseModel):
             create_type=False,
         ),
         nullable=False,
+    )
+
+    billing_type: Mapped[BillingType] = mapped_column(
+    Enum(
+        BillingType,
+        name="billing_type",
+        create_type=False,
+    ),
+    nullable=False,
     )
 
     # ==========================================================
@@ -313,6 +333,11 @@ class ParkingSession(BaseModel):
     "ParkingBay",
     back_populates="sessions",
     passive_deletes=True,
+    )
+
+    vehicle: Mapped["Vehicle | None"] = relationship(
+    "Vehicle",
+    foreign_keys=[vehicle_id],
     )
 
     customer: Mapped["User | None"] = relationship(

@@ -39,6 +39,7 @@ from app.models.enums import (
     EntryMethod,
     SessionSource,
     SessionStatus,
+    VehicleType,
 )
 
 from app.models.parking_reservation import ParkingReservation
@@ -46,6 +47,10 @@ from app.models.parking_session import ParkingSession
 
 from app.repositories.parking_session_repository import (
     ParkingSessionRepository,
+)
+
+from app.repositories.vehicle_repository import (
+    VehicleRepository,
 )
 
 from app.repositories.parking_bay_repository import (
@@ -61,6 +66,8 @@ from app.schemas.parking_session import (
     ParkingSessionCreate,
     ParkingSessionUpdate,
 )
+
+# from app.exceptions.handlers import NotFoundException
 
 
 class ParkingSessionService:
@@ -89,11 +96,12 @@ class ParkingSessionService:
         repository: ParkingSessionRepository,
         parking_bay_repository: ParkingBayRepository,
         pricing_service: PricingService,
-    ) -> None:
-
+        vehicle_repository: VehicleRepository,
+    ):
         self.repository = repository
         self.parking_bay_repository = parking_bay_repository
         self.pricing_service = pricing_service
+        self.vehicle_repository = vehicle_repository
 
     # ==========================================================
     # Validation Helpers
@@ -106,7 +114,6 @@ class ParkingSessionService:
         """
         Validate and normalize a vehicle registration.
         """
-
         registration = registration.strip().upper()
 
         if not registration:
@@ -133,7 +140,84 @@ class ParkingSessionService:
             )
 
         return registration
-    
+
+    async def _resolve_vehicle(
+        self,
+        *,
+        vehicle_id: int | None,
+        vehicle_registration: str | None,
+        vehicle_type: VehicleType | None,
+    ) -> dict:
+        """
+        Resolve vehicle information.
+
+        Registered vehicle flow:
+            vehicle_id is supplied.
+            Registration and vehicle type are obtained
+            from the registered Vehicle record.
+
+        Borrowed/unregistered vehicle flow:
+            vehicle_id is None.
+            Registration and vehicle type must be supplied
+            directly by the caller.
+
+        Vehicle ownership is intentionally NOT validated here.
+        A driver may use another customer's registered vehicle.
+        """
+
+        # ======================================================
+        # Registered Vehicle
+        # ======================================================
+
+        if vehicle_id is not None:
+
+            vehicle = await self.vehicle_repository.get_by_id(
+                vehicle_id
+            )
+
+            if vehicle is None:
+                raise NotFoundException(
+                    "Registered vehicle not found."
+                )
+
+            if not vehicle.is_active:
+                raise BadRequestException(
+                    "Registered vehicle is inactive."
+                )
+
+            registration = self._validate_registration(
+                vehicle.registration_number
+            )
+
+            return {
+                "vehicle_id": vehicle.id,
+                "registration": registration,
+                "vehicle_type": vehicle.vehicle_type,
+            }
+
+        # ======================================================
+        # Borrowed / Unregistered Vehicle
+        # ======================================================
+
+        if not vehicle_registration:
+            raise BadRequestException(
+                "Vehicle registration is required when vehicle_id is not provided."
+            )
+
+        if vehicle_type is None:
+            raise BadRequestException(
+                "Vehicle type is required when vehicle_id is not provided."
+            )
+
+        registration = self._validate_registration(
+            vehicle_registration
+        )
+
+        return {
+            "vehicle_id": None,
+            "registration": registration,
+            "vehicle_type": vehicle_type,
+        }
 
     async def _ensure_vehicle_not_parked(
         self,
@@ -142,7 +226,6 @@ class ParkingSessionService:
         """
         Ensure vehicle has no active session.
         """
-
         exists = await self.repository.active_session_exists(
             registration
         )
@@ -159,7 +242,6 @@ class ParkingSessionService:
         """
         Ensure parking bay is available.
         """
-
         occupied = await self.repository.active_bay_session_exists(
             parking_bay_id
         )
@@ -177,7 +259,9 @@ class ParkingSessionService:
         self,
         session_id: int,
     ) -> ParkingSession:
-
+        """
+        Retrieve a parking session by its ID.
+        """
         parking_session = await self.repository.get_by_id(
             session_id
         )
@@ -193,11 +277,11 @@ class ParkingSessionService:
         self,
         session_number: str,
     ) -> ParkingSession:
-
-        parking_session = (
-            await self.repository.get_by_session_number(
-                session_number
-            )
+        """
+        Retrieve a parking session by its session number.
+        """
+        parking_session = await self.repository.get_by_session_number(
+            session_number
         )
 
         if parking_session is None:
@@ -211,7 +295,9 @@ class ParkingSessionService:
         self,
         registration: str,
     ) -> ParkingSession | None:
-
+        """
+        Retrieve the active parking session for a vehicle.
+        """
         registration = self._validate_registration(
             registration
         )
@@ -224,7 +310,9 @@ class ParkingSessionService:
         self,
         registration: str,
     ) -> list[ParkingSession]:
-
+        """
+        Retrieve all parking sessions for a vehicle.
+        """
         registration = self._validate_registration(
             registration
         )
@@ -236,20 +324,26 @@ class ParkingSessionService:
     async def list_active(
         self,
     ) -> list[ParkingSession]:
-
+        """
+        Return all active parking sessions.
+        """
         return await self.repository.get_active_sessions()
 
     async def list_completed(
         self,
     ) -> list[ParkingSession]:
-
+        """
+        Return all completed parking sessions.
+        """
         return await self.repository.get_completed_sessions()
 
     async def search_registration(
         self,
         registration: str,
     ) -> list[ParkingSession]:
-
+        """
+        Search parking sessions by vehicle registration.
+        """
         registration = registration.strip().upper()
 
         if not registration:
@@ -270,14 +364,38 @@ class ParkingSessionService:
         """
         Start a new parking session for a walk-in customer.
 
-        Supports both:
-        - Guest customers
-        - Registered customers
+        Supports:
+
+        1. Guest/unregistered vehicle
+        - vehicle_id = None
+        - vehicle_registration supplied
+        - vehicle_type supplied
+
+        2. Registered vehicle
+        - vehicle_id supplied
+        - registration and vehicle type resolved
+            from the Vehicle record
+
+        The driver/customer does not have to own the vehicle.
         """
 
-        registration = self._validate_registration(
-            parking_session_data.vehicle_registration,
+        # ======================================================
+        # Resolve Vehicle
+        # ======================================================
+
+        vehicle = await self._resolve_vehicle(
+            vehicle_id=parking_session_data.vehicle_id,
+            vehicle_registration=parking_session_data.vehicle_registration,
+            vehicle_type=parking_session_data.vehicle_type,
         )
+
+        vehicle_id = vehicle["vehicle_id"]
+        registration = vehicle["registration"]
+        vehicle_type = vehicle["vehicle_type"]
+
+        # ======================================================
+        # Validate Parking Bay
+        # ======================================================
 
         await self._validate_bay(
             parking_session_data.parking_bay_id,
@@ -287,55 +405,78 @@ class ParkingSessionService:
             parking_session_data.parking_bay_id,
         )
 
+        # ======================================================
+        # Ensure Vehicle Is Not Already Parked
+        # ======================================================
+
         await self._ensure_vehicle_not_parked(
             registration,
         )
 
+        # ======================================================
+        # Create Parking Session
+        # ======================================================
+
         parking_session = ParkingSession(
             session_number=self._generate_session_number(),
-
             parking_bay_id=parking_session_data.parking_bay_id,
 
+            # Driver/customer associated with THIS session.
+            # This is deliberately independent of vehicle ownership.
             customer_id=parking_session_data.customer_id,
 
             reservation_id=None,
 
-            vehicle_registration=registration,
+            # Registered vehicle -> Vehicle.id
+            # Borrowed/unregistered -> None
+            vehicle_id=vehicle_id,
 
-            vehicle_type=parking_session_data.vehicle_type,
+            vehicle_registration=registration,
+            vehicle_type=vehicle_type,
 
             status=SessionStatus.ACTIVE,
 
             session_source=parking_session_data.session_source,
-
             entry_method=parking_session_data.entry_method,
 
             entry_time=utc_now(),
 
-            expected_exit_time=parking_session_data.expected_exit_time,
+            expected_exit_time=(
+                parking_session_data.expected_exit_time
+            ),
 
             notes=parking_session_data.notes,
+
         )
+
+        # ======================================================
+        # Persist Session
+        # ======================================================
 
         await self.repository.save(
             parking_session,
         )
 
-        #
-        # Bay becomes OCCUPIED
-        #
+        # ======================================================
+        # Bay Becomes OCCUPIED
+        # ======================================================
+
         parking_bay = await self.parking_bay_repository.get_by_id(
             parking_session.parking_bay_id,
         )
 
         if parking_bay is None:
-            raise ValueError(
+            raise NotFoundException(
                 "Parking bay not found."
             )
 
         await self.parking_bay_repository.mark_occupied(
             parking_bay,
         )
+
+        # ======================================================
+        # Commit
+        # ======================================================
 
         await self.repository.db.commit()
 
@@ -357,7 +498,7 @@ class ParkingSessionService:
         Convert a reservation into an active parking session.
 
         Workflow
-
+        --------
         Reservation
                 ↓
         Driver Arrives
@@ -368,51 +509,54 @@ class ParkingSessionService:
                 ↓
         Bay becomes OCCUPIED
         """
-
         await self._ensure_vehicle_not_parked(
             reservation.vehicle_registration,
         )
 
         parking_session = ParkingSession(
             session_number=self._generate_session_number(),
-
             parking_bay_id=reservation.parking_bay_id,
-
             customer_id=reservation.customer_id,
-
             reservation_id=reservation.id,
-
             vehicle_registration=reservation.vehicle_registration,
-
             vehicle_type=reservation.vehicle_type,
-
             status=SessionStatus.ACTIVE,
-
             session_source=SessionSource.RESERVATION,
-
             # Reservation arrivals use QR Code by default.
             # Future versions may support RFID / ANPR.
             entry_method=EntryMethod.QR_CODE,
-
             entry_time=utc_now(),
-
             expected_exit_time=reservation.reserved_until,
-
             notes=reservation.notes,
+            vehicle_id=reservation.vehicle_id
         )
 
         await self.repository.save(
             parking_session,
         )
 
-        # Reservation becomes occupied.
- 
-        # await self.parking_bay_repository.mark_occupied(
-        #     reservation.parking_bay_id,
-        # )
+        # ==========================================================
+        # Bay Becomes OCCUPIED
+        # ==========================================================
 
-        # Reservation is no longer active.
-        await self.repository.db.commit() 
+        parking_bay = await self.parking_bay_repository.get_by_id(
+            parking_session.parking_bay_id,
+        )
+
+        if parking_bay is None:
+            raise NotFoundException(
+                "Parking bay not found."
+            )
+
+        await self.parking_bay_repository.mark_occupied(
+            parking_bay,
+        )
+
+        # ==========================================================
+        # Commit
+        # ==========================================================
+
+        await self.repository.db.commit()
 
         await self.repository.db.refresh(
             parking_session,
@@ -426,14 +570,13 @@ class ParkingSessionService:
 
     async def check_out_vehicle(
         self,
-        session_id: int,
         checkout_data: ParkingSessionCheckout,
     ) -> ParkingSession:
         """
         Complete an active parking session.
 
         Workflow
-
+        --------
         Active Session
                 ↓
         Calculate Parking Fee
@@ -443,59 +586,47 @@ class ParkingSessionService:
         Release Parking Bay
         """
 
-        parking_session = await self.get_by_id(
-            session_id,
+        parking_session = await self.repository.get_active_by_registration(
+            checkout_data.vehicle_registration
         )
+
+        if parking_session is None:
+            raise NotFoundException(
+                "No active parking session found for this vehicle."
+            )
 
         if parking_session.status != SessionStatus.ACTIVE:
             raise BadRequestException(
                 "Parking session is not active."
             )
 
-        #
+        # ------------------------------------------------------
         # Determine exit time
-        #
+        # ------------------------------------------------------
+
         exit_time = utc_now()
 
-        #
-        # Delegate pricing to Pricing Service.
-        #
-        # PricingService should determine the applicable tariff
-        # using the parking bay and vehicle type.
-        #
+        # ------------------------------------------------------
+        # Calculate parking fee
+        # ------------------------------------------------------
+
         pricing = await self.pricing_service.calculate_for_session(
-            parking_bay_id=parking_session.parking_bay_id,
             vehicle_type=parking_session.vehicle_type,
+            billing_type=parking_session.billing_type,
             entry_time=parking_session.entry_time,
             exit_time=exit_time,
         )
 
-        #
-        # Update Session
-        #
+        # ------------------------------------------------------
+        # Update session
+        # ------------------------------------------------------
+
         parking_session.exit_time = exit_time
+        parking_session.exit_method = checkout_data.exit_method
+        parking_session.status = SessionStatus.COMPLETED
+        parking_session.duration_minutes = pricing.duration_minutes
+        parking_session.calculated_amount = pricing.total_amount
 
-        parking_session.exit_method = (
-            checkout_data.exit_method
-        )
-
-        parking_session.status = (
-            SessionStatus.COMPLETED
-        )
-
-        parking_session.duration_minutes = (
-            pricing.duration_minutes
-        )
-
-        parking_session.calculated_amount = (
-            pricing.total_amount
-        )
-
-        #
-        # Payment is handled separately.
-        #
-        # At checkout we simply calculate the amount due.
-        #
         parking_session.notes = (
             checkout_data.notes
             or parking_session.notes
@@ -505,12 +636,22 @@ class ParkingSessionService:
             parking_session,
         )
 
-        #
-        # Bay becomes AVAILABLE again.
-        #
-        await self.parking_bay_repository.release_bay(
+        # ------------------------------------------------------
+        # Release parking bay
+        # ------------------------------------------------------
+
+        parking_bay = await self.parking_bay_repository.release_bay(
             parking_session.parking_bay_id,
         )
+
+        if parking_bay is None:
+            raise NotFoundException(
+                "Parking bay not found."
+            )
+
+        # ------------------------------------------------------
+        # Commit transaction
+        # ------------------------------------------------------
 
         await self.repository.db.commit()
 
@@ -536,7 +677,6 @@ class ParkingSessionService:
         Session lifecycle fields are managed by
         dedicated business workflows.
         """
-
         parking_session = await self.get_by_id(
             session_id,
         )
@@ -549,7 +689,6 @@ class ParkingSessionService:
         # Validate registration
         #
         if "vehicle_registration" in update_data:
-
             update_data["vehicle_registration"] = (
                 self._validate_registration(
                     update_data["vehicle_registration"],
@@ -560,7 +699,6 @@ class ParkingSessionService:
         # Validate parking bay
         #
         if "parking_bay_id" in update_data:
-
             await self._validate_bay(
                 update_data["parking_bay_id"],
             )
@@ -569,7 +707,6 @@ class ParkingSessionService:
         # Apply updates
         #
         for field, value in update_data.items():
-
             setattr(
                 parking_session,
                 field,
@@ -601,13 +738,11 @@ class ParkingSessionService:
 
         Active sessions cannot be deleted.
         """
-
         parking_session = await self.get_by_id(
             session_id,
         )
 
         if parking_session.status == SessionStatus.ACTIVE:
-
             raise BadRequestException(
                 "Active parking sessions cannot be deleted."
             )
@@ -640,11 +775,9 @@ class ParkingSessionService:
         Ensure the supplied vehicle does not already
         have an active parking session.
         """
-
         if await self.repository.active_session_exists(
             registration,
         ):
-
             raise BadRequestException(
                 "Vehicle already has an active parking session."
             )
@@ -656,11 +789,9 @@ class ParkingSessionService:
         """
         Ensure the supplied parking bay is available.
         """
-
         if await self.repository.active_bay_session_exists(
             parking_bay_id,
         ):
-
             raise BadRequestException(
                 "Parking bay is currently occupied."
             )
@@ -678,11 +809,8 @@ class ParkingSessionService:
         - Parking bay must be active.
         - Parking bay must be reservable.
         """
-
-        parking_bay = (
-            await self.parking_bay_repository.get_by_id(
-                parking_bay_id,
-            )
+        parking_bay = await self.parking_bay_repository.get_by_id(
+            parking_bay_id,
         )
 
         if parking_bay is None:
@@ -708,7 +836,6 @@ class ParkingSessionService:
         Determine whether a parking bay currently has
         an active parking session.
         """
-
         return await self.repository.has_active_session(
             parking_bay_id,
         )
@@ -724,14 +851,10 @@ class ParkingSessionService:
         Generate a unique parking session number.
 
         Example
-
-            PS-4F7A8C91DE
+        -------
+        PS-4F7A8C91DE
         """
-
-        return (
-            "PS-"
-            + uuid4().hex[:10].upper()
-        )
+        return "PS-" + uuid4().hex[:10].upper()
 
     # ==========================================================
     # Representation
@@ -740,7 +863,6 @@ class ParkingSessionService:
     def __repr__(
         self,
     ) -> str:
-
         return (
             f"{self.__class__.__name__}("
             f"repository={self.repository.__class__.__name__}, "

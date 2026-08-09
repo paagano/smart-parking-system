@@ -104,6 +104,7 @@ def get_parking_session_service(
     repository: ParkingSessionRepositoryDep,
     parking_bay_repository: ParkingBayRepositoryDep,
     pricing_service: PricingServiceDep,
+    vehicle_repository: VehicleRepositoryDep,
 ) -> ParkingSessionService:
     """
     Return a ParkingSessionService instance.
@@ -113,6 +114,7 @@ def get_parking_session_service(
         repository=repository,
         parking_bay_repository=parking_bay_repository,
         pricing_service=pricing_service,
+        vehicle_repository=vehicle_repository,
     )
 
 

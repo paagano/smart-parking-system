@@ -47,17 +47,32 @@ class ReservationBase(BaseModel):
         description="Parking Bay identifier.",
     )
 
-    vehicle_registration: str = Field(
-        ...,
+    vehicle_id: int | None = Field(
+        default=None,
+        gt=0,
+        description=(
+            "Registered vehicle identifier. "
+            "Leave null when using a borrowed vehicle."
+        ),
+    )
+
+    vehicle_registration: str | None = Field(
+        default=None,
         min_length=1,
         max_length=20,
-        description="Vehicle registration number.",
+        description=(
+            "Vehicle registration number. "
+            "Required when using a borrowed vehicle."
+        ),
         examples=["KDK123A"],
     )
 
-    vehicle_type: VehicleType = Field(
-        ...,
-        description="Vehicle type.",
+    vehicle_type: VehicleType | None = Field(
+        default=None,
+        description=(
+            "Vehicle type. "
+            "Required when using a borrowed vehicle."
+        ),
     )
 
     reserved_from: datetime = Field(
@@ -84,11 +99,14 @@ class ReservationBase(BaseModel):
     @classmethod
     def validate_vehicle_registration(
         cls,
-        value: str,
-    ) -> str:
+        value: str | None,
+    ) -> str | None:
         """
-        Normalize vehicle registration.
+        Normalize vehicle registration when supplied.
         """
+
+        if value is None:
+            return None
 
         value = value.strip().upper()
 
@@ -100,17 +118,92 @@ class ReservationBase(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_reservation_period(
+    def validate_vehicle_selection(
         self,
     ) -> "ReservationBase":
         """
-        Validate reservation period.
+        Validate the vehicle selection mode.
+
+        Registered vehicle:
+            vehicle_id is supplied.
+
+        Borrowed vehicle:
+            vehicle_id is null and both registration and
+            vehicle_type are supplied.
         """
 
-        if self.reserved_until <= self.reserved_from:
+        # ------------------------------------------------------
+        # Registered vehicle
+        # ------------------------------------------------------
+
+        if self.vehicle_id is not None:
+
+            if (
+                self.vehicle_registration is not None
+                or self.vehicle_type is not None
+            ):
+                raise ValueError(
+                    "When vehicle_id is provided, "
+                    "vehicle_registration and vehicle_type "
+                    "must not be supplied."
+                )
+
+            return self
+
+        # ------------------------------------------------------
+        # Borrowed vehicle
+        # ------------------------------------------------------
+
+        if self.vehicle_registration is None:
+            raise ValueError(
+                "Vehicle registration is required when "
+                "vehicle_id is not provided."
+            )
+
+        if self.vehicle_type is None:
+            raise ValueError(
+                "Vehicle type is required when "
+                "vehicle_id is not provided."
+            )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_reservation_period(
+        self,
+    ) -> "ParkingReservationUpdate":
+        """
+        Validate reservation period and vehicle changes.
+        """
+
+        if (
+            self.reserved_from is not None
+            and self.reserved_until is not None
+            and self.reserved_until <= self.reserved_from
+        ):
             raise ValueError(
                 "reserved_until must be later than reserved_from."
             )
+
+        # ======================================================
+        # Temporary Vehicle Validation
+        # ======================================================
+
+        if (
+            "vehicle_id" in self.model_fields_set
+            and self.vehicle_id is None
+        ):
+            if not self.vehicle_registration:
+                raise ValueError(
+                    "vehicle_registration is required "
+                    "when switching to a temporary vehicle."
+                )
+
+            if self.vehicle_type is None:
+                raise ValueError(
+                    "vehicle_type is required "
+                    "when switching to a temporary vehicle."
+                )
 
         return self
 
@@ -118,6 +211,7 @@ class ReservationBase(BaseModel):
         from_attributes=True,
         validate_assignment=True,
         str_strip_whitespace=True,
+        extra="forbid",
     )
 
 # ==========================================================
@@ -128,26 +222,7 @@ class ParkingReservationCreate(ReservationBase):
     """
     Schema used when creating a parking reservation.
     """
-
-    customer_id: int | None = Field(
-        default=None,
-        gt=0,
-        description="Customer making the reservation.",
-    )
-
-    @field_validator("customer_id")
-    @classmethod
-    def validate_customer_id(cls, value):
-
-        if value is None:
-            return value
-
-        if value <= 0:
-            raise ValueError(
-                "Customer ID must be greater than zero."
-            )
-
-        return value
+    pass
 
 
 # ==========================================================
@@ -168,6 +243,15 @@ class ParkingReservationUpdate(BaseModel):
         default=None,
         gt=0,
         description="Parking Bay identifier.",
+    )
+
+    vehicle_id: int | None = Field(
+        default=None,
+        gt=0,
+        description=(
+            "Registered vehicle identifier. "
+            "Leave null when using a temporary/borrowed vehicle."
+        ),
     )
 
     vehicle_registration: str | None = Field(
@@ -262,6 +346,8 @@ class ParkingReservationResponse(BaseModel):
     customer_id: int | None = None
 
     parking_bay_id: int
+
+    vehicle_id: int | None = None
 
     vehicle_registration: str
 

@@ -23,6 +23,7 @@ from fastapi import Depends
 from app.api.dependencies.repositories import (
     ParkingBayRepositoryDep,
     ParkingReservationRepositoryDep,
+    VehicleRepositoryDep,
 )
 
 from app.api.dependencies.services import (
@@ -47,6 +48,7 @@ def get_parking_reservation_service(
     parking_bay_repository: ParkingBayRepositoryDep,
     pricing_service: PricingServiceDep,
     parking_session_service: ParkingSessionServiceDep,
+    vehicle_repository: VehicleRepositoryDep,
 ) -> ParkingReservationService:
     """
     Return a ParkingReservationService instance.
@@ -57,6 +59,7 @@ def get_parking_reservation_service(
         parking_bay_repository=parking_bay_repository,
         pricing_service=pricing_service,
         parking_session_service=parking_session_service,
+        vehicle_repository=vehicle_repository,
     )
 
 

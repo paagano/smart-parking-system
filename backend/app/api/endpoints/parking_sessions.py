@@ -62,7 +62,6 @@ async def check_in_vehicle(
 # Vehicle Check-Out
 # ==========================================================
 
-
 @router.post(
     "/check-out",
     response_model=ParkingSessionResponse,
@@ -89,7 +88,6 @@ async def check_out_vehicle(
 # ==========================================================
 # Read Operations
 # ==========================================================
-
 
 @router.get(
     "",

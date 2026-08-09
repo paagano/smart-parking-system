@@ -153,10 +153,10 @@ class Vehicle(BaseModel):
         back_populates="vehicles",
     )
 
-    # reservations: Mapped[list["ParkingReservation"]] = relationship(
-    #     "ParkingReservation",
-    #     back_populates="vehicle",
-    # )
+    reservations: Mapped[list["ParkingReservation"]] = relationship(
+        "ParkingReservation",
+        back_populates="vehicle",
+    )
 
     # parking_sessions: Mapped[list["ParkingSession"]] = relationship(
     #     "ParkingSession",

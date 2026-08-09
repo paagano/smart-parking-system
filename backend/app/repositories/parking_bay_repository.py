@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.parking_bay import ParkingBay
 
+from app.exceptions.handlers import NotFoundException
+
 
 class ParkingBayRepository:
     """
@@ -162,9 +164,11 @@ class ParkingBayRepository:
     ) -> ParkingBay:
         """
         Persist changes to a parking bay.
+
+        Transaction commit is handled by the Service layer.
         """
 
-        await self.db.commit()
+        await self.db.flush()
 
         await self.db.refresh(parking_bay)
 
@@ -209,6 +213,7 @@ class ParkingBayRepository:
             parking_bay,
         )
 
+
     async def mark_available(
         self,
         parking_bay: ParkingBay,
@@ -224,6 +229,28 @@ class ParkingBayRepository:
         """
 
         return await self.update(
+            parking_bay,
+        )
+
+
+    async def release_bay(
+        self,
+        parking_bay_id: int,
+    ) -> ParkingBay | None:
+        """
+        Release a parking bay after a vehicle checks out.
+
+        Returns None if the parking bay does not exist.
+        """
+
+        parking_bay = await self.get_by_id(
+            parking_bay_id,
+        )
+
+        if parking_bay is None:
+            return None
+
+        return await self.mark_available(
             parking_bay,
         )
 

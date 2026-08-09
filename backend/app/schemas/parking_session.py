@@ -9,7 +9,13 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from app.models.enums import (
     EntryMethod,
@@ -24,27 +30,59 @@ from app.models.enums import (
 # ==========================================================
 # Base Schema
 # ==========================================================
-
-
 class ParkingSessionBase(BaseModel):
-    """Common Parking Session fields."""
+    """
+    Common Parking Session fields.
 
-    parking_bay_id: int = Field(..., gt=0)
+    A session may use either:
+
+    1. A registered vehicle identified by vehicle_id.
+    2. A borrowed/unregistered vehicle identified by
+       vehicle_registration and vehicle_type.
+
+    vehicle_id and vehicle_registration/vehicle_type are
+    therefore mutually exclusive at the API boundary.
+    """
+
+    parking_bay_id: int = Field(
+        ...,
+        gt=0,
+    )
 
     customer_id: Optional[int] = Field(
-    default=None,
-    gt=0,
-    description="Registered customer. Leave null for guest walk-ins.",
+        default=None,
+        gt=0,
+        description=(
+            "Registered customer responsible for the session. "
+            "Leave null for guest walk-ins."
+        ),
     )
 
-    vehicle_registration: str = Field(
-        ...,
+    vehicle_id: Optional[int] = Field(
+        default=None,
+        gt=0,
+        description=(
+            "Registered vehicle identifier. "
+            "Leave blank if using a borrowed or unregistered vehicle."
+        ),
+    )
+
+    vehicle_registration: Optional[str] = Field(
+        default=None,
         min_length=3,
         max_length=20,
-        description="Vehicle registration number.",
+        description=(
+            "Vehicle registration number. "
+            "Required when vehicle_id is not supplied."
+        ),
     )
 
-    vehicle_type: VehicleType
+    vehicle_type: Optional[VehicleType] = Field(
+        default=None,
+        description=(
+            "Vehicle type. Required when vehicle_id is not supplied."
+        ),
+    )
 
     session_source: SessionSource
 
@@ -57,23 +95,91 @@ class ParkingSessionBase(BaseModel):
         max_length=1000,
     )
 
+    @field_validator("vehicle_registration")
+    @classmethod
+    def normalize_vehicle_registration(
+        cls,
+        value: str | None,
+    ) -> str | None:
+        """
+        Normalize vehicle registration.
+        """
+
+        if value is None:
+            return None
+
+        value = value.strip().upper()
+
+        if not value:
+            raise ValueError(
+                "Vehicle registration cannot be blank."
+            )
+
+        return value
+
+    @model_validator(mode="after")
+    def validate_vehicle_reference(
+        self,
+    ) -> "ParkingSessionBase":
+        """
+        Validate the vehicle representation supplied
+        for the parking session.
+
+        Registered vehicle:
+            vehicle_id is supplied.
+            Registration and vehicle type are resolved
+            from the registered Vehicle record.
+
+        Borrowed/unregistered vehicle:
+            vehicle_id is null.
+            vehicle_registration and vehicle_type are required.
+        """
+
+        if self.vehicle_id is not None:
+            if (
+                self.vehicle_registration is not None
+                or self.vehicle_type is not None
+            ):
+                raise ValueError(
+                    "When vehicle_id is provided, "
+                    "vehicle_registration and vehicle_type "
+                    "must not be provided."
+                )
+
+            return self
+
+        if not self.vehicle_registration:
+            raise ValueError(
+                "vehicle_registration is required when "
+                "vehicle_id is not provided."
+            )
+
+        if self.vehicle_type is None:
+            raise ValueError(
+                "vehicle_type is required when "
+                "vehicle_id is not provided."
+            )
+
+        return self
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        validate_assignment=True,
+        str_strip_whitespace=True,
+    )
+
 
 # ==========================================================
 # Create
 # ==========================================================
-
-
 class ParkingSessionCreate(ParkingSessionBase):
     """Schema used when creating a parking session."""
 
     pass
 
-
 # ==========================================================
 # Update
 # ==========================================================
-
-
 class ParkingSessionUpdate(BaseModel):
     """
     Schema used when updating a parking session.
@@ -112,16 +218,32 @@ class ParkingSessionUpdate(BaseModel):
 # ==========================================================
 # Response
 # ==========================================================
-
-
-class ParkingSessionResponse(ParkingSessionBase):
-    """Schema returned by the API."""
+class ParkingSessionResponse(BaseModel):
+    """Schema returned by the Parking Session API."""
 
     model_config = ConfigDict(
         from_attributes=True,
     )
 
     id: int
+
+    parking_bay_id: int
+
+    customer_id: Optional[int] = None
+
+    vehicle_id: Optional[int] = None
+
+    vehicle_registration: str
+
+    vehicle_type: VehicleType
+
+    session_source: SessionSource
+
+    entry_method: EntryMethod
+
+    expected_exit_time: Optional[datetime] = None
+
+    notes: Optional[str] = None
 
     session_number: str
 
@@ -153,8 +275,6 @@ class ParkingSessionResponse(ParkingSessionBase):
 # ==========================================================
 # List Response
 # ==========================================================
-
-
 class ParkingSessionListResponse(BaseModel):
     """
     Parking Session list response.

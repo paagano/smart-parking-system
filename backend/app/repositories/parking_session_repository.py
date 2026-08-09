@@ -315,6 +315,9 @@ class ParkingSessionRepository(BaseRepository[ParkingSession]):
         """
         Persist a parking session.
 
+        The repository flushes changes so generated values
+        and database state are available immediately.
+
         Commit is handled by the Service layer.
         """
 
@@ -331,6 +334,9 @@ class ParkingSessionRepository(BaseRepository[ParkingSession]):
     ) -> None:
         """
         Delete a parking session.
+
+        Commit is handled by the Service layer.
         """
 
         await self.db.delete(parking_session)
+        await self.db.flush()

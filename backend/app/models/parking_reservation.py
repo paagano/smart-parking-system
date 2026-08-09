@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from app.models.parking_bay import ParkingBay
     from app.models.parking_session import ParkingSession
     from app.models.payment_transaction import PaymentTransaction
+    from app.models.vehicle import Vehicle
 
 class ParkingReservation(BaseModel):
     """
@@ -344,15 +345,19 @@ class ParkingReservation(BaseModel):
         post_update=True,
     )
 
-    # vehicle_id = mapped_column(
-    # ForeignKey("vehicles.id"),
-    # nullable=False,
-    # )
+    vehicle_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "vehicles.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
 
-    # vehicle = relationship(
-    #     "Vehicle",
-    #     back_populates="reservations",
-    # )
+    vehicle: Mapped["Vehicle | None"] = relationship(
+        "Vehicle",
+        back_populates="reservations",
+    )
 
     # ==========================================================
     # Table Indexes
