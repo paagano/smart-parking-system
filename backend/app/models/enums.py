@@ -464,3 +464,79 @@ class WalletTransactionStatus(str, Enum):
     @property
     def label(self) -> str:
         return self.value.replace("_", " ").title()
+
+# ==========================================================
+# Notifications
+# ==========================================================
+class NotificationType(str, Enum):
+    """
+    Business event that triggered the notification.
+    """
+
+    RESERVATION_CREATED = "RESERVATION_CREATED"
+    RESERVATION_CONFIRMED = "RESERVATION_CONFIRMED"
+    RESERVATION_CANCELLED = "RESERVATION_CANCELLED"
+    RESERVATION_EXPIRED = "RESERVATION_EXPIRED"
+
+    SESSION_CHECKED_IN = "SESSION_CHECKED_IN"
+    SESSION_CHECKED_OUT = "SESSION_CHECKED_OUT"
+
+    PAYMENT_INITIATED = "PAYMENT_INITIATED"
+    PAYMENT_SUCCESSFUL = "PAYMENT_SUCCESSFUL"
+    PAYMENT_FAILED = "PAYMENT_FAILED"
+    PAYMENT_REFUNDED = "PAYMENT_REFUNDED"
+
+    RECEIPT_AVAILABLE = "RECEIPT_AVAILABLE"
+
+    LOYALTY_REWARD = "LOYALTY_REWARD"
+
+    SYSTEM = "SYSTEM"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+
+class NotificationChannel(str, Enum):
+    """
+    Delivery channel through which a notification is sent.
+    """
+
+    IN_APP = "IN_APP"
+    SMS = "SMS"
+    EMAIL = "EMAIL"
+    PUSH = "PUSH"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+
+class NotificationStatus(str, Enum):
+    """
+    Delivery lifecycle of a notification.
+    """
+
+    PENDING = "PENDING"
+    SENT = "SENT"
+    DELIVERED = "DELIVERED"
+    FAILED = "FAILED"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+
+class NotificationPriority(str, Enum):
+    """
+    Priority assigned to a notification.
+    """
+
+    LOW = "LOW"
+    NORMAL = "NORMAL"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()

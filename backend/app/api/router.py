@@ -44,6 +44,10 @@ from app.api.endpoints.vehicles import (
     router as vehicles_router,
 )
 
+from app.api.endpoints.notifications import (
+    router as notifications_router,
+)
+
 
 router = APIRouter()
 
@@ -144,6 +148,15 @@ router.include_router(
 
 router.include_router(
     vehicles_router,
+)
+
+
+# ==========================================================
+# Notifications
+# ==========================================================
+
+router.include_router(
+    notifications_router,
 )
 
 

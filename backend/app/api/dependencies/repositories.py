@@ -18,7 +18,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.dependencies import get_db
 
-from app.repositories.user_repository import UserRepository
+from app.repositories.user_repository import (
+    UserRepository,
+)
 
 from app.repositories.parking_facility_repository import (
     ParkingFacilityRepository,
@@ -47,9 +49,15 @@ from app.repositories.parking_tariff_repository import (
 from app.repositories.payment_repository import (
     PaymentRepository,
 )
+
 from app.repositories.vehicle_repository import (
     VehicleRepository,
 )
+
+from app.repositories.notification_repository import (
+    NotificationRepository,
+)
+
 
 # ==========================================================
 # Database Dependency
@@ -59,6 +67,7 @@ DbSession = Annotated[
     AsyncSession,
     Depends(get_db),
 ]
+
 
 # ==========================================================
 # User Repository
@@ -175,6 +184,7 @@ def get_payment_repository(
         db=db,
     )
 
+
 # ==========================================================
 # Vehicle Repository
 # ==========================================================
@@ -192,6 +202,22 @@ def get_vehicle_repository(
 
 
 # ==========================================================
+# Notification Repository
+# ==========================================================
+
+def get_notification_repository(
+    db: DbSession,
+) -> NotificationRepository:
+    """
+    Return a NotificationRepository instance.
+    """
+
+    return NotificationRepository(
+        db=db,
+    )
+
+
+# ==========================================================
 # Dependency Aliases
 # ==========================================================
 
@@ -200,42 +226,56 @@ UserRepositoryDep = Annotated[
     Depends(get_user_repository),
 ]
 
+
 ParkingFacilityRepositoryDep = Annotated[
     ParkingFacilityRepository,
     Depends(get_parking_facility_repository),
 ]
+
 
 ParkingZoneRepositoryDep = Annotated[
     ParkingZoneRepository,
     Depends(get_parking_zone_repository),
 ]
 
+
 ParkingBayRepositoryDep = Annotated[
     ParkingBayRepository,
     Depends(get_parking_bay_repository),
 ]
+
 
 ParkingSessionRepositoryDep = Annotated[
     ParkingSessionRepository,
     Depends(get_parking_session_repository),
 ]
 
+
 ParkingReservationRepositoryDep = Annotated[
     ParkingReservationRepository,
     Depends(get_parking_reservation_repository),
 ]
+
 
 ParkingTariffRepositoryDep = Annotated[
     ParkingTariffRepository,
     Depends(get_parking_tariff_repository),
 ]
 
+
 PaymentRepositoryDep = Annotated[
     PaymentRepository,
     Depends(get_payment_repository),
 ]
 
+
 VehicleRepositoryDep = Annotated[
     VehicleRepository,
     Depends(get_vehicle_repository),
+]
+
+
+NotificationRepositoryDep = Annotated[
+    NotificationRepository,
+    Depends(get_notification_repository),
 ]
