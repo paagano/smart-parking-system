@@ -18,9 +18,11 @@ Responsibilities
 - Reservation -> Session conversion
 - Pricing orchestration
 - Parking bay state transitions
+- Session notifications
 
 Persistence is delegated to the Repository layer.
 Pricing calculations are delegated to PricingService.
+Notification creation is delegated to NotificationService.
 """
 
 from __future__ import annotations
@@ -37,6 +39,9 @@ from app.exceptions.handlers import (
 
 from app.models.enums import (
     EntryMethod,
+    NotificationChannel,
+    NotificationPriority,
+    NotificationType,
     SessionSource,
     SessionStatus,
     VehicleType,
@@ -61,13 +66,19 @@ from app.services.pricing_service import (
     PricingService,
 )
 
+from app.services.notification_service import (
+    NotificationService,
+)
+
+from app.schemas.notification import (
+    NotificationCreate,
+)
+
 from app.schemas.parking_session import (
     ParkingSessionCheckout,
     ParkingSessionCreate,
     ParkingSessionUpdate,
 )
-
-# from app.exceptions.handlers import NotFoundException
 
 
 class ParkingSessionService:
@@ -79,6 +90,7 @@ class ParkingSessionService:
     • Guest Walk-ins
     • Registered Customer Walk-ins
     • Reservation Check-ins
+    • Session Notifications
 
     Future support:
 
@@ -97,11 +109,59 @@ class ParkingSessionService:
         parking_bay_repository: ParkingBayRepository,
         pricing_service: PricingService,
         vehicle_repository: VehicleRepository,
+        notification_service: NotificationService,
     ):
         self.repository = repository
         self.parking_bay_repository = parking_bay_repository
         self.pricing_service = pricing_service
         self.vehicle_repository = vehicle_repository
+        self.notification_service = notification_service
+
+    # ==========================================================
+    # Notification Helper
+    # ==========================================================
+
+    async def _create_session_notification(
+        self,
+        *,
+        parking_session: ParkingSession,
+        notification_type: NotificationType,
+        title: str,
+        message: str,
+    ) -> None:
+        """
+        Create an in-app notification for a parking session event.
+
+        The session operation is committed before this method is
+        called.
+
+        Notification failures are intentionally isolated from the
+        core parking session operation so that an already successful
+        parking transaction is not converted into a failed operation
+        because of a notification problem.
+        """
+
+        try:
+            await self.notification_service.create_notification(
+                data=NotificationCreate(
+                    user_id=parking_session.customer_id,
+                    type=notification_type,
+                    channel=NotificationChannel.IN_APP,
+                    priority=NotificationPriority.NORMAL,
+                    title=title,
+                    message=message,
+                    related_entity_type="PARKING_SESSION",
+                    related_entity_id=parking_session.id,
+                ),
+            )
+
+        except Exception:
+            # Notification creation must not break an already
+            # successfully committed parking session operation.
+            #
+            # Proper logging/observability can be introduced later
+            # as part of the Notification Delivery hardening phase.
+            pass
 
     # ==========================================================
     # Validation Helpers
@@ -114,6 +174,7 @@ class ParkingSessionService:
         """
         Validate and normalize a vehicle registration.
         """
+
         registration = registration.strip().upper()
 
         if not registration:
@@ -226,6 +287,7 @@ class ParkingSessionService:
         """
         Ensure vehicle has no active session.
         """
+
         exists = await self.repository.active_session_exists(
             registration
         )
@@ -242,6 +304,7 @@ class ParkingSessionService:
         """
         Ensure parking bay is available.
         """
+
         occupied = await self.repository.active_bay_session_exists(
             parking_bay_id
         )
@@ -262,6 +325,7 @@ class ParkingSessionService:
         """
         Retrieve a parking session by its ID.
         """
+
         parking_session = await self.repository.get_by_id(
             session_id
         )
@@ -280,6 +344,7 @@ class ParkingSessionService:
         """
         Retrieve a parking session by its session number.
         """
+
         parking_session = await self.repository.get_by_session_number(
             session_number
         )
@@ -298,6 +363,7 @@ class ParkingSessionService:
         """
         Retrieve the active parking session for a vehicle.
         """
+
         registration = self._validate_registration(
             registration
         )
@@ -313,6 +379,7 @@ class ParkingSessionService:
         """
         Retrieve all parking sessions for a vehicle.
         """
+
         registration = self._validate_registration(
             registration
         )
@@ -327,6 +394,7 @@ class ParkingSessionService:
         """
         Return all active parking sessions.
         """
+
         return await self.repository.get_active_sessions()
 
     async def list_completed(
@@ -335,6 +403,7 @@ class ParkingSessionService:
         """
         Return all completed parking sessions.
         """
+
         return await self.repository.get_completed_sessions()
 
     async def search_registration(
@@ -344,6 +413,7 @@ class ParkingSessionService:
         """
         Search parking sessions by vehicle registration.
         """
+
         registration = registration.strip().upper()
 
         if not registration:
@@ -433,6 +503,7 @@ class ParkingSessionService:
 
             vehicle_registration=registration,
             vehicle_type=vehicle_type,
+            billing_type=parking_session_data.billing_type,
 
             status=SessionStatus.ACTIVE,
 
@@ -446,7 +517,6 @@ class ParkingSessionService:
             ),
 
             notes=parking_session_data.notes,
-
         )
 
         # ======================================================
@@ -484,6 +554,21 @@ class ParkingSessionService:
             parking_session,
         )
 
+        # ======================================================
+        # Notification
+        # ======================================================
+
+        await self._create_session_notification(
+            parking_session=parking_session,
+            notification_type=NotificationType.SESSION_CHECKED_IN,
+            title="Parking Session Started",
+            message=(
+                f"Your parking session "
+                f"{parking_session.session_number} "
+                f"has started successfully."
+            ),
+        )
+
         return parking_session
 
     # ==========================================================
@@ -509,6 +594,7 @@ class ParkingSessionService:
                 ↓
         Bay becomes OCCUPIED
         """
+
         await self._ensure_vehicle_not_parked(
             reservation.vehicle_registration,
         )
@@ -560,6 +646,21 @@ class ParkingSessionService:
 
         await self.repository.db.refresh(
             parking_session,
+        )
+
+        # ==========================================================
+        # Notification
+        # ==========================================================
+
+        await self._create_session_notification(
+            parking_session=parking_session,
+            notification_type=NotificationType.SESSION_CHECKED_IN,
+            title="Parking Session Started",
+            message=(
+                f"Your parking session "
+                f"{parking_session.session_number} "
+                f"has started successfully."
+            ),
         )
 
         return parking_session
@@ -659,6 +760,23 @@ class ParkingSessionService:
             parking_session,
         )
 
+        # ======================================================
+        # Notification
+        # ======================================================
+
+        await self._create_session_notification(
+            parking_session=parking_session,
+            notification_type=NotificationType.SESSION_CHECKED_OUT,
+            title="Parking Session Completed",
+            message=(
+                f"Your parking session "
+                f"{parking_session.session_number} "
+                f"has been completed. "
+                f"Parking amount: "
+                f"KES {parking_session.calculated_amount}."
+            ),
+        )
+
         return parking_session
 
     # ==========================================================
@@ -677,6 +795,7 @@ class ParkingSessionService:
         Session lifecycle fields are managed by
         dedicated business workflows.
         """
+
         parking_session = await self.get_by_id(
             session_id,
         )
@@ -688,6 +807,7 @@ class ParkingSessionService:
         #
         # Validate registration
         #
+
         if "vehicle_registration" in update_data:
             update_data["vehicle_registration"] = (
                 self._validate_registration(
@@ -698,6 +818,7 @@ class ParkingSessionService:
         #
         # Validate parking bay
         #
+
         if "parking_bay_id" in update_data:
             await self._validate_bay(
                 update_data["parking_bay_id"],
@@ -706,6 +827,7 @@ class ParkingSessionService:
         #
         # Apply updates
         #
+
         for field, value in update_data.items():
             setattr(
                 parking_session,
@@ -738,6 +860,7 @@ class ParkingSessionService:
 
         Active sessions cannot be deleted.
         """
+
         parking_session = await self.get_by_id(
             session_id,
         )
@@ -753,6 +876,7 @@ class ParkingSessionService:
         # If the bay somehow wasn't released,
         # ensure it is available again.
         #
+
         await self.parking_bay_repository.release_bay(
             parking_session.parking_bay_id,
         )
@@ -775,6 +899,7 @@ class ParkingSessionService:
         Ensure the supplied vehicle does not already
         have an active parking session.
         """
+
         if await self.repository.active_session_exists(
             registration,
         ):
@@ -789,6 +914,7 @@ class ParkingSessionService:
         """
         Ensure the supplied parking bay is available.
         """
+
         if await self.repository.active_bay_session_exists(
             parking_bay_id,
         ):
@@ -809,6 +935,7 @@ class ParkingSessionService:
         - Parking bay must be active.
         - Parking bay must be reservable.
         """
+
         parking_bay = await self.parking_bay_repository.get_by_id(
             parking_bay_id,
         )
@@ -836,8 +963,9 @@ class ParkingSessionService:
         Determine whether a parking bay currently has
         an active parking session.
         """
+
         return await self.repository.has_active_session(
-            parking_bay_id,
+            parking_bay_id
         )
 
     # ==========================================================
@@ -854,6 +982,7 @@ class ParkingSessionService:
         -------
         PS-4F7A8C91DE
         """
+
         return "PS-" + uuid4().hex[:10].upper()
 
     # ==========================================================

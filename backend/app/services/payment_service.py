@@ -31,6 +31,9 @@ from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enums import (
+    NotificationChannel,
+    NotificationPriority,
+    NotificationType,
     PaymentMethod,
     PaymentPurpose,
     PaymentStatus,
@@ -51,6 +54,7 @@ from app.repositories.parking_session_repository import (
     ParkingSessionRepository,
 )
 from app.schemas.mpesa_callback import MpesaCallbackRequest
+from app.schemas.notification import NotificationCreate
 from app.schemas.payment import (
     PaymentCreate,
     RefundCreate,
@@ -60,6 +64,7 @@ from app.schemas.payment import (
     WalletTopUpCreate,
 )
 from app.schemas.payment_provider import PaymentProviderResponse
+from app.services.notification_service import NotificationService
 from app.services.payment_providers.factory import PaymentProviderFactory
 from app.services.wallet_service import WalletService
 
@@ -77,6 +82,7 @@ class PaymentService:
         reservation_repository: ParkingReservationRepository,
         session_repository: ParkingSessionRepository,
         wallet_service: WalletService,
+        notification_service: NotificationService,
     ) -> None:
         self.db = db
         self.repository = repository
@@ -88,6 +94,16 @@ class PaymentService:
         # Wallet operations are delegated to WalletService.
         #
         self.wallet_service = wallet_service
+
+        #
+        # Notification integration.
+        #
+        # Notification failures are isolated from the core
+        # payment transaction so a successful payment is never
+        # converted into a failed operation because notification
+        # creation fails.
+        #
+        self.notification_service = notification_service
 
     # ==========================================================
     # Internal Helpers
@@ -111,6 +127,46 @@ class PaymentService:
         Normalize a monetary value to two decimal places.
         """
         return value.quantize(Decimal("0.01"))
+
+    async def _create_payment_notification(
+        self,
+        *,
+        payment: PaymentTransaction,
+        notification_type: NotificationType,
+        title: str,
+        message: str,
+    ) -> None:
+        """
+        Create an in-app notification for a payment event.
+
+        Payment notifications are deliberately isolated from the
+        payment transaction. A notification failure must never cause
+        an already successful payment operation to fail or roll back.
+
+        Notifications are currently persisted as IN_APP messages with
+        PENDING delivery status. Email, SMS and push delivery will be
+        handled by the notification channel-delivery layer later.
+        """
+
+        if payment.customer_id is None:
+            return
+
+        try:
+            await self.notification_service.create_notification(
+                data=NotificationCreate(
+                    user_id=payment.customer_id,
+                    type=notification_type,
+                    channel=NotificationChannel.IN_APP,
+                    priority=NotificationPriority.NORMAL,
+                    title=title,
+                    message=message,
+                    related_entity_type="PAYMENT_TRANSACTION",
+                    related_entity_id=payment.id,
+                ),
+            )
+        except Exception:
+            # Notification failures must not break payment processing.
+            pass
 
     async def _get_customer_wallet(self, customer_id: int) -> Wallet:
         """
@@ -324,6 +380,33 @@ class PaymentService:
             #
             await self.repository.refresh(payment_transaction)
 
+            #
+            # Notification.
+            #
+            if payment_transaction.status == PaymentStatus.PENDING:
+                await self._create_payment_notification(
+                    payment=payment_transaction,
+                    notification_type=NotificationType.PAYMENT_INITIATED,
+                    title="Payment Initiated",
+                    message=(
+                        f"Your payment "
+                        f"{payment_transaction.transaction_number} "
+                        f"has been initiated and is awaiting confirmation."
+                    ),
+                )
+            elif payment_transaction.status == PaymentStatus.SUCCESSFUL:
+                await self._create_payment_notification(
+                    payment=payment_transaction,
+                    notification_type=NotificationType.PAYMENT_SUCCESSFUL,
+                    title="Payment Successful",
+                    message=(
+                        f"Your payment "
+                        f"{payment_transaction.transaction_number} "
+                        f"of KES {payment_transaction.total_amount} "
+                        f"was successful."
+                    ),
+                )
+
             return payment_transaction
 
         except Exception:
@@ -471,6 +554,34 @@ class PaymentService:
             await self.repository.refresh(payment_transaction)
             await self.session_repository.refresh(parking_session)
 
+            #
+            # Notification.
+            #
+            if payment_transaction.status == PaymentStatus.PENDING:
+                await self._create_payment_notification(
+                    payment=payment_transaction,
+                    notification_type=NotificationType.PAYMENT_INITIATED,
+                    title="Payment Initiated",
+                    message=(
+                        f"Your payment "
+                        f"{payment_transaction.transaction_number} "
+                        f"for your parking session has been initiated "
+                        f"and is awaiting confirmation."
+                    ),
+                )
+            elif payment_transaction.status == PaymentStatus.SUCCESSFUL:
+                await self._create_payment_notification(
+                    payment=payment_transaction,
+                    notification_type=NotificationType.PAYMENT_SUCCESSFUL,
+                    title="Payment Successful",
+                    message=(
+                        f"Your parking session payment "
+                        f"{payment_transaction.transaction_number} "
+                        f"of KES {payment_transaction.total_amount} "
+                        f"was successful."
+                    ),
+                )
+
             return payment_transaction
 
         except Exception:
@@ -587,6 +698,18 @@ class PaymentService:
                 await self.repository.refresh(payment_transaction)
                 await self.reservation_repository.refresh(reservation)
 
+                await self._create_payment_notification(
+                    payment=payment_transaction,
+                    notification_type=NotificationType.PAYMENT_INITIATED,
+                    title="Payment Initiated",
+                    message=(
+                        f"Your payment "
+                        f"{payment_transaction.transaction_number} "
+                        f"for your parking reservation has been initiated "
+                        f"and is awaiting confirmation."
+                    ),
+                )
+
                 return payment_transaction
 
             # ======================================================
@@ -631,6 +754,18 @@ class PaymentService:
             #
             await self.repository.refresh(payment_transaction)
             await self.reservation_repository.refresh(reservation)
+
+            await self._create_payment_notification(
+                payment=payment_transaction,
+                notification_type=NotificationType.PAYMENT_SUCCESSFUL,
+                title="Payment Successful",
+                message=(
+                    f"Your reservation payment "
+                    f"{payment_transaction.transaction_number} "
+                    f"of KES {payment_transaction.total_amount} "
+                    f"was successful."
+                ),
+            )
 
             return payment_transaction
 
@@ -708,6 +843,16 @@ class PaymentService:
                 await self.repository.commit()
                 await self.repository.refresh(payment)
 
+                await self._create_payment_notification(
+                    payment=payment,
+                    notification_type=NotificationType.PAYMENT_FAILED,
+                    title="Payment Failed",
+                    message=(
+                        f"Your payment {payment.transaction_number} failed. "
+                        f"{payment.provider_status_message or 'The payment provider rejected the transaction.'}"
+                    ),
+                )
+
                 return payment
 
             #
@@ -761,6 +906,16 @@ class PaymentService:
             # Refresh payment.
             #
             await self.repository.refresh(payment)
+
+            await self._create_payment_notification(
+                payment=payment,
+                notification_type=NotificationType.PAYMENT_SUCCESSFUL,
+                title="Payment Successful",
+                message=(
+                    f"Your payment {payment.transaction_number} "
+                    f"of KES {payment.total_amount} was successful."
+                ),
+            )
 
             return payment
 
@@ -937,6 +1092,15 @@ class PaymentService:
             payment_transaction = await self._create_payment(payment)
 
             #
+            # A refund belongs to the customer of the original payment.
+            # RefundCreate may not carry customer_id, so inherit it from
+            # the original transaction before creating the notification.
+            # This is intentionally scoped to the refund workflow only.
+            #
+            payment_transaction.customer_id = original_payment.customer_id
+            await self.repository.save(payment_transaction)
+
+            #
             # Refund customer's wallet.
             #
             await self.wallet_service.credit_wallet(
@@ -960,6 +1124,16 @@ class PaymentService:
             await self.repository.save(original_payment)
             await self.repository.commit()
             await self.repository.refresh(payment_transaction)
+
+            await self._create_payment_notification(
+                payment=payment_transaction,
+                notification_type=NotificationType.PAYMENT_REFUNDED,
+                title="Payment Refunded",
+                message=(
+                    f"Your payment {original_payment.transaction_number} "
+                    f"has been refunded for KES {payment_transaction.total_amount}."
+                ),
+            )
 
             return payment_transaction
 

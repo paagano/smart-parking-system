@@ -16,6 +16,10 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from app.api.dependencies.notifications import (
+    NotificationServiceDep,
+)
+
 from app.api.dependencies.pricing import (
     PricingServiceDep,
 )
@@ -58,6 +62,7 @@ from app.services.payment_service import (
 from app.services.vehicle_service import (
     VehicleService,
 )
+
 
 # ==========================================================
 # Authentication Service
@@ -105,9 +110,14 @@ def get_parking_session_service(
     parking_bay_repository: ParkingBayRepositoryDep,
     pricing_service: PricingServiceDep,
     vehicle_repository: VehicleRepositoryDep,
+    notification_service: NotificationServiceDep,
 ) -> ParkingSessionService:
     """
     Return a ParkingSessionService instance.
+
+    NotificationService is injected so the Parking Session
+    service can create notifications for relevant session
+    lifecycle events.
     """
 
     return ParkingSessionService(
@@ -115,6 +125,7 @@ def get_parking_session_service(
         parking_bay_repository=parking_bay_repository,
         pricing_service=pricing_service,
         vehicle_repository=vehicle_repository,
+        notification_service=notification_service,
     )
 
 
@@ -150,9 +161,14 @@ def get_payment_service(
     reservation_repository: ParkingReservationRepositoryDep,
     session_repository: ParkingSessionRepositoryDep,
     wallet_service: WalletServiceDep,
+    notification_service: NotificationServiceDep,
 ) -> PaymentService:
     """
     Return a PaymentService instance.
+
+    NotificationService is injected so the Payment Service
+    can create notifications for relevant payment lifecycle
+    events.
     """
 
     return PaymentService(
@@ -161,11 +177,14 @@ def get_payment_service(
         reservation_repository=reservation_repository,
         session_repository=session_repository,
         wallet_service=wallet_service,
+        notification_service=notification_service,
     )
+
 
 # ==========================================================
 # Vehicle Service
 # ==========================================================
+
 
 def get_vehicle_service(
     repository: VehicleRepositoryDep,
@@ -182,6 +201,7 @@ def get_vehicle_service(
 # ==========================================================
 # Dependency Aliases
 # ==========================================================
+
 
 AuthServiceDep = Annotated[
     AuthService,

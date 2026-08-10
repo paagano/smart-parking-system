@@ -9,6 +9,8 @@ This module composes the Reservation subsystem by wiring together:
 - ParkingReservationRepository
 - ParkingBayRepository
 - ParkingSessionService
+- VehicleRepository
+- NotificationService
 
 Business logic belongs in the services.
 Persistence belongs in the repositories.
@@ -30,13 +32,18 @@ from app.api.dependencies.services import (
     ParkingSessionServiceDep,
 )
 
+from app.api.dependencies.pricing import (
+    PricingServiceDep,
+)
+
+from app.api.dependencies.notifications import (
+    NotificationServiceDep,
+)
+
 from app.services.parking_reservation_service import (
     ParkingReservationService,
 )
 
-from app.api.dependencies.pricing import (
-    PricingServiceDep,
-)
 
 # ==========================================================
 # Parking Reservation Service
@@ -49,6 +56,7 @@ def get_parking_reservation_service(
     pricing_service: PricingServiceDep,
     parking_session_service: ParkingSessionServiceDep,
     vehicle_repository: VehicleRepositoryDep,
+    notification_service: NotificationServiceDep,
 ) -> ParkingReservationService:
     """
     Return a ParkingReservationService instance.
@@ -60,6 +68,7 @@ def get_parking_reservation_service(
         pricing_service=pricing_service,
         parking_session_service=parking_session_service,
         vehicle_repository=vehicle_repository,
+        notification_service=notification_service,
     )
 
 

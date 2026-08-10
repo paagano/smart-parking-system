@@ -18,6 +18,7 @@ from pydantic import (
 )
 
 from app.models.enums import (
+    BillingType,
     EntryMethod,
     ExitMethod,
     PaymentStatus,
@@ -82,6 +83,14 @@ class ParkingSessionBase(BaseModel):
         description=(
             "Vehicle type. Required when vehicle_id is not supplied."
         ),
+    )
+
+    billing_type: BillingType = Field(
+    ...,
+    description=(
+        "Billing strategy used to calculate parking charges. "
+        "Supported values: HOURLY, DAILY, FLAT."
+    ),
     )
 
     session_source: SessionSource
@@ -236,6 +245,8 @@ class ParkingSessionResponse(BaseModel):
     vehicle_registration: str
 
     vehicle_type: VehicleType
+
+    billing_type: BillingType
 
     session_source: SessionSource
 
