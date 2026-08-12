@@ -36,6 +36,10 @@ from app.api.endpoints.payments import (
     router as payments_router,
 )
 
+from app.api.endpoints.receipts import (
+    router as receipts_router,
+)
+
 from app.api.endpoints.wallets import (
     router as wallets_router,
 )
@@ -132,6 +136,13 @@ router.include_router(
     payments_router,
 )
 
+# ==========================================================
+# Receipts
+# ==========================================================
+
+router.include_router(
+    receipts_router,
+)
 
 # ==========================================================
 # Wallets

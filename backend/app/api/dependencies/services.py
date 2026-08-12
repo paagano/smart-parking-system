@@ -59,6 +59,10 @@ from app.services.payment_service import (
     PaymentService,
 )
 
+from app.api.dependencies.receipts import (
+    ReceiptServiceDep,
+)
+
 from app.services.vehicle_service import (
     VehicleService,
 )
@@ -162,6 +166,7 @@ def get_payment_service(
     session_repository: ParkingSessionRepositoryDep,
     wallet_service: WalletServiceDep,
     notification_service: NotificationServiceDep,
+    receipt_service: ReceiptServiceDep,
 ) -> PaymentService:
     """
     Return a PaymentService instance.
@@ -178,7 +183,16 @@ def get_payment_service(
         session_repository=session_repository,
         wallet_service=wallet_service,
         notification_service=notification_service,
+        receipt_service=receipt_service,
     )
+
+# ==========================================================
+# Receipt Service
+# ==========================================================
+
+# ReceiptServiceDep is imported from the Receipt dependency
+# module so API routes can inject the fully configured
+# ReceiptService directly.
 
 
 # ==========================================================

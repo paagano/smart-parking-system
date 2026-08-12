@@ -65,6 +65,7 @@ from app.schemas.payment import (
 )
 from app.schemas.payment_provider import PaymentProviderResponse
 from app.services.notification_service import NotificationService
+from app.services.receipt_service import ReceiptService
 from app.services.payment_providers.factory import PaymentProviderFactory
 from app.services.wallet_service import WalletService
 
@@ -83,6 +84,7 @@ class PaymentService:
         session_repository: ParkingSessionRepository,
         wallet_service: WalletService,
         notification_service: NotificationService,
+        receipt_service: ReceiptService,
     ) -> None:
         self.db = db
         self.repository = repository
@@ -104,6 +106,7 @@ class PaymentService:
         # creation fails.
         #
         self.notification_service = notification_service
+        self.receipt_service = receipt_service
 
     # ==========================================================
     # Internal Helpers
@@ -159,7 +162,11 @@ class PaymentService:
                     channel=NotificationChannel.IN_APP,
                     priority=NotificationPriority.NORMAL,
                     title=title,
-                    message=message,
+                    message=message.replace(
+                        "Your payment ",
+                        f"Your {payment.payment_purpose.value} payment ",
+                        1,
+                    ),
                     related_entity_type="PAYMENT_TRANSACTION",
                     related_entity_id=payment.id,
                 ),
@@ -175,6 +182,35 @@ class PaymentService:
         Wallet lookup is delegated to WalletService.
         """
         return await self.wallet_service.get_wallet_by_customer(customer_id)
+
+    async def _generate_payment_receipt(
+        self,
+        *,
+        payment: PaymentTransaction,
+    ) -> None:
+        """
+        Create and generate the receipt for a successful payment.
+
+        Receipt failures are isolated from the already successful
+        payment transaction.
+        """
+
+        try:
+            receipt = await self.receipt_service.create_receipt(
+                payment=payment,
+            )
+
+            await self.receipt_service.generate_receipt(
+                receipt_id=receipt.id,
+            )
+
+        except Exception:
+            #
+            # Payment has already succeeded. A receipt-generation
+            # failure must not turn the successful payment into
+            # a failed API operation.
+            #
+            pass
 
     # ==========================================================
     # Internal Payment Creator
@@ -381,6 +417,13 @@ class PaymentService:
             await self.repository.refresh(payment_transaction)
 
             #
+            # Receipt.
+            #
+            if payment_transaction.status == PaymentStatus.SUCCESSFUL:
+                await self._generate_payment_receipt(
+                    payment=payment_transaction,
+                )
+            #
             # Notification.
             #
             if payment_transaction.status == PaymentStatus.PENDING:
@@ -553,6 +596,14 @@ class PaymentService:
             #
             await self.repository.refresh(payment_transaction)
             await self.session_repository.refresh(parking_session)
+
+            #
+            # Receipt.
+            #
+            if payment_transaction.status == PaymentStatus.SUCCESSFUL:
+                await self._generate_payment_receipt(
+                    payment=payment_transaction,
+                )
 
             #
             # Notification.
@@ -754,6 +805,14 @@ class PaymentService:
             #
             await self.repository.refresh(payment_transaction)
             await self.reservation_repository.refresh(reservation)
+
+            #
+            # Receipt.
+            #
+            if payment_transaction.status == PaymentStatus.SUCCESSFUL:
+                await self._generate_payment_receipt(
+                    payment=payment_transaction,
+                )
 
             await self._create_payment_notification(
                 payment=payment_transaction,

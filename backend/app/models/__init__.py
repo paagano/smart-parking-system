@@ -7,9 +7,11 @@ from .parking_bay import ParkingBay
 from .parking_session import ParkingSession
 from .parking_reservation import ParkingReservation
 from .payment_transaction import PaymentTransaction
+from .receipt import Receipt
 from .wallet import Wallet
 from .wallet_transaction import WalletTransaction
 from .vehicle import Vehicle
+
 
 __all__ = [
     "BaseModel",
@@ -21,6 +23,7 @@ __all__ = [
     "ParkingTariff",
     "ParkingReservation",
     "PaymentTransaction",
+    "Receipt",
     "Wallet",
     "WalletTransaction",
     "Vehicle",

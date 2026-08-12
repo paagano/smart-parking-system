@@ -58,6 +58,10 @@ from app.repositories.notification_repository import (
     NotificationRepository,
 )
 
+from app.repositories.receipt_repository import (
+    ReceiptRepository,
+)
+
 
 # ==========================================================
 # Database Dependency
@@ -184,6 +188,22 @@ def get_payment_repository(
         db=db,
     )
 
+# ==========================================================
+# Receipt Repository
+# ==========================================================
+
+
+def get_receipt_repository(
+    db: DbSession,
+) -> ReceiptRepository:
+    """
+    Return a ReceiptRepository instance.
+    """
+
+    return ReceiptRepository(
+        db=db,
+    )
+
 
 # ==========================================================
 # Vehicle Repository
@@ -268,6 +288,10 @@ PaymentRepositoryDep = Annotated[
     Depends(get_payment_repository),
 ]
 
+ReceiptRepositoryDep = Annotated[
+    ReceiptRepository,
+    Depends(get_receipt_repository),
+]
 
 VehicleRepositoryDep = Annotated[
     VehicleRepository,

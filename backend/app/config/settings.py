@@ -70,6 +70,18 @@ class Settings(BaseSettings):
     MPESA_TIMEOUT_SECONDS: int = 30
 
     # ==========================================================
+    # Storage (Dual storage - Local storage for development, Supaase for production)
+    # ==========================================================
+
+    STORAGE_BACKEND: str = "local"
+    LOCAL_STORAGE_PATH: str = "storage"
+
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+    SUPABASE_BUCKET: str = "receipts"
+    SUPABASE_PUBLIC_BUCKET: bool = False
+
+    # ==========================================================
     # Machine Learning
     # ==========================================================
 

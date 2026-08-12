@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -27,6 +28,9 @@ if TYPE_CHECKING:
     from app.models.parking_session import ParkingSession
     from app.models.parking_reservation import ParkingReservation
     from app.models.wallet_transaction import WalletTransaction
+    from typing import Any, Optional
+
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sqlalchemy import (
     JSON,
@@ -416,6 +420,15 @@ class PaymentTransaction(BaseModel):
         "WalletTransaction",
         foreign_keys="WalletTransaction.payment_transaction_id",
         back_populates="payment_transaction",
+    )
+
+    # 
+    # Receipts Relationships
+    #
+    receipt: Mapped[Any] = relationship(
+        "Receipt",
+        back_populates="payment_transaction",
+        uselist=False,
     )
 
     # ==========================================================
