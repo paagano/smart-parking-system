@@ -52,6 +52,10 @@ from app.api.endpoints.notifications import (
     router as notifications_router,
 )
 
+from app.api.endpoints.loyalty import (
+    router as loyalty_router,
+)
+
 
 router = APIRouter()
 
@@ -136,6 +140,7 @@ router.include_router(
     payments_router,
 )
 
+
 # ==========================================================
 # Receipts
 # ==========================================================
@@ -143,6 +148,7 @@ router.include_router(
 router.include_router(
     receipts_router,
 )
+
 
 # ==========================================================
 # Wallets
@@ -168,6 +174,15 @@ router.include_router(
 
 router.include_router(
     notifications_router,
+)
+
+
+# ==========================================================
+# Loyalty
+# ==========================================================
+
+router.include_router(
+    loyalty_router,
 )
 
 

@@ -11,6 +11,8 @@ from .receipt import Receipt
 from .wallet import Wallet
 from .wallet_transaction import WalletTransaction
 from .vehicle import Vehicle
+from .loyalty_account import LoyaltyAccount
+from .loyalty_point_transaction import LoyaltyPointTransaction
 
 
 __all__ = [
@@ -27,4 +29,7 @@ __all__ = [
     "Wallet",
     "WalletTransaction",
     "Vehicle",
+    "LoyaltyAccount",
+    "LoyaltyAccountTransaction"
+
 ]

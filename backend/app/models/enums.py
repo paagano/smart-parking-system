@@ -595,3 +595,60 @@ class NotificationPriority(str, Enum):
     @property
     def label(self) -> str:
         return self.value.replace("_", " ").title()
+
+# ==========================================================
+# Loyalty
+# ==========================================================
+
+class LoyaltyTier(str, Enum):
+    """
+    Loyalty membership tier.
+
+    The tier thresholds and benefits are defined separately
+    from the enum.
+    """
+
+    BRONZE = "BRONZE"
+    SILVER = "SILVER"
+    GOLD = "GOLD"
+    PLATINUM = "PLATINUM"
+
+class LoyaltyPointTransactionType(str, Enum):
+    """
+    Type of loyalty point ledger transaction.
+    """
+
+    EARN = "EARN"
+    REDEEM = "REDEEM"
+    REFERRAL_BONUS = "REFERRAL_BONUS"
+    ADJUSTMENT = "ADJUSTMENT"
+    REVERSAL = "REVERSAL"
+    EXPIRATION = "EXPIRATION"
+
+class LoyaltyRewardType(str, Enum):
+    """
+    Type of loyalty reward.
+    """
+
+    DISCOUNT = "DISCOUNT"
+    FREE_PARKING = "FREE_PARKING"
+    COUPON = "COUPON"
+
+class ReferralStatus(str, Enum):
+    """
+    Lifecycle status of a customer referral.
+    """
+
+    PENDING = "PENDING"
+    QUALIFIED = "QUALIFIED"
+    REWARDED = "REWARDED"
+    CANCELLED = "CANCELLED"
+
+class RewardRedemptionStatus(str, Enum):
+    """
+    Lifecycle status of a loyalty reward redemption.
+    """
+
+    PENDING = "PENDING"
+    REDEEMED = "REDEEMED"
+    CANCELLED = "CANCELLED"

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,6 +45,7 @@ from app.models.enums import (
     WalletTransactionType,
 )
 from app.models.payment_transaction import PaymentTransaction
+from app.models.enums import LoyaltyPointTransactionType
 from app.models.wallet import Wallet
 from app.repositories.payment_repository import PaymentRepository
 from app.repositories.parking_reservation_repository import (
@@ -53,6 +54,7 @@ from app.repositories.parking_reservation_repository import (
 from app.repositories.parking_session_repository import (
     ParkingSessionRepository,
 )
+from app.repositories.loyalty_repository import LoyaltyRepository
 from app.schemas.mpesa_callback import MpesaCallbackRequest
 from app.schemas.notification import NotificationCreate
 from app.schemas.payment import (
@@ -68,6 +70,22 @@ from app.services.notification_service import NotificationService
 from app.services.receipt_service import ReceiptService
 from app.services.payment_providers.factory import PaymentProviderFactory
 from app.services.wallet_service import WalletService
+from app.services.loyalty_service import LoyaltyService
+
+
+# ==========================================================
+# Loyalty Configuration
+# ==========================================================
+
+# 1 loyalty point for every KES 100 successfully paid.
+#
+# Keep this configurable so the commercial loyalty rule can be
+# changed later without changing the payment workflow.
+# Example:
+#     Decimal("0.01") -> 1 point per KES 100
+#     Decimal("0.02") -> 1 point per KES 50
+#
+LOYALTY_POINTS_PER_KES = Decimal("0.01")
 
 
 class PaymentService:
@@ -107,6 +125,19 @@ class PaymentService:
         #
         self.notification_service = notification_service
         self.receipt_service = receipt_service
+
+        #
+        # Loyalty integration.
+        #
+        # Loyalty persistence is kept behind LoyaltyRepository and
+        # business rules are delegated to LoyaltyService. The existing
+        # PaymentService constructor remains unchanged so current
+        # dependency wiring is not disturbed.
+        #
+        self.loyalty_service = LoyaltyService(
+            db=db,
+            repository=LoyaltyRepository(db),
+        )
 
     # ==========================================================
     # Internal Helpers
@@ -152,7 +183,7 @@ class PaymentService:
         """
 
         if payment.customer_id is None:
-            return
+            return 0
 
         try:
             await self.notification_service.create_notification(
@@ -211,6 +242,92 @@ class PaymentService:
             # a failed API operation.
             #
             pass
+
+    async def _award_loyalty_points(
+        self,
+        *,
+        payment: PaymentTransaction,
+    ) -> int:
+        """
+        Award loyalty points for an eligible successful parking payment.
+
+        Rules
+        -----
+        - Only SUCCESSFUL payments earn points.
+        - PARKING_SESSION and RESERVATION payments are eligible.
+        - WALLET_TOPUP payments do not earn parking loyalty points.
+        - The same payment cannot earn points twice because the payment
+          transaction ID is used as the loyalty ledger reference and
+          LoyaltyService provides idempotency.
+        - Refund/reversal handling will be added later by reversing the
+          corresponding loyalty ledger entry.
+
+        Loyalty failures are isolated from the already successful payment
+        so the payment itself is never converted into a failed operation.
+        """
+
+        if payment.status != PaymentStatus.SUCCESSFUL:
+            return 0
+
+        if payment.customer_id is None:
+            return 0
+
+        if payment.payment_purpose not in (
+            PaymentPurpose.PARKING_SESSION,
+            PaymentPurpose.RESERVATION,
+        ):
+            return 0
+
+        try:
+            #
+            # Calculate points using the configurable commercial rate.
+            # Decimal arithmetic avoids floating-point rounding issues.
+            #
+            points = int(
+                (
+                    payment.total_amount
+                    * LOYALTY_POINTS_PER_KES
+                ).to_integral_value(
+                    rounding=ROUND_FLOOR,
+                )
+            )
+
+            # Payments below the configured earning threshold earn zero.
+            if points <= 0:
+                return 0
+
+            #
+            # Every customer who makes an eligible successful parking
+            # payment must have a loyalty account. Create it lazily when
+            # the first eligible payment is completed.
+            #
+            await self.loyalty_service.get_or_create_account(
+                customer_id=payment.customer_id,
+            )
+
+            await self.loyalty_service.award_points(
+                customer_id=payment.customer_id,
+                points=points,
+                transaction_type=(
+                    LoyaltyPointTransactionType.EARN
+                ),
+                reference_type="PAYMENT_TRANSACTION",
+                reference_id=payment.id,
+                description=(
+                    f"Earned {points} loyalty points for "
+                    f"{payment.payment_purpose.value} payment "
+                    f"{payment.transaction_number}."
+                ),
+            )
+
+            return points
+
+        except Exception:
+            #
+            # The payment has already succeeded. Loyalty processing must
+            # never make the successful financial transaction fail.
+            #
+            return 0
 
     # ==========================================================
     # Internal Payment Creator
@@ -598,6 +715,25 @@ class PaymentService:
             await self.session_repository.refresh(parking_session)
 
             #
+            # Loyalty points.
+            #
+            if payment_transaction.status == PaymentStatus.SUCCESSFUL:
+                loyalty_points = await self._award_loyalty_points(
+                    payment=payment_transaction,
+                )
+
+                payment_transaction.loyalty_points_earned = loyalty_points
+
+                await self.repository.save(
+                    payment_transaction,
+                )
+
+                await self.repository.commit()
+
+                await self.repository.refresh(
+                    payment_transaction,
+                )
+            #
             # Receipt.
             #
             if payment_transaction.status == PaymentStatus.SUCCESSFUL:
@@ -807,6 +943,26 @@ class PaymentService:
             await self.reservation_repository.refresh(reservation)
 
             #
+            # Loyalty points.
+            #
+            if payment_transaction.status == PaymentStatus.SUCCESSFUL:
+                loyalty_points = await self._award_loyalty_points(
+                    payment=payment_transaction,
+                )
+
+                payment_transaction.loyalty_points_earned = loyalty_points
+
+                await self.repository.save(
+                    payment_transaction,
+                )
+
+                await self.repository.commit()
+
+                await self.repository.refresh(
+                    payment_transaction,
+                )
+
+            #
             # Receipt.
             #
             if payment_transaction.status == PaymentStatus.SUCCESSFUL:
@@ -967,6 +1123,25 @@ class PaymentService:
             await self.repository.refresh(payment)
 
             #
+            # Loyalty points.
+            #
+            loyalty_points = await self._award_loyalty_points(
+                payment=payment,
+            )
+
+            payment.loyalty_points_earned = loyalty_points
+
+            await self.repository.save(
+                payment,
+            )
+
+            await self.repository.commit()
+
+            await self.repository.refresh(
+                payment,
+            )
+
+            #
             # Receipt.
             #
             await self._generate_payment_receipt(
@@ -1051,29 +1226,6 @@ class PaymentService:
         await self.session_repository.save(parking_session)
         await self.session_repository.refresh(parking_session)
 
-    async def _complete_wallet_topup(
-        self,
-        *,
-        payment: PaymentTransaction,
-        paid_at: datetime,
-    ) -> None:
-        """
-        Complete a successful wallet top-up.
-
-        This method is called after an asynchronous
-        payment provider (e.g. M-Pesa) confirms that
-        payment has been received.
-        """
-        wallet = await self._get_customer_wallet(payment.customer_id)
-
-        await self.wallet_service.credit_wallet(
-            wallet_id=wallet.id,
-            amount=payment.total_amount,
-            payment_transaction_id=payment.id,
-            created_by=payment.customer_id,
-            description="Wallet Top-up",
-            reference=payment.transaction_number,
-        )
 
     async def _complete_wallet_topup(
         self,

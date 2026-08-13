@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from app.models.loyalty_account import LoyaltyAccount
     from app.models.parking_reservation import ParkingReservation
     from app.models.parking_session import ParkingSession
     from app.models.wallet import Wallet
@@ -21,8 +22,6 @@ from sqlalchemy.orm import (
 
 from app.models.base_model import BaseModel
 from app.models.enums import UserRole
-
-
 
 
 class User(BaseModel):
@@ -124,6 +123,17 @@ class User(BaseModel):
         passive_deletes=True,
     )
 
+    # Loyalty Account
+    loyalty_account: Mapped[
+        "LoyaltyAccount | None"
+    ] = relationship(
+        "LoyaltyAccount",
+        back_populates="customer",
+        uselist=False,
+        passive_deletes=True,
+    )
+
+    # Vehicles
     vehicles: Mapped[list["Vehicle"]] = relationship(
         "Vehicle",
         back_populates="customer",
