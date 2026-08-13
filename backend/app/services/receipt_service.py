@@ -793,19 +793,13 @@ class ReceiptService:
                 pdf_url
             )
 
-            receipt.generated_at = (
-                now
-            )
+            receipt.generated_at = now
 
-            receipt.available_at = (
-                now
-            )
+            receipt.available_at = now
 
             receipt.failure_reason = None
 
-            receipt.status = (
-                ReceiptStatus.AVAILABLE
-            )
+            receipt.status = ReceiptStatus.AVAILABLE
 
             await self.repository.save(
                 receipt,

@@ -966,6 +966,13 @@ class PaymentService:
             #
             await self.repository.refresh(payment)
 
+            #
+            # Receipt.
+            #
+            await self._generate_payment_receipt(
+                payment=payment,
+            )
+
             await self._create_payment_notification(
                 payment=payment,
                 notification_type=NotificationType.PAYMENT_SUCCESSFUL,
