@@ -13,13 +13,20 @@ Responsibilities
 - Loyalty point history
 - Lifetime point tracking
 - Loyalty tier evaluation
+- Loyalty notification integration
 
 Persistence is delegated to LoyaltyRepository.
 
 Business rules belong in this service.
+
+Notification delivery is delegated to NotificationService.
+Notification failures are deliberately isolated from core
+Loyalty business operations.
 """
 
 from __future__ import annotations
+
+import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,6 +38,9 @@ from app.exceptions.handlers import (
 from app.models.enums import (
     LoyaltyPointTransactionType,
     LoyaltyTier,
+    NotificationChannel,
+    NotificationPriority,
+    NotificationType,
 )
 
 from app.models.loyalty_account import (
@@ -44,6 +54,17 @@ from app.models.loyalty_point_transaction import (
 from app.repositories.loyalty_repository import (
     LoyaltyRepository,
 )
+
+from app.schemas.notification import (
+    NotificationCreate,
+)
+
+from app.services.notification_service import (
+    NotificationService,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 class LoyaltyService:
@@ -75,13 +96,34 @@ class LoyaltyService:
         self,
         db: AsyncSession,
         repository: LoyaltyRepository,
+        notification_service: NotificationService | None = None,
     ) -> None:
         """
         Create a LoyaltyService instance.
+
+        Parameters
+        ----------
+        db:
+            Current asynchronous database session.
+
+        repository:
+            LoyaltyRepository responsible for persistence.
+
+        notification_service:
+            Existing NotificationService used to create Loyalty
+            notifications.
+
+            This dependency is optional for backwards compatibility
+            with existing service-level tests and internal callers
+            that construct LoyaltyService directly.
+
+            Production API dependency wiring should provide the
+            NotificationService.
         """
 
         self.db = db
         self.repository = repository
+        self.notification_service = notification_service
 
     # ==========================================================
     # Loyalty Account
@@ -184,6 +226,17 @@ class LoyaltyService:
         is returned. This provides basic idempotency for business
         events such as payment-based point awards.
 
+        Notifications
+        -------------
+        After the Loyalty transaction is successfully committed:
+
+        - LOYALTY_POINTS_EARNED is generated.
+        - LOYALTY_TIER_UPGRADED is generated when the customer's
+          tier changes.
+
+        Notification failures are isolated and do not cause the
+        successful Loyalty transaction to fail.
+
         Raises
         ------
         BadRequestException
@@ -227,12 +280,18 @@ class LoyaltyService:
                 )
             )
 
-            for transaction in existing_transactions:
+            for existing_transaction in existing_transactions:
                 if (
-                    transaction.transaction_type
+                    existing_transaction.transaction_type
                     == transaction_type
                 ):
-                    return transaction
+                    return existing_transaction
+
+        # ------------------------------------------------------
+        # Capture Previous Tier
+        # ------------------------------------------------------
+
+        previous_tier = account.tier
 
         # ------------------------------------------------------
         # Update Account
@@ -245,9 +304,11 @@ class LoyaltyService:
         # Evaluate Tier
         # ------------------------------------------------------
 
-        account.tier = self._determine_tier(
+        new_tier = self._determine_tier(
             account.lifetime_points,
         )
+
+        account.tier = new_tier
 
         # ------------------------------------------------------
         # Create Ledger Transaction
@@ -267,11 +328,42 @@ class LoyaltyService:
             transaction,
         )
 
+        # ------------------------------------------------------
+        # Core Loyalty Transaction
+        # ------------------------------------------------------
+
         await self.db.commit()
 
         await self.db.refresh(
             transaction,
         )
+
+        await self.db.refresh(
+            account,
+        )
+
+        # ------------------------------------------------------
+        # Loyalty Notifications
+        #
+        # IMPORTANT:
+        # These happen AFTER the Loyalty transaction has been
+        # committed.
+        #
+        # Notification failures must never cause an already
+        # successful Loyalty operation to fail.
+        # ------------------------------------------------------
+
+        await self._create_points_earned_notification(
+            account=account,
+            transaction=transaction,
+        )
+
+        if previous_tier != new_tier:
+            await self._create_tier_upgraded_notification(
+                account=account,
+                previous_tier=previous_tier,
+                new_tier=new_tier,
+            )
 
         return transaction
 
@@ -343,12 +435,12 @@ class LoyaltyService:
                 )
             )
 
-            for transaction in existing_transactions:
+            for existing_transaction in existing_transactions:
                 if (
-                    transaction.transaction_type
+                    existing_transaction.transaction_type
                     == LoyaltyPointTransactionType.REDEEM
                 ):
-                    return transaction
+                    return existing_transaction
 
         # ------------------------------------------------------
         # Update Balance
@@ -591,6 +683,102 @@ class LoyaltyService:
         )
 
         return transaction
+
+    # ==========================================================
+    # Loyalty Notification Helpers
+    # ==========================================================
+
+    async def _create_points_earned_notification(
+        self,
+        *,
+        account: LoyaltyAccount,
+        transaction: LoyaltyPointTransaction,
+    ) -> None:
+        """
+        Create a Loyalty Points Earned notification.
+
+        Notification failures are intentionally swallowed and
+        logged so they cannot break the successful Loyalty
+        transaction.
+        """
+
+        if self.notification_service is None:
+            return
+
+        try:
+            await self.notification_service.create_notification(
+                data=NotificationCreate(
+                    user_id=account.customer_id,
+                    type=NotificationType.LOYALTY_POINTS_EARNED,
+                    channel=NotificationChannel.IN_APP,
+                    priority=NotificationPriority.NORMAL,
+                    title="Loyalty Points Earned",
+                    message=(
+                        f"You have earned {transaction.points} "
+                        f"loyalty points. Your current balance "
+                        f"is {account.points_balance} points."
+                    ),
+                    related_entity_type=(
+                        "LOYALTY_POINT_TRANSACTION"
+                    ),
+                    related_entity_id=transaction.id,
+                ),
+            )
+
+        except Exception:
+            logger.exception(
+                "Failed to create LOYALTY_POINTS_EARNED "
+                "notification for customer_id=%s, "
+                "transaction_id=%s.",
+                account.customer_id,
+                transaction.id,
+            )
+
+    async def _create_tier_upgraded_notification(
+        self,
+        *,
+        account: LoyaltyAccount,
+        previous_tier: LoyaltyTier,
+        new_tier: LoyaltyTier,
+    ) -> None:
+        """
+        Create a Loyalty Tier Upgraded notification.
+
+        Notification failures are intentionally swallowed and
+        logged so they cannot break the successful Loyalty
+        transaction.
+        """
+
+        if self.notification_service is None:
+            return
+
+        try:
+            await self.notification_service.create_notification(
+                data=NotificationCreate(
+                    user_id=account.customer_id,
+                    type=NotificationType.LOYALTY_TIER_UPGRADED,
+                    channel=NotificationChannel.IN_APP,
+                    priority=NotificationPriority.HIGH,
+                    title="Loyalty Tier Upgraded",
+                    message=(
+                        "Congratulations! Your loyalty tier "
+                        f"has been upgraded from "
+                        f"{previous_tier.value} to "
+                        f"{new_tier.value}."
+                    ),
+                    related_entity_type="LOYALTY_ACCOUNT",
+                    related_entity_id=account.id,
+                ),
+            )
+
+        except Exception:
+            logger.exception(
+                "Failed to create LOYALTY_TIER_UPGRADED "
+                "notification for customer_id=%s, "
+                "account_id=%s.",
+                account.customer_id,
+                account.id,
+            )
 
     # ==========================================================
     # Read Operations

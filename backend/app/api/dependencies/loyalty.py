@@ -1,13 +1,19 @@
 """
-Loyalty Service Dependencies.
+Loyalty Dependencies.
 
-Dependency Injection providers for the LoyaltyService.
+Dependency Injection providers for the Loyalty module.
 
-This module composes the LoyaltyService by wiring the
-LoyaltyRepository into the service.
+This module composes LoyaltyService by wiring together:
+
+- LoyaltyRepository
+- NotificationService
 
 Business logic belongs in LoyaltyService.
+
 Persistence belongs in LoyaltyRepository.
+
+Notification persistence and delivery belong in the
+Notification subsystem.
 """
 
 from __future__ import annotations
@@ -18,6 +24,10 @@ from fastapi import Depends
 
 from app.api.dependencies.repositories import (
     DbSession,
+)
+
+from app.api.dependencies.notifications import (
+    NotificationServiceDep,
 )
 
 from app.repositories.loyalty_repository import (
@@ -38,8 +48,8 @@ def get_loyalty_repository(
     db: DbSession,
 ) -> LoyaltyRepository:
     """
-    Return a LoyaltyRepository instance using the
-    current database session.
+    Return a LoyaltyRepository instance using the current
+    database session.
     """
 
     return LoyaltyRepository(
@@ -54,21 +64,27 @@ def get_loyalty_repository(
 
 def get_loyalty_service(
     db: DbSession,
+    repository: Annotated[
+        LoyaltyRepository,
+        Depends(get_loyalty_repository),
+    ],
+    notification_service: NotificationServiceDep,
 ) -> LoyaltyService:
     """
     Return a fully configured LoyaltyService instance.
 
-    The service receives the current database session and
-    a LoyaltyRepository backed by that same session.
-    """
+    The service receives:
 
-    repository = LoyaltyRepository(
-        db=db,
-    )
+    - Current database session.
+    - LoyaltyRepository backed by that session.
+    - Existing NotificationService for Loyalty event
+      notifications.
+    """
 
     return LoyaltyService(
         db=db,
         repository=repository,
+        notification_service=notification_service,
     )
 
 

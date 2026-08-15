@@ -38,6 +38,9 @@ from app.models.enums import (
     LoyaltyRewardType,
     LoyaltyTier,
     RewardRedemptionStatus,
+    NotificationChannel,
+    NotificationPriority,
+    NotificationType,
 )
 
 from app.models.loyalty_reward import (
@@ -56,6 +59,14 @@ from app.services.loyalty_service import (
     LoyaltyService,
 )
 
+from app.schemas.notification import (
+    NotificationCreateInternal,
+)
+
+from app.services.notification_service import (
+    NotificationService,
+)
+
 
 class LoyaltyRewardService:
     """
@@ -72,6 +83,7 @@ class LoyaltyRewardService:
         db: AsyncSession,
         repository: LoyaltyRewardRepository,
         loyalty_service: LoyaltyService,
+        notification_service: NotificationService,
     ) -> None:
         """
         Create a LoyaltyRewardService instance.
@@ -80,6 +92,7 @@ class LoyaltyRewardService:
         self.db = db
         self.repository = repository
         self.loyalty_service = loyalty_service
+        self.notification_service = notification_service
 
     # ==========================================================
     # Reward Catalogue
@@ -571,6 +584,26 @@ class LoyaltyRewardService:
 
         await self.db.refresh(
             redemption,
+        )
+
+        # ------------------------------------------------------
+        # Loyalty Reward Redeemed Notification
+        # ------------------------------------------------------
+
+        await self.notification_service.create_notification(
+            NotificationCreateInternal(
+                user_id=customer_id,
+                type=NotificationType.LOYALTY_REWARD_REDEEMED,
+                channel=NotificationChannel.IN_APP,
+                priority=NotificationPriority.NORMAL,
+                title="Loyalty Reward Redeemed",
+                message=(
+                    f"You have successfully redeemed the loyalty reward "
+                    f"'{reward.name}' for {reward.points_cost} points."
+                ),
+                related_entity_type="LOYALTY_REWARD_REDEMPTION",
+                related_entity_id=redemption.id,
+            )
         )
 
         # ------------------------------------------------------

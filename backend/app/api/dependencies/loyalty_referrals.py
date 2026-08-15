@@ -10,10 +10,15 @@ This module composes the LoyaltyReferralService by wiring:
     LoyaltyReferralRepository
         +
     LoyaltyService
+        +
+    NotificationService
 
 Business logic belongs in LoyaltyReferralService.
 
 Persistence belongs in LoyaltyReferralRepository.
+
+Notification persistence and delivery belong in the
+Notification subsystem.
 """
 
 from __future__ import annotations
@@ -24,6 +29,10 @@ from fastapi import Depends
 
 from app.api.dependencies.loyalty import (
     LoyaltyServiceDep,
+)
+
+from app.api.dependencies.notifications import (
+    NotificationServiceDep,
 )
 
 from app.api.dependencies.repositories import (
@@ -69,6 +78,7 @@ def get_loyalty_referral_service(
         Depends(get_loyalty_referral_repository),
     ],
     loyalty_service: LoyaltyServiceDep,
+    notification_service: NotificationServiceDep,
 ) -> LoyaltyReferralService:
     """
     Return a fully configured LoyaltyReferralService instance.
@@ -79,12 +89,15 @@ def get_loyalty_referral_service(
     - A LoyaltyReferralRepository backed by that session.
     - The existing LoyaltyService for loyalty-account and
       loyalty-point operations.
+    - The existing NotificationService for loyalty referral
+      notifications.
     """
 
     return LoyaltyReferralService(
         db=db,
         repository=repository,
         loyalty_service=loyalty_service,
+        notification_service=notification_service,
     )
 
 

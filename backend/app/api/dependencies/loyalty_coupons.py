@@ -4,10 +4,12 @@ Loyalty Coupon Service Dependencies.
 Dependency Injection providers for the LoyaltyCouponService.
 
 This module composes the LoyaltyCouponService by wiring the
-LoyaltyCouponRepository and LoyaltyService into the service.
+LoyaltyCouponRepository, LoyaltyService, and NotificationService
+into the service.
 
 Business logic belongs in LoyaltyCouponService.
 Persistence belongs in LoyaltyCouponRepository.
+Notification persistence belongs in the Notification subsystem.
 """
 
 from __future__ import annotations
@@ -18,6 +20,10 @@ from fastapi import Depends
 
 from app.api.dependencies.loyalty import (
     LoyaltyServiceDep,
+)
+
+from app.api.dependencies.notifications import (
+    NotificationServiceDep,
 )
 
 from app.api.dependencies.repositories import (
@@ -63,6 +69,7 @@ def get_loyalty_coupon_service(
         Depends(get_loyalty_coupon_repository),
     ],
     loyalty_service: LoyaltyServiceDep,
+    notification_service: NotificationServiceDep,
 ) -> LoyaltyCouponService:
     """
     Return a fully configured LoyaltyCouponService instance.
@@ -73,12 +80,15 @@ def get_loyalty_coupon_service(
     - A LoyaltyCouponRepository backed by that session.
     - The existing LoyaltyService for loyalty-account
       operations and loyalty business rules.
+    - The existing NotificationService for loyalty coupon
+      notifications.
     """
 
     return LoyaltyCouponService(
         db=db,
         repository=repository,
         loyalty_service=loyalty_service,
+        notification_service=notification_service,
     )
 
 

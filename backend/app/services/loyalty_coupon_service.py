@@ -40,6 +40,9 @@ from app.exceptions.handlers import (
 from app.models.enums import (
     CouponStatus,
     CouponType,
+    NotificationChannel,
+    NotificationPriority,
+    NotificationType,
 )
 
 from app.models.loyalty_coupon import (
@@ -52,6 +55,14 @@ from app.repositories.loyalty_coupon_repository import (
 
 from app.services.loyalty_service import (
     LoyaltyService,
+)
+
+from app.schemas.notification import (
+    NotificationCreateInternal,
+)
+
+from app.services.notification_service import (
+    NotificationService,
 )
 
 
@@ -70,6 +81,7 @@ class LoyaltyCouponService:
         db: AsyncSession,
         repository: LoyaltyCouponRepository,
         loyalty_service: LoyaltyService,
+        notification_service: NotificationService,
     ) -> None:
         """
         Create a LoyaltyCouponService instance.
@@ -78,6 +90,7 @@ class LoyaltyCouponService:
         self.db = db
         self.repository = repository
         self.loyalty_service = loyalty_service
+        self.notification_service = notification_service
 
     # ==========================================================
     # Pagination Validation
@@ -355,6 +368,26 @@ class LoyaltyCouponService:
 
         await self.db.refresh(
             coupon,
+        )
+
+        # ------------------------------------------------------
+        # Loyalty Coupon Issued Notification
+        # ------------------------------------------------------
+
+        await self.notification_service.create_notification(
+            NotificationCreateInternal(
+                user_id=customer_id,
+                type=NotificationType.LOYALTY_COUPON_ISSUED,
+                channel=NotificationChannel.IN_APP,
+                priority=NotificationPriority.NORMAL,
+                title="Loyalty Coupon Issued",
+                message=(
+                    f"A new loyalty coupon '{coupon.coupon_code}' "
+                    f"has been issued to you."
+                ),
+                related_entity_type="LOYALTY_COUPON",
+                related_entity_id=coupon.id,
+            )
         )
 
         return coupon
@@ -723,6 +756,26 @@ class LoyaltyCouponService:
 
         await self.db.refresh(
             coupon,
+        )
+
+        # ------------------------------------------------------
+        # Loyalty Coupon Used Notification
+        # ------------------------------------------------------
+
+        await self.notification_service.create_notification(
+            NotificationCreateInternal(
+                user_id=customer_id,
+                type=NotificationType.LOYALTY_COUPON_USED,
+                channel=NotificationChannel.IN_APP,
+                priority=NotificationPriority.NORMAL,
+                title="Loyalty Coupon Used",
+                message=(
+                    f"Your loyalty coupon '{coupon.coupon_code}' "
+                    f"has been successfully used."
+                ),
+                related_entity_type="LOYALTY_COUPON",
+                related_entity_id=coupon.id,
+            )
         )
 
         return coupon

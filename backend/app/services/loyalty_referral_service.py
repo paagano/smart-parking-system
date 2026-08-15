@@ -39,6 +39,9 @@ from app.exceptions.handlers import (
 
 from app.models.enums import (
     LoyaltyPointTransactionType,
+    NotificationChannel,
+    NotificationPriority,
+    NotificationType,
     ReferralStatus,
 )
 
@@ -48,12 +51,20 @@ from app.models.loyalty_referral import (
 
 from app.models.user import User
 
+from app.schemas.notification import (
+    NotificationCreateInternal,
+)
+
 from app.repositories.loyalty_referral_repository import (
     LoyaltyReferralRepository,
 )
 
 from app.services.loyalty_service import (
     LoyaltyService,
+)
+
+from app.services.notification_service import (
+    NotificationService,
 )
 
 
@@ -78,6 +89,7 @@ class LoyaltyReferralService:
         db: AsyncSession,
         repository: LoyaltyReferralRepository,
         loyalty_service: LoyaltyService,
+        notification_service: NotificationService,
     ) -> None:
         """
         Create a LoyaltyReferralService instance.
@@ -86,6 +98,7 @@ class LoyaltyReferralService:
         self.db = db
         self.repository = repository
         self.loyalty_service = loyalty_service
+        self.notification_service = notification_service
 
     # ==========================================================
     # Referral Creation
@@ -753,6 +766,26 @@ class LoyaltyReferralService:
             referral,
         )
 
+        # ------------------------------------------------------
+        # Loyalty Referral Qualified Notification
+        # ------------------------------------------------------
+
+        await self.notification_service.create_notification(
+            NotificationCreateInternal(
+                user_id=referral.referrer_id,
+                type=NotificationType.LOYALTY_REFERRAL_QUALIFIED,
+                channel=NotificationChannel.IN_APP,
+                priority=NotificationPriority.NORMAL,
+                title="Referral Qualified",
+                message=(
+                    f"Your referral {referral.referral_code} "
+                    f"has been successfully qualified."
+                ),
+                related_entity_type="LOYALTY_REFERRAL",
+                related_entity_id=referral.id,
+            )
+        )
+
         return referral
 
     # ==========================================================
@@ -836,6 +869,27 @@ class LoyaltyReferralService:
             referral,
         )
 
+        # ------------------------------------------------------
+        # Loyalty Referral Rewarded Notification
+        # ------------------------------------------------------
+
+        await self.notification_service.create_notification(
+            NotificationCreateInternal(
+                user_id=referral.referrer_id,
+                type=NotificationType.LOYALTY_REFERRAL_REWARDED,
+                channel=NotificationChannel.IN_APP,
+                priority=NotificationPriority.NORMAL,
+                title="Referral Rewarded",
+                message=(
+                    f"Your referral {referral.referral_code} "
+                    f"has been rewarded with "
+                    f"{referral.reward_points} loyalty points."
+                ),
+                related_entity_type="LOYALTY_REFERRAL",
+                related_entity_id=referral.id,
+            )
+        )
+
         return referral
 
     # ==========================================================
@@ -890,6 +944,27 @@ class LoyaltyReferralService:
 
         await self.db.refresh(
             referral,
+        )
+
+        # ------------------------------------------------------
+        # Loyalty Referral Rewarded Notification
+        # ------------------------------------------------------
+
+        await self.notification_service.create_notification(
+            NotificationCreateInternal(
+                user_id=referral.referrer_id,
+                type=NotificationType.LOYALTY_REFERRAL_REWARDED,
+                channel=NotificationChannel.IN_APP,
+                priority=NotificationPriority.NORMAL,
+                title="Referral Rewarded",
+                message=(
+                    f"Your referral {referral.referral_code} "
+                    f"has been rewarded with "
+                    f"{referral.reward_points} loyalty points."
+                ),
+                related_entity_type="LOYALTY_REFERRAL",
+                related_entity_id=referral.id,
+            )
         )
 
         return referral

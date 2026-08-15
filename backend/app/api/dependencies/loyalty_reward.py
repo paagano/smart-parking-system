@@ -39,6 +39,10 @@ from app.services.loyalty_reward_service import (
     LoyaltyRewardService,
 )
 
+from app.api.dependencies.notifications import (
+    NotificationServiceDep,
+)
+
 
 # ==========================================================
 # Loyalty Reward Repository
@@ -78,6 +82,7 @@ def get_loyalty_reward_service(
     db: DbSession,
     repository: LoyaltyRewardRepositoryDep,
     loyalty_service: LoyaltyServiceDep,
+    notification_service: NotificationServiceDep,
 ) -> LoyaltyRewardService:
     """
     Return a fully configured LoyaltyRewardService instance.
@@ -99,6 +104,7 @@ def get_loyalty_reward_service(
         db=db,
         repository=repository,
         loyalty_service=loyalty_service,
+        notification_service=notification_service,
     )
 
 

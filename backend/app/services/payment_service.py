@@ -126,17 +126,20 @@ class PaymentService:
         self.notification_service = notification_service
         self.receipt_service = receipt_service
 
-        #
+        # ==========================================================
         # Loyalty integration.
-        #
+        # ==========================================================
+
         # Loyalty persistence is kept behind LoyaltyRepository and
-        # business rules are delegated to LoyaltyService. The existing
-        # PaymentService constructor remains unchanged so current
-        # dependency wiring is not disturbed.
+        # business rules are delegated to LoyaltyService.
         #
+        # The existing NotificationService is passed through so that
+        # LoyaltyService can generate notifications for loyalty events
+        # such as points earned and tier upgrades.
         self.loyalty_service = LoyaltyService(
             db=db,
             repository=LoyaltyRepository(db),
+            notification_service=notification_service,
         )
 
     # ==========================================================
