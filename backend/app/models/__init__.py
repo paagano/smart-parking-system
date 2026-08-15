@@ -11,8 +11,16 @@ from .receipt import Receipt
 from .wallet import Wallet
 from .wallet_transaction import WalletTransaction
 from .vehicle import Vehicle
+
+# ==========================================================
+# Loyalty Models
+# ==========================================================
+
 from .loyalty_account import LoyaltyAccount
 from .loyalty_point_transaction import LoyaltyPointTransaction
+from .loyalty_reward import LoyaltyReward
+from .loyalty_reward_redemption import LoyaltyRewardRedemption
+from .loyalty_coupon import LoyaltyCoupon
 
 
 __all__ = [
@@ -30,6 +38,8 @@ __all__ = [
     "WalletTransaction",
     "Vehicle",
     "LoyaltyAccount",
-    "LoyaltyAccountTransaction"
-
+    "LoyaltyPointTransaction",
+    "LoyaltyReward",
+    "LoyaltyRewardRedemption",
+    "LoyaltyCoupon",
 ]

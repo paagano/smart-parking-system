@@ -79,14 +79,14 @@ from app.services.loyalty_service import LoyaltyService
 
 # 1 loyalty point for every KES 100 successfully paid.
 #
-# Keep this configurable so the commercial loyalty rule can be
+# This configuration of the commercial loyalty rule can be
 # changed later without changing the payment workflow.
 # Example:
 #     Decimal("0.01") -> 1 point per KES 100
 #     Decimal("0.02") -> 1 point per KES 50
 #
-LOYALTY_POINTS_PER_KES = Decimal("0.01")
 
+LOYALTY_POINTS_PER_KES = Decimal("0.01")
 
 class PaymentService:
     """

@@ -54,7 +54,7 @@ from app.schemas.loyalty import (
 
 router = APIRouter(
     prefix="/loyalty",
-    tags=["Loyalty"],
+    tags=["Loyalty Programme"],
 )
 
 

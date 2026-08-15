@@ -8,6 +8,12 @@ lifetime earned points, and current loyalty tier.
 
 Detailed point movements are stored in
 LoyaltyPointTransaction.
+
+Customer reward redemptions are stored in
+LoyaltyRewardRedemption.
+
+Customer coupons are stored in
+LoyaltyCoupon.
 """
 
 from __future__ import annotations
@@ -28,6 +34,23 @@ from sqlalchemy.orm import (
 
 from app.models.base_model import BaseModel
 from app.models.enums import LoyaltyTier
+
+
+if TYPE_CHECKING:
+    from app.models.user import User
+
+    from app.models.loyalty_point_transaction import (
+        LoyaltyPointTransaction,
+    )
+
+    from app.models.loyalty_reward_redemption import (
+        LoyaltyRewardRedemption,
+    )
+
+    from app.models.loyalty_coupon import (
+        LoyaltyCoupon,
+    )
+
 
 class LoyaltyAccount(BaseModel):
     """
@@ -87,6 +110,7 @@ class LoyaltyAccount(BaseModel):
             LoyaltyTier,
             name="loyalty_tier",
             native_enum=True,
+            create_type=False,
         ),
         nullable=False,
         default=LoyaltyTier.BRONZE,
@@ -106,7 +130,7 @@ class LoyaltyAccount(BaseModel):
     )
 
     # ==========================================================
-    # Relationships
+    # Customer Relationship
     # ==========================================================
 
     customer: Mapped["User"] = relationship(
@@ -114,11 +138,47 @@ class LoyaltyAccount(BaseModel):
         back_populates="loyalty_account",
     )
 
+    # ==========================================================
+    # Point Transactions
+    # ==========================================================
+
     point_transactions: Mapped[
         list["LoyaltyPointTransaction"]
     ] = relationship(
         "LoyaltyPointTransaction",
         back_populates="loyalty_account",
         cascade="all, delete-orphan",
-        order_by="LoyaltyPointTransaction.created_at.desc()",
+        order_by=(
+            "LoyaltyPointTransaction.created_at.desc()"
+        ),
+    )
+
+    # ==========================================================
+    # Reward Redemptions
+    # ==========================================================
+
+    reward_redemptions: Mapped[
+        list["LoyaltyRewardRedemption"]
+    ] = relationship(
+        "LoyaltyRewardRedemption",
+        back_populates="loyalty_account",
+        cascade="all, delete-orphan",
+        order_by=(
+            "LoyaltyRewardRedemption.created_at.desc()"
+        ),
+    )
+
+    # ==========================================================
+    # Coupons
+    # ==========================================================
+
+    coupons: Mapped[
+        list["LoyaltyCoupon"]
+    ] = relationship(
+        "LoyaltyCoupon",
+        back_populates="loyalty_account",
+        cascade="all, delete-orphan",
+        order_by=(
+            "LoyaltyCoupon.created_at.desc()"
+        ),
     )

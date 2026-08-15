@@ -56,6 +56,18 @@ from app.api.endpoints.loyalty import (
     router as loyalty_router,
 )
 
+from app.api.endpoints.loyalty_rewards import (
+    router as loyalty_rewards_router,
+)
+
+from app.api.endpoints.loyalty_coupons import (
+    router as loyalty_coupons_router,
+)
+
+from app.api.endpoints.loyalty_referrals import (
+    router as loyalty_referrals_router,
+)
+
 
 router = APIRouter()
 
@@ -178,11 +190,23 @@ router.include_router(
 
 
 # ==========================================================
-# Loyalty
+# Loyalty Programme
 # ==========================================================
 
 router.include_router(
     loyalty_router,
+)
+
+router.include_router(
+    loyalty_rewards_router,
+)
+
+router.include_router(
+    loyalty_coupons_router,
+)
+
+router.include_router(
+    loyalty_referrals_router,
 )
 
 

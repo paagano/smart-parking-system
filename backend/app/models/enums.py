@@ -5,6 +5,7 @@ from enum import Enum
 # User & Authentication
 # ==========================================================
 
+
 class UserRole(str, Enum):
     DRIVER = "DRIVER"
     ATTENDANT = "ATTENDANT"
@@ -18,6 +19,7 @@ class UserRole(str, Enum):
 # ==========================================================
 # Parking Facilities
 # ==========================================================
+
 
 class FacilityType(str, Enum):
     SHOPPING_MALL = "SHOPPING_MALL"
@@ -43,6 +45,7 @@ class FacilityType(str, Enum):
 # Parking Zones
 # ==========================================================
 
+
 class ZoneType(str, Enum):
     BUILDING_LEVEL = "BUILDING_LEVEL"
     WING = "WING"
@@ -64,6 +67,7 @@ class ZoneType(str, Enum):
 # ==========================================================
 # Parking Bays
 # ==========================================================
+
 
 class BayType(str, Enum):
     STANDARD = "STANDARD"
@@ -99,6 +103,7 @@ class VehicleType(str, Enum):
 # Vehicle Parking Profile
 # ==========================================================
 
+
 class ParkingProfile(str, Enum):
     """
     Vehicle parking profile.
@@ -133,6 +138,7 @@ class BaySize(str, Enum):
 # ==========================================================
 # Parking Sessions
 # ==========================================================
+
 
 class SessionStatus(str, Enum):
     ACTIVE = "ACTIVE"
@@ -187,6 +193,7 @@ class SessionSource(str, Enum):
 # Reservations
 # ==========================================================
 
+
 class ReservationStatus(str, Enum):
     """
     Reservation lifecycle status.
@@ -208,6 +215,7 @@ class ReservationStatus(str, Enum):
 # Reservation Payment Status
 # ==========================================================
 
+
 class ReservationPaymentStatus(str, Enum):
     """
     Payment status of a parking reservation.
@@ -228,6 +236,7 @@ class ReservationPaymentStatus(str, Enum):
 # ==========================================================
 # Session Payment Status Enum
 # ==========================================================
+
 
 class SessionPaymentStatus(str, Enum):
     """
@@ -252,6 +261,7 @@ class SessionPaymentStatus(str, Enum):
 # ==========================================================
 # Payments Enums
 # ==========================================================
+
 
 class PaymentMethod(str, Enum):
     """
@@ -360,6 +370,7 @@ class Currency(str, Enum):
 # Billing Tariffs | Pricing Plans
 # ==========================================================
 
+
 class BillingType(str, Enum):
     """
     Parking tariff billing strategy.
@@ -377,6 +388,7 @@ class BillingType(str, Enum):
 # ==========================================================
 # Receipts
 # ==========================================================
+
 
 class ReceiptType(str, Enum):
     """
@@ -407,8 +419,9 @@ class ReceiptStatus(str, Enum):
 
 
 # ==========================================================
-# Sensors | IoT Devices 
+# Sensors | IoT Devices
 # ==========================================================
+
 
 class SensorStatus(str, Enum):
     ONLINE = "ONLINE"
@@ -424,6 +437,7 @@ class SensorStatus(str, Enum):
 # ==========================================================
 # Wallet Status
 # ==========================================================
+
 
 class WalletStatus(str, Enum):
     """
@@ -442,6 +456,7 @@ class WalletStatus(str, Enum):
 # ==========================================================
 # Wallet Transaction Type
 # ==========================================================
+
 
 class WalletTransactionType(str, Enum):
     """
@@ -503,6 +518,7 @@ class WalletTransactionType(str, Enum):
 # Wallet Transaction Status
 # ==========================================================
 
+
 class WalletTransactionStatus(str, Enum):
     """
     Wallet transaction lifecycle.
@@ -522,7 +538,6 @@ class WalletTransactionStatus(str, Enum):
 # ==========================================================
 # Notifications
 # ==========================================================
-
 class NotificationType(str, Enum):
     """
     Business event that triggered the notification.
@@ -543,7 +558,15 @@ class NotificationType(str, Enum):
 
     RECEIPT_AVAILABLE = "RECEIPT_AVAILABLE"
 
+    
+    LOYALTY_POINTS_EARNED = "LOYALTY_POINTS_EARNED"
+    LOYALTY_TIER_UPGRADED = "LOYALTY_TIER_UPGRADED"
     LOYALTY_REWARD = "LOYALTY_REWARD"
+    LOYALTY_REWARD_REDEEMED = "LOYALTY_REWARD_REDEEMED"
+    LOYALTY_REFERRAL_QUALIFIED = "LOYALTY_REFERRAL_QUALIFIED"
+    LOYALTY_REFERRAL_REWARDED = "LOYALTY_REFERRAL_REWARDED"
+    LOYALTY_COUPON_ISSUED = "LOYALTY_COUPON_ISSUED"
+    LOYALTY_COUPON_USED = "LOYALTY_COUPON_USED"
 
     SYSTEM = "SYSTEM"
 
@@ -596,8 +619,9 @@ class NotificationPriority(str, Enum):
     def label(self) -> str:
         return self.value.replace("_", " ").title()
 
+
 # ==========================================================
-# Loyalty
+# Loyalty Programme:
 # ==========================================================
 
 class LoyaltyTier(str, Enum):
@@ -613,6 +637,9 @@ class LoyaltyTier(str, Enum):
     GOLD = "GOLD"
     PLATINUM = "PLATINUM"
 
+# ==========================================================
+# Loyalty Points
+# ==========================================================
 class LoyaltyPointTransactionType(str, Enum):
     """
     Type of loyalty point ledger transaction.
@@ -625,6 +652,11 @@ class LoyaltyPointTransactionType(str, Enum):
     REVERSAL = "REVERSAL"
     EXPIRATION = "EXPIRATION"
 
+
+# ==========================================================
+# Loyalty Rewards
+# ==========================================================
+
 class LoyaltyRewardType(str, Enum):
     """
     Type of loyalty reward.
@@ -633,16 +665,17 @@ class LoyaltyRewardType(str, Enum):
     DISCOUNT = "DISCOUNT"
     FREE_PARKING = "FREE_PARKING"
     COUPON = "COUPON"
+    VIP_BENEFIT = "VIP_BENEFIT"
 
-class ReferralStatus(str, Enum):
+
+class LoyaltyRewardStatus(str, Enum):
     """
-    Lifecycle status of a customer referral.
+    Lifecycle status of a loyalty reward.
     """
 
-    PENDING = "PENDING"
-    QUALIFIED = "QUALIFIED"
-    REWARDED = "REWARDED"
-    CANCELLED = "CANCELLED"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    EXPIRED = "EXPIRED"
 
 class RewardRedemptionStatus(str, Enum):
     """
@@ -651,4 +684,66 @@ class RewardRedemptionStatus(str, Enum):
 
     PENDING = "PENDING"
     REDEEMED = "REDEEMED"
+    CANCELLED = "CANCELLED"
+
+# ==========================================================
+# Loyalty Coupons
+# ==========================================================
+
+class CouponType(str, Enum):
+    """
+    Type of benefit provided by a loyalty coupon.
+    """
+
+    PERCENTAGE_DISCOUNT = "PERCENTAGE_DISCOUNT"
+    FIXED_AMOUNT_DISCOUNT = "FIXED_AMOUNT_DISCOUNT"
+    FREE_PARKING = "FREE_PARKING"
+    FREE_PARKING_HOURS = "FREE_PARKING_HOURS"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+
+class CouponStatus(str, Enum):
+    """
+    Lifecycle status of a loyalty coupon.
+    """
+
+    ACTIVE = "ACTIVE"
+    USED = "USED"
+    EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+# ==========================================================
+# Loyalty Referrals
+# ==========================================================
+
+class ReferralStatus(str, Enum):
+    """
+    Lifecycle status of a customer referral.
+
+    PENDING:
+        Referral has been created but the referred customer
+        has not yet completed the qualifying action.
+
+    QUALIFIED:
+        The referred customer has completed the qualifying
+        action required by the referral programme.
+
+    REWARDED:
+        The referral bonus has been successfully awarded.
+
+    CANCELLED:
+        The referral has been cancelled and is no longer
+        eligible for qualification or reward.
+    """
+
+    PENDING = "PENDING"
+    QUALIFIED = "QUALIFIED"
+    REWARDED = "REWARDED"
     CANCELLED = "CANCELLED"
