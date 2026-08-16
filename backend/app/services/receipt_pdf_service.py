@@ -36,6 +36,7 @@ from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
 
+import qrcode
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
@@ -45,6 +46,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     HRFlowable,
+    Image,
+    KeepTogether,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -52,6 +55,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from app.config.settings import settings
 from app.models.receipt import Receipt
 
 
@@ -99,7 +103,7 @@ class ReceiptPDFService:
     )
 
     VERIFICATION_TEXT = (
-        "This receipt can be verified using the receipt number "
+        "This receipt can also be verified using the receipt number "
         "and verification code."
     )
 
@@ -450,6 +454,7 @@ class ReceiptPDFService:
                 fontName="Helvetica",
                 fontSize=7.5,
                 leading=10,
+                alignment=TA_CENTER,
                 textColor=colors.HexColor("#666666"),
             ),
             "verification": ParagraphStyle(
@@ -1134,32 +1139,128 @@ class ReceiptPDFService:
         """
         Build receipt verification information.
 
-        The verification token is intentionally displayed as a
-        verification code rather than exposing it as a URL.
+        The verification section contains:
+
+        - The QR scan instruction.
+        - A QR code pointing to the receipt verification endpoint.
+        - The manual verification explanation.
+        - The manual verification code.
+        - The receipt number.
+
+        The QR code is generated entirely in memory and does not
+        require database or storage changes.
         """
 
         verification_code = self._format_verification_token(
             receipt.verification_token,
         )
 
+        # ------------------------------------------------------
+        # Build Verification URL
+        # ------------------------------------------------------
+
+        base_url = (
+            settings.RECEIPT_VERIFICATION_BASE_URL
+            .rstrip("/")
+        )
+
+        verification_url = (
+            f"{base_url}"
+            f"/receipts/verify/"
+            f"{receipt.receipt_number}"
+            f"?verification_token="
+            f"{receipt.verification_token}"
+        )
+
+        # ------------------------------------------------------
+        # Generate QR Code
+        # ------------------------------------------------------
+
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=8,
+            border=4,
+        )
+
+        qr.add_data(
+            verification_url,
+        )
+
+        qr.make(
+            fit=True,
+        )
+
+        qr_image = qr.make_image(
+            fill_color="black",
+            back_color="white",
+        ).convert("RGB")
+
+        qr_buffer = BytesIO()
+
+        qr_image.save(
+            qr_buffer,
+            format="PNG",
+        )
+
+        qr_buffer.seek(0)
+
+        # ------------------------------------------------------
+        # Convert QR PNG into a ReportLab Platypus Image
+        # ------------------------------------------------------
+
+        qr_flowable = Image(
+            qr_buffer,
+            width=35 * mm,
+            height=35 * mm,
+        )
+
+        # ------------------------------------------------------
+        # Verification Text
+        # ------------------------------------------------------
+
+        verification_text = Paragraph(
+            self.VERIFICATION_TEXT,
+            self.styles["verification"],
+        )
+
+        scan_text = Paragraph(
+            "Scan the QR code to verify this receipt.",
+            self.styles["small"],
+        )
+
+        verification_code_paragraph = Paragraph(
+            verification_code,
+            self.styles["verification_code"],
+        )
+
+        receipt_number_paragraph = Paragraph(
+            (
+                f"Receipt No: "
+                f"{self._safe_text(receipt.receipt_number)}"
+            ),
+            self.styles["verification"],
+        )
+
+        # ------------------------------------------------------
+        # Verification Content
+        # ------------------------------------------------------
+
         data = [
             [
-                Paragraph(
-                    self.VERIFICATION_TEXT,
-                    self.styles["verification"],
-                ),
+                scan_text,
             ],
             [
-                Paragraph(
-                    verification_code,
-                    self.styles["verification_code"],
-                ),
+                qr_flowable,
             ],
             [
-                Paragraph(
-                    f"Receipt No: {self._safe_text(receipt.receipt_number)}",
-                    self.styles["verification"],
-                ),
+                verification_text,
+            ],
+            [
+                verification_code_paragraph,
+            ],
+            [
+                receipt_number_paragraph,
             ],
         ]
 
@@ -1210,16 +1311,38 @@ class ReceiptPDFService:
                         (-1, -1),
                         7,
                     ),
+                    (
+                        "ALIGN",
+                        (0, 0),
+                        (-1, -1),
+                        "CENTER",
+                    ),
+                    (
+                        "VALIGN",
+                        (0, 0),
+                        (-1, -1),
+                        "MIDDLE",
+                    ),
                 ]
             )
         )
 
+        # ------------------------------------------------------
+        # Keep Heading + Verification Box Together
+        # ------------------------------------------------------
+
+        verification_section = KeepTogether(
+            [
+                Paragraph(
+                    "Receipt Verification",
+                    self.styles["section"],
+                ),
+                table,
+            ]
+        )
+
         return [
-            Paragraph(
-                "Receipt Verification",
-                self.styles["section"],
-            ),
-            table,
+            verification_section,
         ]
 
     # ==========================================================
@@ -1253,13 +1376,13 @@ class ReceiptPDFService:
                 1,
                 2 * mm,
             ),
-            Paragraph(
-                (
-                    f"Receipt: "
-                    f"{self._safe_text(receipt.receipt_number)}"
-                ),
-                self.styles["footer"],
-            ),
+            # Paragraph(
+            #     (
+            #         f"Receipt: "
+            #         f"{self._safe_text(receipt.receipt_number)}"
+            #     ),
+            #     self.styles["footer"],
+            # ),
         ]
 
     # ==========================================================

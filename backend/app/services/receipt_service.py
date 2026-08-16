@@ -62,6 +62,8 @@ from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config.settings import settings
+
 from app.exceptions.handlers import (
     NotFoundException,
 )
@@ -241,6 +243,33 @@ class ReceiptService:
         )
 
     @staticmethod
+    def _normalize_verification_token(
+        verification_token: str,
+    ) -> str:
+        """
+        Normalize a receipt verification token before comparison.
+
+        The canonical token stored in the database contains no
+        formatting separators. The customer-facing PDF displays
+        the token with hyphens for readability.
+
+        Example:
+
+            IEVh1nfMdYsbviakN51WcI02IALgNqqSEcby2vTrJM
+
+        and:
+
+            IEVh-1nfM-dYsb-viak-N51W-cI02-IAlg-NqqS
+
+        represent the same verification token.
+
+        Only formatting hyphens and surrounding whitespace are removed.
+        The underlying token value is never modified in storage.
+        """
+
+        return verification_token.strip().replace("-", "")
+
+    @staticmethod
     def _utc_now() -> datetime:
         """
         Return the current UTC timestamp.
@@ -304,6 +333,39 @@ class ReceiptService:
         """
 
         return value is not None
+
+    # ==========================================================
+    # Receipt Access URL
+    # ==========================================================
+
+    @staticmethod
+    def _build_receipt_access_url(
+        *,
+        receipt_id: int,
+    ) -> str:
+        """
+        Build the stable application URL used to access a receipt PDF.
+
+        IMPORTANT
+        ---------
+        This is NOT a Supabase storage URL and it is NOT a signed URL.
+
+        The application-level URL remains stable in the database while
+        the actual storage access URL can be generated dynamically by
+        StorageService when the receipt is requested.
+
+        For private Supabase storage, GET /receipts/{id}/url will create
+        a fresh signed URL at request time.
+        """
+
+        base_url = (
+            str(settings.RECEIPT_VERIFICATION_BASE_URL)
+            .rstrip("/")
+        )
+
+        return (
+            f"{base_url}/receipts/{receipt_id}/url"
+        )
 
     # ==========================================================
     # Notification
@@ -1277,9 +1339,7 @@ class ReceiptService:
               ↓
         Upload PDF
               ↓
-        Generate Access URL
-              ↓
-        Mark GENERATED
+        Build stable application access URL
               ↓
         Mark AVAILABLE
               ↓
@@ -1287,8 +1347,15 @@ class ReceiptService:
               ↓
         Notification
 
-        If generation or storage fails, the Receipt is marked
+        Storage access URLs are deliberately NOT generated during
+        receipt generation. For private Supabase storage, a fresh
+        signed URL is generated on demand by get_receipt_url().
+
+        If PDF generation or storage fails, the Receipt is marked
         FAILED and the failure reason is retained.
+
+        A failure to create a public storage URL must NOT occur here:
+        private Supabase receipts use signed URLs generated on demand.
         """
 
         receipt = (
@@ -1363,13 +1430,22 @@ class ReceiptService:
                 )
 
             # --------------------------------------------------
-            # Generate access URL
+            # Build stable application-level access URL
+            # --------------------------------------------------
+            #
+            # Do NOT call StorageService.get_url() here.
+            #
+            # A private Supabase bucket cannot provide a permanent
+            # public URL. Calling get_url() here would therefore make
+            # an otherwise successful receipt generation fail.
+            #
+            # The stable application URL is stored in pdf_url.
+            # When that URL is requested, get_receipt_url() generates
+            # a fresh signed URL through StorageService.
             # --------------------------------------------------
 
-            pdf_url = (
-                await self.storage_service.get_url(
-                    path=stored_path,
-                )
+            pdf_url = self._build_receipt_access_url(
+                receipt_id=receipt.id,
             )
 
             # --------------------------------------------------
@@ -1731,10 +1807,16 @@ class ReceiptService:
                 "Receipt not found."
             )
 
+        normalized_token = (
+            self._normalize_verification_token(
+                verification_token,
+            )
+        )
+
         valid = (
             secrets.compare_digest(
                 receipt.verification_token,
-                verification_token,
+                normalized_token,
             )
             and receipt.status
             == ReceiptStatus.AVAILABLE

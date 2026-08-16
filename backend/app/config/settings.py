@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     API_V1_STR: str
 
     # ==========================================================
+    # Receipt Verification
+    # ==========================================================
+
+    RECEIPT_VERIFICATION_BASE_URL: str
+
+    # ==========================================================
     # Security
     # ==========================================================
 
@@ -81,9 +87,9 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "SmartPark AI"
     SMTP_USE_TLS: bool = True
 
-    # ==========================================================
-    # Storage (Dual storage - Local storage for development, Supaase for production)
-    # ==========================================================
+    # ===============================================================================
+    # Storage (Dual Storage - use 'local' for development, 'supabase' for production)
+    # ===============================================================================
 
     STORAGE_BACKEND: str = "local"
     LOCAL_STORAGE_PATH: str = "storage"
