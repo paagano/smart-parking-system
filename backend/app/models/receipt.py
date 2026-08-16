@@ -181,6 +181,11 @@ class Receipt(Base):
         nullable=False,
     )
 
+    payment_purpose: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
     payment_provider: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,

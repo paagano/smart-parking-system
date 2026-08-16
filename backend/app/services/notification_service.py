@@ -9,8 +9,11 @@ The service layer owns:
 - Transaction boundaries
 - Read/unread state management
 - Notification lifecycle management
+- Email notification delivery
 
 Database access is delegated to NotificationRepository.
+User lookup is delegated to UserRepository.
+Email delivery is delegated to EmailService.
 """
 
 from __future__ import annotations
@@ -27,12 +30,24 @@ from app.models.enums import (
     NotificationStatus,
     NotificationType,
 )
+
 from app.models.notification import Notification
+
 from app.repositories.notification_repository import (
     NotificationRepository,
 )
+
+from app.repositories.user_repository import (
+    UserRepository,
+)
+
 from app.schemas.notification import (
     NotificationCreate,
+)
+
+from app.services.email_service import (
+    EmailAttachment,
+    EmailService,
 )
 
 
@@ -44,8 +59,12 @@ class NotificationService:
     def __init__(
         self,
         repository: NotificationRepository,
+        user_repository: UserRepository,
+        email_service: EmailService,
     ):
         self.repository = repository
+        self.user_repository = user_repository
+        self.email_service = email_service
 
     # ==========================================================
     # Create Notification
@@ -54,6 +73,9 @@ class NotificationService:
     async def create_notification(
         self,
         data: NotificationCreate,
+        *,
+        email_html: str | None = None,
+        email_attachments: list[EmailAttachment] | None = None,
     ) -> Notification:
         """
         Create a new notification.
@@ -67,6 +89,13 @@ class NotificationService:
         - Priority
         - Content
         - Optional related entity
+
+        EMAIL notifications are delivered through EmailService
+        after the notification record has been persisted.
+
+        Email-specific HTML content and attachments are transient
+        delivery data. They are NOT stored in the Notification
+        database record.
         """
 
         notification = Notification(
@@ -92,6 +121,56 @@ class NotificationService:
         await self.repository.db.refresh(
             notification,
         )
+
+        # ------------------------------------------------------
+        # Email Delivery
+        # ------------------------------------------------------
+
+        if notification.channel == NotificationChannel.EMAIL:
+
+            user = await self.user_repository.get_by_id(
+                notification.user_id,
+            )
+
+            if user is None:
+                await self.mark_as_failed(
+                    notification.id,
+                    "Notification recipient user not found.",
+                )
+
+                return notification
+
+            if not user.email:
+                await self.mark_as_failed(
+                    notification.id,
+                    "Notification recipient does not have "
+                    "an email address.",
+                )
+
+                return notification
+
+            try:
+                provider_message_id = (
+                    await self.email_service.send_email(
+                        to_email=user.email,
+                        subject=notification.title,
+                        body=notification.message,
+                        html_body=email_html,
+                        attachments=email_attachments,
+                    )
+                )
+
+                notification = await self.mark_as_sent(
+                    notification.id,
+                    provider_message_id=provider_message_id,
+                )
+
+            except Exception as exc:
+
+                notification = await self.mark_as_failed(
+                    notification.id,
+                    str(exc),
+                )
 
         return notification
 

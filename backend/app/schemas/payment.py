@@ -46,6 +46,7 @@ from app.models.enums import (
 # Base Schema
 # ==========================================================
 
+
 class PaymentBase(BaseModel):
     """
     Base schema shared by all payment requests.
@@ -156,22 +157,44 @@ class PaymentBase(BaseModel):
             subtotal
             - discount
             + tax
-            = total
+            - loyalty points contribution
+            = total cash payment
+
+        Loyalty points are valued at:
+            1 Loyalty Point = KES 1.00
         """
+
+        loyalty_contribution = Decimal(
+            str(
+                getattr(
+                    self,
+                    "loyalty_points_to_redeem",
+                    0,
+                )
+            )
+        )
 
         expected_total = (
             self.subtotal_amount
             - self.discount_amount
             + self.tax_amount
+            - loyalty_contribution
         ).quantize(
             Decimal("0.01"),
         )
+
+        if expected_total < Decimal("0.00"):
+            raise ValueError(
+                "Loyalty-points contribution cannot exceed "
+                "the required payment amount."
+            )
 
         if expected_total != self.total_amount.quantize(
             Decimal("0.01"),
         ):
             raise ValueError(
-                "Total amount must equal subtotal - discount + tax."
+                "Total amount must equal subtotal - discount + tax "
+                "- loyalty-points contribution."
             )
 
         return self
@@ -190,6 +213,7 @@ class PaymentBase(BaseModel):
 # Update Schema
 # ==========================================================
 
+
 class PaymentUpdate(BaseModel):
     """
     Fields that may be updated after
@@ -204,7 +228,7 @@ class PaymentUpdate(BaseModel):
     )
 
     idempotency_key: str | None = Field(
-        default=None,               
+        default=None,
     )
 
     provider_transaction_id: str | None = Field(
@@ -231,6 +255,7 @@ class PaymentUpdate(BaseModel):
 # ==========================================================
 # Summary Schema
 # ==========================================================
+
 
 class PaymentSummary(BaseModel):
     """
@@ -262,13 +287,20 @@ class PaymentSummary(BaseModel):
         from_attributes=True,
     )
 
+
 # ==========================================================
 # Reservation Payment
 # ==========================================================
 
+
 class ReservationPaymentCreate(PaymentBase):
     """
     Create a payment for a parking reservation.
+
+    Loyalty points may optionally be redeemed towards
+    the reservation payment.
+
+    One loyalty point is worth KES 1.00.
     """
 
     reservation_id: int = Field(
@@ -283,10 +315,21 @@ class ReservationPaymentCreate(PaymentBase):
         description="Registered customer making the payment.",
     )
 
+    loyalty_points_to_redeem: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "Number of loyalty points to redeem towards this payment. "
+            "1 loyalty point is worth KES 1.00. "
+            "Set to 0 for a normal payment."
+        ),
+    )
+
 
 # ==========================================================
 # Parking Session Payment
 # ==========================================================
+
 
 class SessionPaymentCreate(PaymentBase):
     """
@@ -294,12 +337,19 @@ class SessionPaymentCreate(PaymentBase):
 
     The payment amount must match the calculated parking fee
     for the specified parking session.
+
+    Loyalty points may optionally be redeemed towards
+    the parking session payment.
+
+    One loyalty point is worth KES 1.00.
     """
 
     parking_session_id: int = Field(
         ...,
         gt=0,
-        description="Unique identifier of the parking session being settled.",
+        description=(
+            "Unique identifier of the parking session being settled."
+        ),
     )
 
     customer_id: int | None = Field(
@@ -311,9 +361,21 @@ class SessionPaymentCreate(PaymentBase):
         ),
     )
 
+    loyalty_points_to_redeem: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "Number of loyalty points to redeem towards this payment. "
+            "1 loyalty point is worth KES 1.00. "
+            "Set to 0 for a normal payment."
+        ),
+    )
+
+
 # ==========================================================
 # Wallet Top-up
 # ==========================================================
+
 
 class WalletTopUpCreate(PaymentBase):
     """
@@ -335,6 +397,7 @@ class WalletTopUpCreate(PaymentBase):
 # Refund | Reversal
 # ==========================================================
 
+
 class RefundCreate(PaymentBase):
     """
     Create a refund transaction.
@@ -355,6 +418,7 @@ class RefundCreate(PaymentBase):
         max_length=500,
         description="Reason for the refund.",
     )
+
 
 class ReversalCreate(PaymentBase):
     """
@@ -378,6 +442,7 @@ class ReversalCreate(PaymentBase):
 # ==========================================================
 # Generic Payment Create
 # ==========================================================
+
 
 class PaymentCreate(PaymentBase):
     """
@@ -424,9 +489,11 @@ class PaymentCreate(PaymentBase):
 
         return value
 
+
 # ==========================================================
 # Payment Response
 # ==========================================================
+
 
 class PaymentResponse(BaseModel):
     """
@@ -506,6 +573,7 @@ class PaymentResponse(BaseModel):
 # Payment List Response
 # ==========================================================
 
+
 class PaymentListResponse(BaseModel):
     """
     Paginated payment results.
@@ -525,6 +593,7 @@ class PaymentListResponse(BaseModel):
 # ==========================================================
 # Payment Statistics
 # ==========================================================
+
 
 class PaymentStatistics(BaseModel):
     """
@@ -552,6 +621,7 @@ class PaymentStatistics(BaseModel):
 # Revenue Summary
 # ==========================================================
 
+
 class RevenueSummary(BaseModel):
     """
     Revenue summary.
@@ -575,6 +645,7 @@ class RevenueSummary(BaseModel):
 # ==========================================================
 # Payment Search Filters
 # ==========================================================
+
 
 class PaymentSearchFilters(BaseModel):
     """
@@ -610,6 +681,7 @@ class PaymentSearchFilters(BaseModel):
 # ==========================================================
 # Payment Receipt
 # ==========================================================
+
 
 class PaymentReceipt(BaseModel):
     """

@@ -88,6 +88,10 @@ from app.services.loyalty_service import LoyaltyService
 
 LOYALTY_POINTS_PER_KES = Decimal("0.01")
 
+# Confirmed commercial redemption rule:
+# 1 loyalty point = KES 1.00.
+LOYALTY_POINT_VALUE_KES = Decimal("1.00")
+
 class PaymentService:
     """
     Business logic for payment transactions.
@@ -208,6 +212,111 @@ class PaymentService:
         except Exception:
             # Notification failures must not break payment processing.
             pass
+
+    async def _validate_loyalty_points_contribution(
+        self,
+        *,
+        customer_id: int | None,
+        points: int,
+        expected_amount: Decimal,
+        remaining_amount: Decimal,
+    ) -> None:
+        """
+        Validate an optional loyalty-points contribution.
+
+        One loyalty point is worth KES 1.00. The amount supplied
+        to the external payment provider represents only the
+        remaining monetary amount after the loyalty contribution.
+
+        Existing payment behaviour is unchanged when ``points``
+        is zero.
+        """
+
+        if points < 0:
+            raise ValueError(
+                "Loyalty points to redeem cannot be negative."
+            )
+
+        expected_amount = self._money(expected_amount)
+        remaining_amount = self._money(remaining_amount)
+
+        if points == 0:
+            if expected_amount != remaining_amount:
+                raise ValueError(
+                    "Payment amount does not match the required amount."
+                )
+            return
+
+        if customer_id is None:
+            raise ValueError(
+                "Customer ID is required when redeeming loyalty points."
+            )
+
+        loyalty_value = (
+            Decimal(points) * LOYALTY_POINT_VALUE_KES
+        ).quantize(Decimal("0.01"))
+
+        if loyalty_value > expected_amount:
+            raise ValueError(
+                "Loyalty points cannot exceed the payment amount."
+            )
+
+        expected_remaining = (
+            expected_amount - loyalty_value
+        ).quantize(Decimal("0.01"))
+
+        if expected_remaining != remaining_amount:
+            raise ValueError(
+                "Payment amount must equal the required amount minus "
+                "the loyalty-points contribution."
+            )
+
+        account = await self.loyalty_service.get_account(
+            customer_id,
+        )
+
+        if not account.is_active:
+            raise ValueError(
+                "Loyalty account is inactive."
+            )
+
+        if account.points_balance < points:
+            raise ValueError(
+                "Insufficient loyalty points."
+            )
+
+    async def _redeem_loyalty_points_for_payment(
+        self,
+        *,
+        payment: PaymentTransaction,
+    ) -> None:
+        """
+        Redeem the loyalty points recorded on a successful payment.
+
+        The payment transaction ID is used as the loyalty ledger
+        reference, providing idempotency through LoyaltyService.
+        """
+
+        points = payment.loyalty_points_redeemed
+
+        if points <= 0:
+            return
+
+        if payment.customer_id is None:
+            raise ValueError(
+                "Customer ID is required to redeem loyalty points."
+            )
+
+        await self.loyalty_service.redeem_points(
+            customer_id=payment.customer_id,
+            points=points,
+            reference_type="PAYMENT_TRANSACTION",
+            reference_id=payment.id,
+            description=(
+                f"Redeemed {points} loyalty points towards payment "
+                f"{payment.transaction_number}."
+            ),
+        )
 
     async def _get_customer_wallet(self, customer_id: int) -> Wallet:
         """
@@ -636,16 +745,23 @@ class PaymentService:
         )
         received_amount = payment.total_amount.quantize(Decimal("0.01"))
 
-        if expected_amount != received_amount:
-            raise ValueError(
-                "Payment amount does not match the calculated parking fee."
-            )
+        await self._validate_loyalty_points_contribution(
+            customer_id=payment.customer_id,
+            points=payment.loyalty_points_to_redeem,
+            expected_amount=expected_amount,
+            remaining_amount=received_amount,
+        )
 
         try:
             #
             # Create payment transaction.
             #
             payment_transaction = await self._create_payment(payment)
+
+            payment_transaction.loyalty_points_redeemed = (
+                payment.loyalty_points_to_redeem
+            )
+            await self.repository.save(payment_transaction)
 
             #
             # Wallet payment.
@@ -667,40 +783,55 @@ class PaymentService:
             # Resolve Payment Provider
             # ======================================================
             #
-            provider = PaymentProviderFactory.get_provider(
-                payment.payment_provider,
-            )
-
-            provider_response = await provider.process_payment(
-                payment=payment_transaction,
-            )
-
-            if not provider_response.success:
-                raise ValueError(
-                    provider_response.message
-                    or "Payment provider rejected the payment."
+            # A full loyalty-points payment has no external monetary
+            # amount to send to a provider. Partial redemption still
+            # follows the existing provider flow using only the
+            # remaining monetary amount.
+            #
+            if payment.total_amount > Decimal("0.00"):
+                provider = PaymentProviderFactory.get_provider(
+                    payment.payment_provider,
                 )
 
-            #
-            # Persist provider response.
-            #
-            payment_transaction.provider_transaction_id = (
-                provider_response.provider_reference
-            )
-            payment_transaction.provider_status_message = (
-                provider_response.message
-            )
-            payment_transaction.provider_response = (
-                provider_response.raw_response
-            )
-            payment_transaction.status = provider_response.status
+                provider_response = await provider.process_payment(
+                    payment=payment_transaction,
+                )
 
-            await self.repository.save(payment_transaction)
+                if not provider_response.success:
+                    raise ValueError(
+                        provider_response.message
+                        or "Payment provider rejected the payment."
+                    )
+
+                #
+                # Persist provider response.
+                #
+                payment_transaction.provider_transaction_id = (
+                    provider_response.provider_reference
+                )
+                payment_transaction.provider_status_message = (
+                    provider_response.message
+                )
+                payment_transaction.provider_response = (
+                    provider_response.raw_response
+                )
+                payment_transaction.status = provider_response.status
+
+                await self.repository.save(payment_transaction)
+
+            else:
+                # Full payment is covered by loyalty points.
+                payment_transaction.status = PaymentStatus.SUCCESSFUL
+                payment_transaction.paid_at = datetime.now(timezone.utc)
+                await self.repository.save(payment_transaction)
 
             #
             # INTERNAL payments complete immediately.
             #
-            if payment.payment_provider == PaymentProvider.INTERNAL:
+            if (
+                payment.payment_provider == PaymentProvider.INTERNAL
+                or payment.total_amount == Decimal("0.00")
+            ):
                 await self._complete_session_payment(
                     payment=payment_transaction,
                     paid_at=payment_transaction.paid_at,
@@ -718,7 +849,18 @@ class PaymentService:
             await self.session_repository.refresh(parking_session)
 
             #
-            # Loyalty points.
+            # Loyalty points redemption.
+            #
+            if (
+                payment_transaction.status == PaymentStatus.SUCCESSFUL
+                and payment_transaction.loyalty_points_redeemed > 0
+            ):
+                await self._redeem_loyalty_points_for_payment(
+                    payment=payment_transaction,
+                )
+
+            #
+            # Loyalty points earned.
             #
             if payment_transaction.status == PaymentStatus.SUCCESSFUL:
                 loyalty_points = await self._award_loyalty_points(
@@ -844,36 +986,51 @@ class PaymentService:
         )
         received_amount = payment.total_amount.quantize(Decimal("0.01"))
 
-        if expected_amount != received_amount:
-            raise ValueError(
-                "Payment amount does not match the reservation amount."
-            )
+        await self._validate_loyalty_points_contribution(
+            customer_id=payment.customer_id,
+            points=payment.loyalty_points_to_redeem,
+            expected_amount=expected_amount,
+            remaining_amount=received_amount,
+        )
 
         try:
             # ======================================================
             # Resolve Payment Provider
             # ======================================================
-            provider = PaymentProviderFactory.get_provider(
-                payment.payment_provider,
-            )
-
-            provider_response = await provider.process_payment(
-                payment=payment,
-            )
-
-            if not provider_response.success:
-                raise ValueError(
-                    provider_response.message
-                    or "Payment provider rejected the payment."
+            if payment.total_amount > Decimal("0.00"):
+                provider = PaymentProviderFactory.get_provider(
+                    payment.payment_provider,
                 )
 
-            # ======================================================
-            # Create Payment Transaction
-            # ======================================================
-            payment_transaction = await self._create_payment(
-                payment,
-                provider_response=provider_response,
+                provider_response = await provider.process_payment(
+                    payment=payment,
+                )
+
+                if not provider_response.success:
+                    raise ValueError(
+                        provider_response.message
+                        or "Payment provider rejected the payment."
+                    )
+
+                # ======================================================
+                # Create Payment Transaction
+                # ======================================================
+                payment_transaction = await self._create_payment(
+                    payment,
+                    provider_response=provider_response,
+                )
+            else:
+                # Full payment is covered by loyalty points.
+                payment_transaction = await self._create_payment(
+                    payment,
+                    status=PaymentStatus.SUCCESSFUL,
+                )
+                payment_transaction.paid_at = datetime.now(timezone.utc)
+
+            payment_transaction.loyalty_points_redeemed = (
+                payment.loyalty_points_to_redeem
             )
+            await self.repository.save(payment_transaction)
 
             # ======================================================
             # Asynchronous Payment Provider
@@ -946,7 +1103,18 @@ class PaymentService:
             await self.reservation_repository.refresh(reservation)
 
             #
-            # Loyalty points.
+            # Loyalty points redemption.
+            #
+            if (
+                payment_transaction.status == PaymentStatus.SUCCESSFUL
+                and payment_transaction.loyalty_points_redeemed > 0
+            ):
+                await self._redeem_loyalty_points_for_payment(
+                    payment=payment_transaction,
+                )
+
+            #
+            # Loyalty points earned.
             #
             if payment_transaction.status == PaymentStatus.SUCCESSFUL:
                 loyalty_points = await self._award_loyalty_points(
@@ -1056,6 +1224,7 @@ class PaymentService:
             #
             if stk.result_code != 0:
                 payment.status = PaymentStatus.FAILED
+                payment.loyalty_points_redeemed = 0
 
                 await self.repository.save(payment)
                 await self.repository.commit()
@@ -1126,7 +1295,15 @@ class PaymentService:
             await self.repository.refresh(payment)
 
             #
-            # Loyalty points.
+            # Loyalty points redemption.
+            #
+            if payment.loyalty_points_redeemed > 0:
+                await self._redeem_loyalty_points_for_payment(
+                    payment=payment,
+                )
+
+            #
+            # Loyalty points earned.
             #
             loyalty_points = await self._award_loyalty_points(
                 payment=payment,

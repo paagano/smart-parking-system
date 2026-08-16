@@ -70,6 +70,18 @@ class Settings(BaseSettings):
     MPESA_TIMEOUT_SECONDS: int = 30
 
     # ==========================================================
+    # Email / SMTP
+    # ==========================================================
+
+    SMTP_HOST: str
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
+    SMTP_FROM_EMAIL: str
+    SMTP_FROM_NAME: str = "SmartPark AI"
+    SMTP_USE_TLS: bool = True
+
+    # ==========================================================
     # Storage (Dual storage - Local storage for development, Supaase for production)
     # ==========================================================
 

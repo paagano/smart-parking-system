@@ -57,6 +57,9 @@ import secrets
 import uuid
 from datetime import datetime, timezone
 
+from html import escape
+from decimal import Decimal
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.handlers import (
@@ -104,6 +107,11 @@ from app.services.notification_service import (
 
 from app.services.receipt_pdf_service import (
     ReceiptPDFService,
+)
+
+from app.services.email_service import (
+    EmailAttachment,
+    EmailService,
 )
 
 from app.storage import (
@@ -305,10 +313,19 @@ class ReceiptService:
         self,
         *,
         receipt: Receipt,
+        pdf_bytes: bytes | None = None,
     ) -> None:
         """
-        Create an in-app notification informing the customer
-        that the receipt is available.
+        Create a customer-facing receipt notification.
+
+        For EMAIL notifications this includes:
+
+        - Professional HTML email
+        - Plain-text fallback
+        - Receipt PDF attachment
+
+        Email attachment data is transient and is not persisted
+        in the Notification database record.
 
         Notification failures are deliberately isolated from
         receipt generation.
@@ -318,33 +335,599 @@ class ReceiptService:
         failed.
         """
 
-        if (
-            self.notification_service is None
-        ):
+        if self.notification_service is None:
             return
 
         if receipt.customer_id is None:
             return
 
         try:
+
+            # --------------------------------------------------
+            # Safe display values
+            # --------------------------------------------------
+
+            customer_name = escape(
+                str(receipt.customer_name or "Customer")
+            )
+
+            receipt_number = escape(
+                str(receipt.receipt_number)
+            )
+
+            currency = escape(
+                str(receipt.currency)
+            )
+
+            total_amount = (
+                f"{receipt.total_amount:,.2f}"
+            )
+
+            payment_method = escape(
+                str(receipt.payment_method or "N/A")
+                .replace("_", " ")
+                .title()
+            )
+
+            payment_purpose = escape(
+                str(getattr(receipt, "payment_purpose", None) or "N/A")
+                .replace("_", " ")
+                .title()
+            )
+
+            payment_provider = escape(
+                str(receipt.payment_provider or "N/A")
+                .replace("_", " ")
+                .title()
+            )
+
+            provider_receipt_number = escape(
+                str(
+                    receipt.provider_receipt_number
+                    or "N/A"
+                )
+            )
+
+            transaction_id = escape(
+                str(
+                    receipt.payment_transaction_id
+                    or "N/A"
+                )
+            )
+
+            paid_at = (
+                receipt.paid_at.strftime(
+                    "%d %b %Y %H:%M:%S UTC"
+                )
+                if receipt.paid_at
+                else "N/A"
+            )
+
+            pdf_url = escape(
+                str(receipt.pdf_url or "")
+            )
+
+            # --------------------------------------------------
+            # Plain-text email
+            # --------------------------------------------------
+
+            plain_text = (
+                f"Hello {receipt.customer_name or 'Customer'},\n\n"
+                f"Thank you for using SmartPark AI.\n\n"
+                f"Your payment has been successfully processed "
+                f"and your receipt is now available.\n\n"
+                f"Receipt Number: "
+                f"{receipt.receipt_number}\n"
+                f"Transaction ID: "
+                f"{receipt.payment_transaction_id or 'N/A'}\n"
+                f"Payment Method: "
+                f"{payment_method}\n"
+                f"Payment Purpose: "
+                f"{payment_purpose}\n"
+                f"Payment Provider: "
+                f"{payment_provider}\n"
+                f"Provider Receipt: "
+                f"{receipt.provider_receipt_number or 'N/A'}\n"
+                f"Paid At: {paid_at}\n"
+                f"Amount Paid: "
+                f"{receipt.currency} "
+                f"{total_amount}\n\n"
+                f"Your official SmartPark AI receipt "
+                f"is attached to this email as a PDF.\n\n"
+                f"Thank you for choosing SmartPark AI.\n\n"
+                f"This is an automated email. "
+                f"Please do not reply."
+            )
+
+            # --------------------------------------------------
+            # HTML email
+            # --------------------------------------------------
+
+            download_button = ""
+
+            if pdf_url:
+                download_button = f"""
+                    <p style="margin: 28px 0;">
+                        <a
+                            href="{pdf_url}"
+                            style="
+                                display: inline-block;
+                                padding: 12px 24px;
+                                background-color: #1a73e8;
+                                color: #ffffff;
+                                text-decoration: none;
+                                border-radius: 6px;
+                                font-weight: 600;
+                                font-size: 14px;
+                            "
+                        >
+                            View / Download Receipt
+                        </a>
+                    </p>
+                """
+
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport"
+                      content="width=device-width,
+                               initial-scale=1.0">
+                <title>SmartPark AI Receipt</title>
+            </head>
+
+            <body
+                style="
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f6f8;
+                    font-family:
+                        Arial,
+                        Helvetica,
+                        sans-serif;
+                    color: #1f2937;
+                "
+            >
+
+                <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                    style="
+                        background-color: #f4f6f8;
+                        padding: 30px 10px;
+                    "
+                >
+                    <tr>
+                        <td align="center">
+
+                            <table
+                                width="600"
+                                cellpadding="0"
+                                cellspacing="0"
+                                border="0"
+                                style="
+                                    max-width: 600px;
+                                    width: 100%;
+                                    background-color: #ffffff;
+                                    border-radius: 10px;
+                                    overflow: hidden;
+                                "
+                            >
+
+                                <!-- Header -->
+
+                                <tr>
+                                    <td
+                                        style="
+                                            padding: 28px 32px;
+                                            background-color: #1a73e8;
+                                            color: #ffffff;
+                                        "
+                                    >
+
+                                        <div
+                                            style="
+                                                font-size: 24px;
+                                                font-weight: 700;
+                                            "
+                                        >
+                                            SmartPark AI
+                                        </div>
+
+                                        <div
+                                            style="
+                                                margin-top: 6px;
+                                                font-size: 13px;
+                                                opacity: 0.9;
+                                            "
+                                        >
+                                            Smart Parking
+                                            Management System
+                                        </div>
+
+                                    </td>
+                                </tr>
+
+                                <!-- Main Content -->
+
+                                <tr>
+                                    <td
+                                        style="
+                                            padding: 32px;
+                                        "
+                                    >
+
+                                        <h2
+                                            style="
+                                                margin: 0 0 12px 0;
+                                                font-size: 22px;
+                                                color: #111827;
+                                            "
+                                        >
+                                            Payment Receipt
+                                        </h2>
+
+                                        <p
+                                            style="
+                                                font-size: 15px;
+                                                line-height: 1.6;
+                                            "
+                                        >
+                                            Hello
+                                            <strong>
+                                                {customer_name}
+                                            </strong>,
+                                        </p>
+
+                                        <p
+                                            style="
+                                                font-size: 15px;
+                                                line-height: 1.6;
+                                            "
+                                        >
+                                            Thank you for using
+                                            <strong>
+                                                SmartPark AI
+                                            </strong>.
+                                            Your payment has been
+                                            successfully processed
+                                            and your receipt is now
+                                            available.
+                                        </p>
+
+                                        <!-- Status -->
+
+                                        <div
+                                            style="
+                                                margin: 24px 0;
+                                                padding: 14px 18px;
+                                                background-color: #ecfdf5;
+                                                border: 1px solid #a7f3d0;
+                                                border-radius: 6px;
+                                                color: #065f46;
+                                                font-weight: 600;
+                                            "
+                                        >
+                                            Payment Successful
+                                        </div>
+
+                                        <!-- Payment Summary -->
+
+                                        <h3
+                                            style="
+                                                margin-top: 28px;
+                                                font-size: 16px;
+                                                color: #111827;
+                                            "
+                                        >
+                                            Payment Summary
+                                        </h3>
+
+                                        <table
+                                            width="100%"
+                                            cellpadding="0"
+                                            cellspacing="0"
+                                            border="0"
+                                            style="
+                                                border-collapse:
+                                                    collapse;
+                                                font-size: 14px;
+                                            "
+                                        >
+
+                                            <tr>
+                                                <td
+                                                    style="
+                                                        padding: 10px 0;
+                                                        color: #6b7280;
+                                                        border-bottom:
+                                                            1px solid #e5e7eb;
+                                                    "
+                                                >
+                                                    Payment Method
+                                                </td>
+
+                                                <td
+                                                    align="right"
+                                                    style="
+                                                        padding: 10px 0;
+                                                        border-bottom:
+                                                            1px solid #e5e7eb;
+                                                    "
+                                                >
+                                                    {payment_method}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td
+                                                    style="
+                                                        padding: 10px 0;
+                                                        color: #6b7280;
+                                                        border-bottom:
+                                                            1px solid #e5e7eb;
+                                                    "
+                                                >
+                                                    Payment Purpose
+                                                </td>
+
+                                                <td
+                                                    align="right"
+                                                    style="
+                                                        padding: 10px 0;
+                                                        border-bottom:
+                                                            1px solid #e5e7eb;
+                                                    "
+                                                >
+                                                    {payment_purpose}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td
+                                                    style="
+                                                        padding: 10px 0;
+                                                        color: #6b7280;
+                                                        border-bottom:
+                                                            1px solid #e5e7eb;
+                                                    "
+                                                >
+                                                    Payment Provider
+                                                </td>
+
+                                                <td
+                                                    align="right"
+                                                    style="
+                                                        padding: 10px 0;
+                                                        border-bottom:
+                                                            1px solid #e5e7eb;
+                                                    "
+                                                >
+                                                    {payment_provider}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td
+                                                    style="
+                                                        padding: 10px 0;
+                                                        color: #6b7280;
+                                                        border-bottom:
+                                                            1px solid #e5e7eb;
+                                                    "
+                                                >
+                                                    Provider Receipt
+                                                </td>
+
+                                                <td
+                                                    align="right"
+                                                    style="
+                                                        padding: 10px 0;
+                                                        border-bottom:
+                                                            1px solid #e5e7eb;
+                                                    "
+                                                >
+                                                    {provider_receipt_number}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td
+                                                    style="
+                                                        padding: 10px 0;
+                                                        color: #6b7280;
+                                                    "
+                                                >
+                                                    Paid At
+                                                </td>
+
+                                                <td
+                                                    align="right"
+                                                    style="
+                                                        padding: 10px 0;
+                                                    "
+                                                >
+                                                    {escape(paid_at)}
+                                                </td>
+                                            </tr>
+
+                                        </table>
+
+                                        <!-- Amount -->
+
+                                        <div
+                                            style="
+                                                margin-top: 24px;
+                                                padding: 20px;
+                                                background-color: #f8fafc;
+                                                border-radius: 8px;
+                                                text-align: center;
+                                            "
+                                        >
+
+                                            <div
+                                                style="
+                                                    font-size: 13px;
+                                                    color: #6b7280;
+                                                "
+                                            >
+                                                TOTAL PAID
+                                            </div>
+
+                                            <div
+                                                style="
+                                                    margin-top: 6px;
+                                                    font-size: 28px;
+                                                    font-weight: 700;
+                                                    color: #111827;
+                                                "
+                                            >
+                                                {currency}
+                                                {total_amount}
+                                            </div>
+
+                                        </div>
+
+                                        {download_button}
+
+                                        <!-- Attachment notice -->
+
+                                        <div
+                                            style="
+                                                margin-top: 20px;
+                                                padding: 16px;
+                                                background-color: #f8fafc;
+                                                border-radius: 6px;
+                                                font-size: 13px;
+                                                color: #4b5563;
+                                            "
+                                        >
+                                            <strong>
+                                                Receipt attached
+                                            </strong>
+
+                                            <br>
+
+                                            Your official SmartPark AI
+                                            receipt is attached to this
+                                            email as a PDF document.
+                                        </div>
+
+                                        <p
+                                            style="
+                                                margin-top: 28px;
+                                                font-size: 14px;
+                                                line-height: 1.6;
+                                                color: #4b5563;
+                                            "
+                                        >
+                                            Thank you for choosing
+                                            SmartPark AI.
+                                        </p>
+
+                                    </td>
+                                </tr>
+
+                                <!-- Footer -->
+
+                                <tr>
+                                    <td
+                                        style="
+                                            padding: 24px 32px;
+                                            background-color: #f8fafc;
+                                            border-top:
+                                                1px solid #e5e7eb;
+                                            text-align: center;
+                                        "
+                                    >
+
+                                        <div
+                                            style="
+                                                font-size: 13px;
+                                                font-weight: 600;
+                                                color: #374151;
+                                            "
+                                        >
+                                            SmartPark AI
+                                        </div>
+
+                                        <div
+                                            style="
+                                                margin-top: 6px;
+                                                font-size: 12px;
+                                                color: #6b7280;
+                                            "
+                                        >
+                                            Smart Parking
+                                            Management System
+                                        </div>
+
+                                        <div
+                                            style="
+                                                margin-top: 12px;
+                                                font-size: 11px;
+                                                color: #9ca3af;
+                                            "
+                                        >
+                                            This is an automated email.
+                                            Please do not reply.
+                                        </div>
+
+                                    </td>
+                                </tr>
+
+                            </table>
+
+                        </td>
+                    </tr>
+                </table>
+
+            </body>
+            </html>
+            """
+
+            # --------------------------------------------------
+            # PDF Attachment
+            # --------------------------------------------------
+
+            attachments = None
+
+            if pdf_bytes:
+                attachments = [
+                    EmailAttachment(
+                        filename=(
+                            f"SmartPark_Receipt_"
+                            f"{receipt.receipt_number}.pdf"
+                        ),
+                        content=pdf_bytes,
+                        maintype="application",
+                        subtype="pdf",
+                    )
+                ]
+
+            # --------------------------------------------------
+            # Create notification
+            # --------------------------------------------------
+
             await self.notification_service.create_notification(
                 data=NotificationCreate(
                     user_id=receipt.customer_id,
                     type=NotificationType.RECEIPT_AVAILABLE,
-                    channel=NotificationChannel.IN_APP,
+                    channel=NotificationChannel.EMAIL,
                     priority=NotificationPriority.NORMAL,
-                    title="Receipt Available",
-                    message=(
-                        f"Your SmartPark receipt "
-                        f"{receipt.receipt_number} "
-                        f"for "
-                        f"{receipt.currency} "
-                        f"{receipt.total_amount} "
-                        f"is now available."
+                    title=(
+                        f"SmartPark AI - Receipt "
+                        f"{receipt.receipt_number}"
                     ),
+                    message=plain_text,
                     related_entity_type="RECEIPT",
                     related_entity_id=receipt.id,
                 ),
+                email_html=html_body,
+                email_attachments=attachments,
             )
 
         except Exception:
@@ -442,6 +1025,16 @@ class ReceiptService:
                     "value",
                     payment.payment_method,
                 )
+            ),
+
+            payment_purpose=(
+                getattr(
+                    payment.payment_purpose,
+                    "value",
+                    payment.payment_purpose,
+                )
+                if payment.payment_purpose is not None
+                else None
             ),
 
             payment_provider=(
@@ -817,6 +1410,7 @@ class ReceiptService:
 
             await self._create_receipt_notification(
                 receipt=receipt,
+                pdf_bytes=pdf_bytes,
             )
 
             return receipt

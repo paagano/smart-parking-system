@@ -838,6 +838,18 @@ class ReceiptPDFService:
             ],
             [
                 Paragraph(
+                    "Payment Purpose",
+                    self.styles["label"],
+                ),
+                Paragraph(
+                    self._enum_value(
+                        receipt.payment_purpose,
+                    ),
+                    self.styles["value"],
+                ),
+            ],
+            [
+                Paragraph(
                     "Payment Provider",
                     self.styles["label"],
                 ),
