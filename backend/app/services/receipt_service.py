@@ -1397,6 +1397,29 @@ class ReceiptService:
 
         try:
             # --------------------------------------------------
+            # Establish receipt generation lifecycle
+            # --------------------------------------------------
+            #
+            # ReceiptPDFService renders the receipt from the Receipt
+            # object supplied to it. Therefore generated_at,
+            # available_at and status must be populated BEFORE PDF
+            # generation so that the PDF contains the correct
+            # lifecycle information.
+            #
+            # These changes remain uncommitted until PDF generation,
+            # storage upload and the final receipt update succeed.
+            # If anything fails, the exception handler below persists
+            # the receipt as FAILED.
+            # --------------------------------------------------
+
+            now = self._utc_now()
+
+            receipt.generated_at = now
+            receipt.available_at = now
+            receipt.status = ReceiptStatus.AVAILABLE
+            receipt.failure_reason = None
+
+            # --------------------------------------------------
             # Generate PDF
             # --------------------------------------------------
 
@@ -1449,25 +1472,19 @@ class ReceiptService:
             )
 
             # --------------------------------------------------
-            # Update Receipt
+            # Final Receipt Persistence
+            # --------------------------------------------------
+            #
+            # generated_at, available_at and status were already set
+            # before PDF generation so ReceiptPDFService could render
+            # them. At this point the PDF has also been successfully
+            # uploaded, so the complete receipt can safely be
+            # persisted as AVAILABLE.
             # --------------------------------------------------
 
-            now = self._utc_now()
-
-            receipt.pdf_storage_path = (
-                stored_path
-            )
-
-            receipt.pdf_url = (
-                pdf_url
-            )
-
-            receipt.generated_at = now
-
-            receipt.available_at = now
-
+            receipt.pdf_storage_path = stored_path
+            receipt.pdf_url = pdf_url
             receipt.failure_reason = None
-
             receipt.status = ReceiptStatus.AVAILABLE
 
             await self.repository.save(
@@ -1496,11 +1513,18 @@ class ReceiptService:
             # --------------------------------------------------
             # Persist failure state
             # --------------------------------------------------
+            #
+            # The PDF must never remain AVAILABLE if generation or
+            # storage failed. Clear the generation/access metadata so
+            # the database accurately represents the failed state.
+            # --------------------------------------------------
 
             try:
-                receipt.status = (
-                    ReceiptStatus.FAILED
-                )
+                receipt.status = ReceiptStatus.FAILED
+                receipt.generated_at = None
+                receipt.available_at = None
+                receipt.pdf_storage_path = None
+                receipt.pdf_url = None
 
                 receipt.failure_reason = (
                     self._format_failure_reason(
