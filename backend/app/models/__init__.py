@@ -1,6 +1,7 @@
 from .base_model import BaseModel
 from .user import User
 from .parking_facility import ParkingFacility
+from .occupancy_observation import OccupancyObservation
 from .parking_tariff import ParkingTariff
 from .parking_zone import ParkingZone
 from .parking_bay import ParkingBay
@@ -23,10 +24,12 @@ from .loyalty_reward_redemption import LoyaltyRewardRedemption
 from .loyalty_coupon import LoyaltyCoupon
 
 
+
 __all__ = [
     "BaseModel",
     "User",
     "ParkingFacility",
+    "OccupancyObservation",
     "ParkingZone",
     "ParkingBay",
     "ParkingSession",

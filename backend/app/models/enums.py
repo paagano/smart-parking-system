@@ -746,3 +746,37 @@ class ReferralStatus(str, Enum):
     QUALIFIED = "QUALIFIED"
     REWARDED = "REWARDED"
     CANCELLED = "CANCELLED"
+
+
+# ==========================================================
+# ML / Occupancy Observations
+# ==========================================================
+class OccupancyObservationSource(str, Enum):
+    """
+    Identifies the source from which an occupancy observation
+    was obtained i.e describes where an ML occupancy observation came from.
+    """
+
+    BIRMINGHAM = "BIRMINGHAM"
+    SMARTPARK = "SMARTPARK"
+    SIMULATED = "SIMULATED"
+    SENSOR = "SENSOR"
+    API = "API"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
+class OccupancyQualityStatus(str, Enum):
+    """
+    Describes the quality status of a canonical occupancy
+    observation after validation.
+    """
+
+    VALID = "VALID"
+    SUSPECT = "SUSPECT"
+    INVALID = "INVALID"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()

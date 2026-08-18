@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from app.models.parking_zone import ParkingZone
     from app.models.parking_session import ParkingSession
     from app.models.parking_reservation import ParkingReservation
+    from app.models.occupancy_observation import OccupancyObservation
 
 from datetime import time
 
@@ -140,6 +141,14 @@ class ParkingFacility(BaseModel):
         "ParkingZone",
         back_populates="facility",
         cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    occupancy_observations: Mapped[
+        list["OccupancyObservation"]
+    ] = relationship(
+        "OccupancyObservation",
+        back_populates="facility",
         passive_deletes=True,
     )
 
