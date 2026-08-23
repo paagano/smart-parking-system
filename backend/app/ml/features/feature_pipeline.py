@@ -1389,12 +1389,25 @@ class FeaturePipeline:
         """
         Build the Birmingham ML dataset and run the complete
         feature pipeline.
+
+        Notes
+        -----
+        ``build_birmingham_ml_dataset()`` is already the Birmingham-
+        specific convenience builder and therefore does not accept a
+        ``dataset_name`` argument.
+
+        ``dataset_name`` is retained in this public method signature for
+        backward compatibility with existing callers, but the value is
+        intentionally not passed to the builder.
         """
+
+        # ``dataset_name`` is retained for API compatibility.
+        # The Birmingham builder already knows the dataset name.
+        _ = dataset_name
 
         dataset_result = (
             build_birmingham_ml_dataset(
                 dataset_root=dataset_root,
-                dataset_name=dataset_name,
             )
         )
 
@@ -1402,7 +1415,8 @@ class FeaturePipeline:
             dataset_result.dataframe
         )
 
-        # Rebuild result with dataset_result attached.
+        # Rebuild the result while attaching the original
+        # Birmingham ML dataset result.
         return FeaturePipelineResult(
             dataframe=result.dataframe,
 
@@ -1426,8 +1440,10 @@ class FeaturePipeline:
 
             metadata={
                 **result.metadata,
+
                 "dataset_status":
                     dataset_result.status.value,
+
                 "dataset_statistics":
                     dataset_result.statistics,
             },

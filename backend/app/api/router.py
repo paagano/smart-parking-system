@@ -68,6 +68,14 @@ from app.api.endpoints.loyalty_referrals import (
     router as loyalty_referrals_router,
 )
 
+# ==========================================================
+# Production ML Forecasting
+# ==========================================================
+
+from app.api.endpoints.forecasts import (
+    router as forecasts_router,
+)
+
 
 router = APIRouter()
 
@@ -207,6 +215,33 @@ router.include_router(
 
 router.include_router(
     loyalty_referrals_router,
+)
+
+
+# ==========================================================
+# Production ML Forecasting
+# ==========================================================
+#
+# Exposes the production occupancy forecasting API.
+#
+# The forecast endpoint uses:
+#
+#     PostgreSQL
+#          ↓
+#     ObservationRepository
+#          ↓
+#     ProductionForecastService
+#          ↓
+#     ProductionFeatureBuilder
+#          ↓
+#     Frozen XGBoost
+#
+# No training or feature rebuilding occurs at API runtime.
+#
+# ==========================================================
+
+router.include_router(
+    forecasts_router,
 )
 
 
