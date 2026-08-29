@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "dataset_name": "birmingham",
+  "target_column": "target_occupancy_rate_30m",
+  "created_by": "birmingham_baseline_benchmark.py",
+  "created_at_utc": "2026-08-20T20:13:53.335967+00:00",
+  "training_file": "C:\\agano\\Oshwal\\docs\\Project\\smart-parking-system\\datasets\\processed\\birmingham\\target_occupancy_rate_30m\\train.parquet",
+  "validation_file": "C:\\agano\\Oshwal\\docs\\Project\\smart-parking-system\\datasets\\processed\\birmingham\\target_occupancy_rate_30m\\validation.parquet",
+  "test_file_loaded": false,
+  "training_rows": 23244,
+  "validation_rows": 4980,
+  "feature_count": 296,
+  "leakage_contract": {
+    "future_data_used": false,
+    "validation_target_used_during_fit": false,
+    "test_dataset_loaded": false,
+    "cross_facility_data_used": false,
+    "target_imputation": false,
+    "random_shuffle": false,
+    "chronological_split": true
+  },
+  "results": [
+    {
+      "model_name": "mean_baseline",
+      "strategy": "mean",
+      "target_column": "target_occupancy_rate_30m",
+      "metrics": {
+        "mae": 0.24872897374305522,
+        "rmse": 0.2855932939619513,
+        "r2": -0.042971075398945846,
+        "mape": 81.68296887689016,
+        "sample_count": 4980
+      },
+      "metadata": {
+        "training_row_count": 23244,
+        "evaluation_row_count": 4980,
+        "training_statistics": {
+          "mean": 0.49605937921471194,
+          "min": 0.0,
+          "max": 1.0,
+          "std": 0.2625385756139865,
+          "median": 0.4790356697445216
+        }
+      }
+    },
+    {
+      "model_name": "last_value_baseline",
+      "strategy": "last_value",
+      "target_column": "target_occupancy_rate_30m",
+      "metrics": {
+        "mae": 0.24538771287344072,
+        "rmse": 0.2797816365333356,
+        "r2": -0.0009552589329264727,
+        "mape": 89.12006606308422,
+        "sample_count": 4980
+      },
+      "metadata": {
+        "training_row_count": 23244,
+        "evaluation_row_count": 4980,
+        "training_statistics": {
+          "last_value": 0.5453857791225416,
+          "mean": 0.49605937921471194,
+          "min": 0.0,
+          "max": 1.0
+        }
+      }
+    }
+  ],
+  "comparison": [
+    {
+      "model_name": "last_value_baseline",
+      "strategy": "last_value",
+      "target_column": "target_occupancy_rate_30m",
+      "mae": 0.24538771287344072,
+      "rmse": 0.2797816365333356,
+      "r2": -0.0009552589329264727,
+      "mape": 89.12006606308422,
+      "sample_count": 4980
+    },
+    {
+      "model_name": "mean_baseline",
+      "strategy": "mean",
+      "target_column": "target_occupancy_rate_30m",
+      "mae": 0.24872897374305522,
+      "rmse": 0.2855932939619513,
+      "r2": -0.042971075398945846,
+      "mape": 81.68296887689016,
+      "sample_count": 4980
+    }
+  ]
+}

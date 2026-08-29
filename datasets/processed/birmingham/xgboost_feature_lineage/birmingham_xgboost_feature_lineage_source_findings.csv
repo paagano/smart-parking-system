@@ -1,0 +1,59 @@
+file,line,finding_type,context,source_expression,likely_context,feature_candidates,temporal_direction,target_context,feature_context
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1083,SHIFT,TARGET_GENERATION,"occupancy.shift(
+                -steps
+            )",_build_horizon_targets,"[""future_occupancy""]",HISTORICAL_OR_UNKNOWN,True,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1089,SHIFT,TARGET_GENERATION,"observation_present
+            .shift(
+                -steps
+            )
+            .fillna(False)
+            .astype(bool)",_build_horizon_targets,"[""future_observed""]",HISTORICAL_OR_UNKNOWN,True,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1098,SHIFT,TARGET_GENERATION,"sequence_break
+            .shift(
+                -steps
+            )
+            .fillna(True)
+            .astype(bool)",_build_horizon_targets,"[""future_sequence_break""]",HISTORICAL_OR_UNKNOWN,True,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1107,SHIFT,TARGET_GENERATION,"operational_gap
+            .shift(
+                -steps
+            )
+            .fillna(True)
+            .astype(bool)",_build_horizon_targets,"[""future_operational_gap""]",HISTORICAL_OR_UNKNOWN,True,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1116,SHIFT,TARGET_GENERATION,"data_gap
+            .shift(
+                -steps
+            )
+            .fillna(True)
+            .astype(bool)",_build_horizon_targets,"[""future_data_gap""]",HISTORICAL_OR_UNKNOWN,True,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal.py,528,DIFF,OTHER,"timestamps
+            .diff()
+            .dropna()
+            .dt.total_seconds()
+            .div(60.0)",_audit_facility,"[""intervals""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal.py,618,POSITIVE_SHIFT,OTHER,timestamps.shift(1),_build_interval_frame,"[""previous""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal.py,618,SHIFT,OTHER,timestamps.shift(1),_build_interval_frame,"[""previous""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1407,POSITIVE_SHIFT,OTHER,timestamps.shift(1),_assign_gap_status,"[""previous_timestamp""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1407,SHIFT,OTHER,timestamps.shift(1),_assign_gap_status,"[""previous_timestamp""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1411,POSITIVE_SHIFT,OTHER,"result[
+                OBSERVATION_PRESENT_COLUMN
+            ]
+            .shift(1)
+            .fillna(False)",_assign_gap_status,"[""previous_observed""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1411,SHIFT,OTHER,"result[
+                OBSERVATION_PRESENT_COLUMN
+            ]
+            .shift(1)
+            .fillna(False)",_assign_gap_status,"[""previous_observed""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1737,POSITIVE_SHIFT,OTHER,current_status.shift(1),_assign_sequence_boundaries,"[""previous_status""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1737,SHIFT,OTHER,current_status.shift(1),_assign_sequence_boundaries,"[""previous_status""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\lag_features.py,1227,DIFF,OTHER,timestamps.diff(),_count_irregular_intervals,"[""deltas""]",HISTORICAL_OR_UNKNOWN,False,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,1203,ROLLING,FEATURE_GENERATION,"grouped.rolling(
+            on=""__timestamp"",
+            **rolling_kwargs,
+        )",_build_window_features,"[""rolling_object""]",HISTORICAL_OR_UNKNOWN,False,True
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\ml_models\baseline_model.py,876,SHIFT,OTHER,"combined.shift(
+            self.lag
+        ).iloc[
+            len(self._history):
+        ]",predict,"[""predictions""]",HISTORICAL_OR_UNKNOWN,False,False

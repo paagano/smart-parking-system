@@ -1,0 +1,3571 @@
+file,line_number,finding_type,matched_text,context
+app\ml\data\dataset_audit.py,46,target_reference,- Why are targets unavailable?,"- Which facilities are sparse?
+- What proportion of observations are usable?
+- Why are targets unavailable?
+- What is the occupancy distribution?
+- How does coverage vary by hour?"
+app\ml\data\dataset_audit.py,104,target_reference,# Target columns,"# ============================================================
+# Target columns
+# ============================================================"
+app\ml\data\dataset_audit.py,107,target_reference,"TARGET_30M_COLUMN = ""target_occupancy_rate_30m""","# ============================================================
+
+TARGET_30M_COLUMN = ""target_occupancy_rate_30m""
+
+TARGET_1H_COLUMN = ""target_occupancy_rate_1h"""
+app\ml\data\dataset_audit.py,109,target_reference,"TARGET_1H_COLUMN = ""target_occupancy_rate_1h""","TARGET_30M_COLUMN = ""target_occupancy_rate_30m""
+
+TARGET_1H_COLUMN = ""target_occupancy_rate_1h""
+
+TARGET_2H_COLUMN = ""target_occupancy_rate_2h"""
+app\ml\data\dataset_audit.py,111,target_reference,"TARGET_2H_COLUMN = ""target_occupancy_rate_2h""","TARGET_1H_COLUMN = ""target_occupancy_rate_1h""
+
+TARGET_2H_COLUMN = ""target_occupancy_rate_2h""
+
+TARGET_TOMORROW_MORNING_COLUMN = ("
+app\ml\data\dataset_audit.py,113,target_reference,TARGET_TOMORROW_MORNING_COLUMN = (,"TARGET_2H_COLUMN = ""target_occupancy_rate_2h""
+
+TARGET_TOMORROW_MORNING_COLUMN = (
+    ""target_tomorrow_morning_demand""
+)"
+app\ml\data\dataset_audit.py,114,target_reference,"""target_tomorrow_morning_demand""","TARGET_TOMORROW_MORNING_COLUMN = (
+    ""target_tomorrow_morning_demand""
+)"
+app\ml\data\dataset_audit.py,119,target_reference,# Target availability columns,"# ============================================================
+# Target availability columns
+# ============================================================"
+app\ml\data\dataset_audit.py,122,target_reference,TARGET_30M_AVAILABLE_COLUMN = (,"# ============================================================
+
+TARGET_30M_AVAILABLE_COLUMN = (
+    ""target_30m_available""
+)"
+app\ml\data\dataset_audit.py,123,target_reference,"""target_30m_available""","TARGET_30M_AVAILABLE_COLUMN = (
+    ""target_30m_available""
+)"
+app\ml\data\dataset_audit.py,126,target_reference,TARGET_1H_AVAILABLE_COLUMN = (,")
+
+TARGET_1H_AVAILABLE_COLUMN = (
+    ""target_1h_available""
+)"
+app\ml\data\dataset_audit.py,127,target_reference,"""target_1h_available""","TARGET_1H_AVAILABLE_COLUMN = (
+    ""target_1h_available""
+)"
+app\ml\data\dataset_audit.py,130,target_reference,TARGET_2H_AVAILABLE_COLUMN = (,")
+
+TARGET_2H_AVAILABLE_COLUMN = (
+    ""target_2h_available""
+)"
+app\ml\data\dataset_audit.py,131,target_reference,"""target_2h_available""","TARGET_2H_AVAILABLE_COLUMN = (
+    ""target_2h_available""
+)"
+app\ml\data\dataset_audit.py,134,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN = (,")
+
+TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN = (
+    ""target_tomorrow_morning_available""
+)"
+app\ml\data\dataset_audit.py,135,target_reference,"""target_tomorrow_morning_available""","TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN = (
+    ""target_tomorrow_morning_available""
+)"
+app\ml\data\dataset_audit.py,138,target_reference,"TARGET_ELIGIBLE_COLUMN = ""target_eligible""",")
+
+TARGET_ELIGIBLE_COLUMN = ""target_eligible""
+
+TARGET_EXCLUSION_REASON_COLUMN = ("
+app\ml\data\dataset_audit.py,140,target_reference,TARGET_EXCLUSION_REASON_COLUMN = (,"TARGET_ELIGIBLE_COLUMN = ""target_eligible""
+
+TARGET_EXCLUSION_REASON_COLUMN = (
+    ""target_exclusion_reason""
+)"
+app\ml\data\dataset_audit.py,141,target_reference,"""target_exclusion_reason""","TARGET_EXCLUSION_REASON_COLUMN = (
+    ""target_exclusion_reason""
+)"
+app\ml\data\dataset_audit.py,367,target_reference,target_eligible_count: int,"sequence_break_count: int
+
+    target_eligible_count: int
+
+    target_eligible_ratio: float"
+app\ml\data\dataset_audit.py,369,target_reference,target_eligible_ratio: float,"target_eligible_count: int
+
+    target_eligible_ratio: float
+
+    coverage_start: pd.Timestamp | None"
+app\ml\data\dataset_audit.py,401,target_reference,target_30m_count: int,"observed_ratio: float
+
+    target_30m_count: int
+
+    target_1h_count: int"
+app\ml\data\dataset_audit.py,403,target_reference,target_1h_count: int,"target_30m_count: int
+
+    target_1h_count: int
+
+    target_2h_count: int"
+app\ml\data\dataset_audit.py,405,target_reference,target_2h_count: int,"target_1h_count: int
+
+    target_2h_count: int
+
+    target_tomorrow_morning_count: int"
+app\ml\data\dataset_audit.py,407,target_reference,target_tomorrow_morning_count: int,"target_2h_count: int
+
+    target_tomorrow_morning_count: int
+
+    target_30m_ratio: float"
+app\ml\data\dataset_audit.py,409,target_reference,target_30m_ratio: float,"target_tomorrow_morning_count: int
+
+    target_30m_ratio: float
+
+    target_1h_ratio: float"
+app\ml\data\dataset_audit.py,411,target_reference,target_1h_ratio: float,"target_30m_ratio: float
+
+    target_1h_ratio: float
+
+    target_2h_ratio: float"
+app\ml\data\dataset_audit.py,413,target_reference,target_2h_ratio: float,"target_1h_ratio: float
+
+    target_2h_ratio: float
+
+    target_tomorrow_morning_ratio: float"
+app\ml\data\dataset_audit.py,415,target_reference,target_tomorrow_morning_ratio: float,"target_2h_ratio: float
+
+    target_tomorrow_morning_ratio: float
+
+    target_eligible_count: int"
+app\ml\data\dataset_audit.py,417,target_reference,target_eligible_count: int,"target_tomorrow_morning_ratio: float
+
+    target_eligible_count: int
+
+    minimum_occupancy_rate: float | None"
+app\ml\data\dataset_audit.py,439,target_reference,# Target audit,"# ============================================================
+# Target audit
+# ============================================================"
+app\ml\data\dataset_audit.py,444,target_reference,class TargetAudit:,"@dataclass(frozen=True, slots=True)
+class TargetAudit:
+    """"""Audit statistics for one target horizon."""""""
+app\ml\data\dataset_audit.py,445,target_reference,"""""""Audit statistics for one target horizon.""""""","@dataclass(frozen=True, slots=True)
+class TargetAudit:
+    """"""Audit statistics for one target horizon.""""""
+
+    horizon: str"
+app\ml\data\dataset_audit.py,449,target_reference,target_column: str,"horizon: str
+
+    target_column: str
+
+    availability_column: str"
+app\ml\data\dataset_audit.py,503,target_reference,target_30m_rows: int,"observed_ratio: float
+
+    target_30m_rows: int
+
+    target_1h_rows: int"
+app\ml\data\dataset_audit.py,505,target_reference,target_1h_rows: int,"target_30m_rows: int
+
+    target_1h_rows: int
+
+    target_2h_rows: int"
+app\ml\data\dataset_audit.py,507,target_reference,target_2h_rows: int,"target_1h_rows: int
+
+    target_2h_rows: int
+
+    target_tomorrow_rows: int"
+app\ml\data\dataset_audit.py,509,target_reference,target_tomorrow_rows: int,"target_2h_rows: int
+
+    target_tomorrow_rows: int"
+app\ml\data\dataset_audit.py,531,target_reference,target_30m_rows: int,"observed_ratio: float
+
+    target_30m_rows: int
+
+    target_1h_rows: int"
+app\ml\data\dataset_audit.py,533,target_reference,target_1h_rows: int,"target_30m_rows: int
+
+    target_1h_rows: int
+
+    target_2h_rows: int"
+app\ml\data\dataset_audit.py,535,target_reference,target_2h_rows: int,"target_1h_rows: int
+
+    target_2h_rows: int
+
+    target_tomorrow_rows: int"
+app\ml\data\dataset_audit.py,537,target_reference,target_tomorrow_rows: int,"target_2h_rows: int
+
+    target_tomorrow_rows: int"
+app\ml\data\dataset_audit.py,558,target_reference,targets: tuple[,"]
+
+    targets: tuple[
+        TargetAudit,
+        ..."
+app\ml\data\dataset_audit.py,559,target_reference,"TargetAudit,","targets: tuple[
+        TargetAudit,
+        ...
+    ]"
+app\ml\data\dataset_audit.py,698,target_reference,targets = (,")
+
+        targets = (
+            self._audit_targets(
+                working,"
+app\ml\data\dataset_audit.py,740,target_reference,"targets,","summary,
+            facilities,
+            targets,
+            findings,
+        )"
+app\ml\data\dataset_audit.py,754,target_reference,targets=tuple(,"facilities
+            ),
+            targets=tuple(
+                targets
+            ),"
+app\ml\data\dataset_audit.py,755,target_reference,targets,"),
+            targets=tuple(
+                targets
+            ),
+            hourly_coverage=tuple("
+app\ml\data\dataset_audit.py,823,target_reference,"TARGET_30M_AVAILABLE_COLUMN,","IS_OPERATIONAL_GAP_COLUMN,
+            IS_DATA_GAP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,"
+app\ml\data\dataset_audit.py,824,target_reference,"TARGET_1H_AVAILABLE_COLUMN,","IS_DATA_GAP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"
+app\ml\data\dataset_audit.py,825,target_reference,"TARGET_2H_AVAILABLE_COLUMN,","TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,"
+app\ml\data\dataset_audit.py,826,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+        }"
+app\ml\data\dataset_audit.py,827,target_reference,"TARGET_ELIGIBLE_COLUMN,","TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+        }"
+app\ml\data\dataset_audit.py,888,target_reference,"TARGET_30M_AVAILABLE_COLUMN,","IS_OPERATIONAL_GAP_COLUMN,
+            IS_DATA_GAP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,"
+app\ml\data\dataset_audit.py,889,target_reference,"TARGET_1H_AVAILABLE_COLUMN,","IS_DATA_GAP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"
+app\ml\data\dataset_audit.py,890,target_reference,"TARGET_2H_AVAILABLE_COLUMN,","TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,"
+app\ml\data\dataset_audit.py,891,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+        ]"
+app\ml\data\dataset_audit.py,892,target_reference,"TARGET_ELIGIBLE_COLUMN,","TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+        ]"
+app\ml\data\dataset_audit.py,964,target_reference,target_eligible = (,"calendar_days = 0
+
+        target_eligible = (
+            dataframe[
+                TARGET_ELIGIBLE_COLUMN"
+app\ml\data\dataset_audit.py,966,target_reference,TARGET_ELIGIBLE_COLUMN,"target_eligible = (
+            dataframe[
+                TARGET_ELIGIBLE_COLUMN
+            ]
+        )"
+app\ml\data\dataset_audit.py,970,target_reference,target_eligible_count = int(,")
+
+        target_eligible_count = int(
+            target_eligible.sum()
+        )"
+app\ml\data\dataset_audit.py,971,target_reference,target_eligible.sum(),"target_eligible_count = int(
+            target_eligible.sum()
+        )"
+app\ml\data\dataset_audit.py,974,target_reference,target_eligible_ratio = (,")
+
+        target_eligible_ratio = (
+            target_eligible_count / total
+            if total"
+app\ml\data\dataset_audit.py,975,target_reference,target_eligible_count / total,"target_eligible_ratio = (
+            target_eligible_count / total
+            if total
+            else 0.0"
+app\ml\data\dataset_audit.py,1011,target_reference,target_eligible_count=(,"].sum()
+            ),
+            target_eligible_count=(
+                target_eligible_count
+            ),"
+app\ml\data\dataset_audit.py,1012,target_reference,target_eligible_count,"),
+            target_eligible_count=(
+                target_eligible_count
+            ),
+            target_eligible_ratio=("
+app\ml\data\dataset_audit.py,1014,target_reference,target_eligible_ratio=(,"target_eligible_count
+            ),
+            target_eligible_ratio=(
+                target_eligible_ratio
+            ),"
+app\ml\data\dataset_audit.py,1015,target_reference,target_eligible_ratio,"),
+            target_eligible_ratio=(
+                target_eligible_ratio
+            ),
+            coverage_start=coverage_start,"
+app\ml\data\dataset_audit.py,1081,target_reference,target_30m = int(,")
+
+            target_30m = int(
+                facility_df[
+                    TARGET_30M_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1083,target_reference,TARGET_30M_AVAILABLE_COLUMN,"target_30m = int(
+                facility_df[
+                    TARGET_30M_AVAILABLE_COLUMN
+                ].sum()
+            )"
+app\ml\data\dataset_audit.py,1087,target_reference,target_1h = int(,")
+
+            target_1h = int(
+                facility_df[
+                    TARGET_1H_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1089,target_reference,TARGET_1H_AVAILABLE_COLUMN,"target_1h = int(
+                facility_df[
+                    TARGET_1H_AVAILABLE_COLUMN
+                ].sum()
+            )"
+app\ml\data\dataset_audit.py,1093,target_reference,target_2h = int(,")
+
+            target_2h = int(
+                facility_df[
+                    TARGET_2H_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1095,target_reference,TARGET_2H_AVAILABLE_COLUMN,"target_2h = int(
+                facility_df[
+                    TARGET_2H_AVAILABLE_COLUMN
+                ].sum()
+            )"
+app\ml\data\dataset_audit.py,1099,target_reference,target_tomorrow = int(,")
+
+            target_tomorrow = int(
+                facility_df[
+                    TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1101,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"target_tomorrow = int(
+                facility_df[
+                    TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN
+                ].sum()
+            )"
+app\ml\data\dataset_audit.py,1107,target_reference,TARGET_ELIGIBLE_COLUMN,"eligible = int(
+                facility_df[
+                    TARGET_ELIGIBLE_COLUMN
+                ].sum()
+            )"
+app\ml\data\dataset_audit.py,1179,target_reference,target_30m_count=(,"observed_ratio
+                ),
+                target_30m_count=(
+                    target_30m
+                ),"
+app\ml\data\dataset_audit.py,1180,target_reference,target_30m,"),
+                target_30m_count=(
+                    target_30m
+                ),
+                target_1h_count=("
+app\ml\data\dataset_audit.py,1182,target_reference,target_1h_count=(,"target_30m
+                ),
+                target_1h_count=(
+                    target_1h
+                ),"
+app\ml\data\dataset_audit.py,1183,target_reference,target_1h,"),
+                target_1h_count=(
+                    target_1h
+                ),
+                target_2h_count=("
+app\ml\data\dataset_audit.py,1185,target_reference,target_2h_count=(,"target_1h
+                ),
+                target_2h_count=(
+                    target_2h
+                ),"
+app\ml\data\dataset_audit.py,1186,target_reference,target_2h,"),
+                target_2h_count=(
+                    target_2h
+                ),
+                target_tomorrow_morning_count=("
+app\ml\data\dataset_audit.py,1188,target_reference,target_tomorrow_morning_count=(,"target_2h
+                ),
+                target_tomorrow_morning_count=(
+                    target_tomorrow
+                ),"
+app\ml\data\dataset_audit.py,1189,target_reference,target_tomorrow,"),
+                target_tomorrow_morning_count=(
+                    target_tomorrow
+                ),
+                target_30m_ratio=("
+app\ml\data\dataset_audit.py,1191,target_reference,target_30m_ratio=(,"target_tomorrow
+                ),
+                target_30m_ratio=(
+                    target_30m / total
+                    if total"
+app\ml\data\dataset_audit.py,1192,target_reference,target_30m / total,"),
+                target_30m_ratio=(
+                    target_30m / total
+                    if total
+                    else 0.0"
+app\ml\data\dataset_audit.py,1196,target_reference,target_1h_ratio=(,"else 0.0
+                ),
+                target_1h_ratio=(
+                    target_1h / total
+                    if total"
+app\ml\data\dataset_audit.py,1197,target_reference,target_1h / total,"),
+                target_1h_ratio=(
+                    target_1h / total
+                    if total
+                    else 0.0"
+app\ml\data\dataset_audit.py,1201,target_reference,target_2h_ratio=(,"else 0.0
+                ),
+                target_2h_ratio=(
+                    target_2h / total
+                    if total"
+app\ml\data\dataset_audit.py,1202,target_reference,target_2h / total,"),
+                target_2h_ratio=(
+                    target_2h / total
+                    if total
+                    else 0.0"
+app\ml\data\dataset_audit.py,1206,target_reference,target_tomorrow_morning_ratio=(,"else 0.0
+                ),
+                target_tomorrow_morning_ratio=(
+                    target_tomorrow / total
+                    if total"
+app\ml\data\dataset_audit.py,1207,target_reference,target_tomorrow / total,"),
+                target_tomorrow_morning_ratio=(
+                    target_tomorrow / total
+                    if total
+                    else 0.0"
+app\ml\data\dataset_audit.py,1211,target_reference,target_eligible_count=(,"else 0.0
+                ),
+                target_eligible_count=(
+                    eligible
+                ),"
+app\ml\data\dataset_audit.py,1290,target_reference,# Low target coverage,"# ------------------------------------------------
+            # Low target coverage
+            # ------------------------------------------------"
+app\ml\data\dataset_audit.py,1293,target_reference,target_checks = [,"# ------------------------------------------------
+
+            target_checks = [
+                (
+                    ""30M"","
+app\ml\data\dataset_audit.py,1296,target_reference,"target_30m,","(
+                    ""30M"",
+                    target_30m,
+                    self._config
+                    .minimum_facility_target_30m,"
+app\ml\data\dataset_audit.py,1302,target_reference,"target_1h,","(
+                    ""1H"",
+                    target_1h,
+                    self._config
+                    .minimum_facility_target_1h,"
+app\ml\data\dataset_audit.py,1308,target_reference,"target_2h,","(
+                    ""2H"",
+                    target_2h,
+                    self._config
+                    .minimum_facility_target_2h,"
+app\ml\data\dataset_audit.py,1314,target_reference,"target_tomorrow,","(
+                    ""TOMORROW_MORNING"",
+                    target_tomorrow,
+                    self._config
+                    .minimum_facility_tomorrow_targets,"
+app\ml\data\dataset_audit.py,1324,target_reference,) in target_checks:,"count,
+                minimum,
+            ) in target_checks:
+
+                if ("
+app\ml\data\dataset_audit.py,1341,target_reference,"f""{horizon} targets.""","f""Facility '{facility_code}' ""
+                                f""has only {count} usable ""
+                                f""{horizon} targets.""
+                            ),
+                            count=count,"
+app\ml\data\dataset_audit.py,1359,target_reference,# Target audit,"# ========================================================
+    # Target audit
+    # ========================================================"
+app\ml\data\dataset_audit.py,1366,target_reference,) -> list[TargetAudit]:,"dataframe: pd.DataFrame,
+        findings: list[AuditFinding],
+    ) -> list[TargetAudit]:
+
+        definitions = ["
+app\ml\data\dataset_audit.py,1371,target_reference,"TARGET_30M_COLUMN,","(
+                ""30m"",
+                TARGET_30M_COLUMN,
+                TARGET_30M_AVAILABLE_COLUMN,
+            ),"
+app\ml\data\dataset_audit.py,1372,target_reference,"TARGET_30M_AVAILABLE_COLUMN,","""30m"",
+                TARGET_30M_COLUMN,
+                TARGET_30M_AVAILABLE_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_audit.py,1376,target_reference,"TARGET_1H_COLUMN,","(
+                ""1h"",
+                TARGET_1H_COLUMN,
+                TARGET_1H_AVAILABLE_COLUMN,
+            ),"
+app\ml\data\dataset_audit.py,1377,target_reference,"TARGET_1H_AVAILABLE_COLUMN,","""1h"",
+                TARGET_1H_COLUMN,
+                TARGET_1H_AVAILABLE_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_audit.py,1381,target_reference,"TARGET_2H_COLUMN,","(
+                ""2h"",
+                TARGET_2H_COLUMN,
+                TARGET_2H_AVAILABLE_COLUMN,
+            ),"
+app\ml\data\dataset_audit.py,1382,target_reference,"TARGET_2H_AVAILABLE_COLUMN,","""2h"",
+                TARGET_2H_COLUMN,
+                TARGET_2H_AVAILABLE_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_audit.py,1386,target_reference,"TARGET_TOMORROW_MORNING_COLUMN,","(
+                ""tomorrow_morning"",
+                TARGET_TOMORROW_MORNING_COLUMN,
+                TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            ),"
+app\ml\data\dataset_audit.py,1387,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","""tomorrow_morning"",
+                TARGET_TOMORROW_MORNING_COLUMN,
+                TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            ),
+        ]"
+app\ml\data\dataset_audit.py,1392,target_reference,TargetAudit,"audits: list[
+            TargetAudit
+        ] = []"
+app\ml\data\dataset_audit.py,1401,target_reference,"target_column,","for (
+            horizon,
+            target_column,
+            availability_column,
+        ) in definitions:"
+app\ml\data\dataset_audit.py,1413,target_reference,target_values = pd.to_numeric(,")
+
+            target_values = pd.to_numeric(
+                dataframe.loc[
+                    available,"
+app\ml\data\dataset_audit.py,1416,target_reference,"target_column,","dataframe.loc[
+                    available,
+                    target_column,
+                ],
+                errors=""coerce"","
+app\ml\data\dataset_audit.py,1436,target_reference,if target_values.empty:,")
+
+            if target_values.empty:
+
+                minimum = None"
+app\ml\data\dataset_audit.py,1451,target_reference,target_values.min(),"minimum = float(
+                    target_values.min()
+                )"
+app\ml\data\dataset_audit.py,1455,target_reference,target_values.max(),"maximum = float(
+                    target_values.max()
+                )"
+app\ml\data\dataset_audit.py,1459,target_reference,target_values.mean(),"mean = float(
+                    target_values.mean()
+                )"
+app\ml\data\dataset_audit.py,1463,target_reference,target_values.median(),"median = float(
+                    target_values.median()
+                )"
+app\ml\data\dataset_audit.py,1467,target_reference,target_values.std(,"std = float(
+                    target_values.std(
+                        ddof=1
+                    )"
+app\ml\data\dataset_audit.py,1471,target_reference,target_values,")
+                ) if len(
+                    target_values
+                ) > 1 else 0.0"
+app\ml\data\dataset_audit.py,1475,target_reference,target_values.quantile(,"p05 = float(
+                    target_values.quantile(
+                        0.05
+                    )"
+app\ml\data\dataset_audit.py,1481,target_reference,target_values.quantile(,"p25 = float(
+                    target_values.quantile(
+                        0.25
+                    )"
+app\ml\data\dataset_audit.py,1487,target_reference,target_values.quantile(,"p75 = float(
+                    target_values.quantile(
+                        0.75
+                    )"
+app\ml\data\dataset_audit.py,1493,target_reference,target_values.quantile(,"p95 = float(
+                    target_values.quantile(
+                        0.95
+                    )"
+app\ml\data\dataset_audit.py,1498,target_reference,audit = TargetAudit(,")
+
+            audit = TargetAudit(
+                horizon=horizon,
+                target_column=target_column,"
+app\ml\data\dataset_audit.py,1500,target_reference,"target_column=target_column,","audit = TargetAudit(
+                horizon=horizon,
+                target_column=target_column,
+                availability_column=(
+                    availability_column"
+app\ml\data\dataset_audit.py,1551,target_reference,"f""{horizon} target coverage ""","),
+                        message=(
+                            f""{horizon} target coverage ""
+                            f""is {ratio:.2%}, below the ""
+                            f""configured threshold of """
+app\ml\data\dataset_audit.py,1623,target_reference,target_30m_rows=int(,"else 0.0
+                    ),
+                    target_30m_rows=int(
+                        subset[
+                            TARGET_30M_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1625,target_reference,TARGET_30M_AVAILABLE_COLUMN,"target_30m_rows=int(
+                        subset[
+                            TARGET_30M_AVAILABLE_COLUMN
+                        ].sum()
+                    ),"
+app\ml\data\dataset_audit.py,1628,target_reference,target_1h_rows=int(,"].sum()
+                    ),
+                    target_1h_rows=int(
+                        subset[
+                            TARGET_1H_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1630,target_reference,TARGET_1H_AVAILABLE_COLUMN,"target_1h_rows=int(
+                        subset[
+                            TARGET_1H_AVAILABLE_COLUMN
+                        ].sum()
+                    ),"
+app\ml\data\dataset_audit.py,1633,target_reference,target_2h_rows=int(,"].sum()
+                    ),
+                    target_2h_rows=int(
+                        subset[
+                            TARGET_2H_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1635,target_reference,TARGET_2H_AVAILABLE_COLUMN,"target_2h_rows=int(
+                        subset[
+                            TARGET_2H_AVAILABLE_COLUMN
+                        ].sum()
+                    ),"
+app\ml\data\dataset_audit.py,1638,target_reference,target_tomorrow_rows=int(,"].sum()
+                    ),
+                    target_tomorrow_rows=int(
+                        subset[
+                            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1640,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"target_tomorrow_rows=int(
+                        subset[
+                            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN
+                        ].sum()
+                    ),"
+app\ml\data\dataset_audit.py,1702,target_reference,target_30m_rows=int(,"else 0.0
+                    ),
+                    target_30m_rows=int(
+                        subset[
+                            TARGET_30M_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1704,target_reference,TARGET_30M_AVAILABLE_COLUMN,"target_30m_rows=int(
+                        subset[
+                            TARGET_30M_AVAILABLE_COLUMN
+                        ].sum()
+                    ),"
+app\ml\data\dataset_audit.py,1707,target_reference,target_1h_rows=int(,"].sum()
+                    ),
+                    target_1h_rows=int(
+                        subset[
+                            TARGET_1H_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1709,target_reference,TARGET_1H_AVAILABLE_COLUMN,"target_1h_rows=int(
+                        subset[
+                            TARGET_1H_AVAILABLE_COLUMN
+                        ].sum()
+                    ),"
+app\ml\data\dataset_audit.py,1712,target_reference,target_2h_rows=int(,"].sum()
+                    ),
+                    target_2h_rows=int(
+                        subset[
+                            TARGET_2H_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1714,target_reference,TARGET_2H_AVAILABLE_COLUMN,"target_2h_rows=int(
+                        subset[
+                            TARGET_2H_AVAILABLE_COLUMN
+                        ].sum()
+                    ),"
+app\ml\data\dataset_audit.py,1717,target_reference,target_tomorrow_rows=int(,"].sum()
+                    ),
+                    target_tomorrow_rows=int(
+                        subset[
+                            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"
+app\ml\data\dataset_audit.py,1719,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"target_tomorrow_rows=int(
+                        subset[
+                            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN
+                        ].sum()
+                    ),"
+app\ml\data\dataset_audit.py,1927,target_reference,# Target consistency,"# ========================================================
+    # Target consistency
+    # ========================================================"
+app\ml\data\dataset_audit.py,1938,target_reference,"TARGET_30M_AVAILABLE_COLUMN,","definitions = [
+            (
+                TARGET_30M_AVAILABLE_COLUMN,
+                TARGET_30M_COLUMN,
+            ),"
+app\ml\data\dataset_audit.py,1939,target_reference,"TARGET_30M_COLUMN,","(
+                TARGET_30M_AVAILABLE_COLUMN,
+                TARGET_30M_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_audit.py,1942,target_reference,"TARGET_1H_AVAILABLE_COLUMN,","),
+            (
+                TARGET_1H_AVAILABLE_COLUMN,
+                TARGET_1H_COLUMN,
+            ),"
+app\ml\data\dataset_audit.py,1943,target_reference,"TARGET_1H_COLUMN,","(
+                TARGET_1H_AVAILABLE_COLUMN,
+                TARGET_1H_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_audit.py,1946,target_reference,"TARGET_2H_AVAILABLE_COLUMN,","),
+            (
+                TARGET_2H_AVAILABLE_COLUMN,
+                TARGET_2H_COLUMN,
+            ),"
+app\ml\data\dataset_audit.py,1947,target_reference,"TARGET_2H_COLUMN,","(
+                TARGET_2H_AVAILABLE_COLUMN,
+                TARGET_2H_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_audit.py,1950,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","),
+            (
+                TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+                TARGET_TOMORROW_MORNING_COLUMN,
+            ),"
+app\ml\data\dataset_audit.py,1951,target_reference,"TARGET_TOMORROW_MORNING_COLUMN,","(
+                TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+                TARGET_TOMORROW_MORNING_COLUMN,
+            ),
+        ]"
+app\ml\data\dataset_audit.py,1957,target_reference,"target_column,","for (
+            availability_column,
+            target_column,
+        ) in definitions:"
+app\ml\data\dataset_audit.py,1970,target_reference,target_column,"missing_target = (
+                dataframe[
+                    target_column
+                ].isna()
+            )"
+app\ml\data\dataset_audit.py,1993,target_reference,"""TARGET_AVAILABILITY_MISMATCH""","AuditFinding(
+                        code=(
+                            ""TARGET_AVAILABILITY_MISMATCH""
+                        ),
+                        severity=("
+app\ml\data\dataset_audit.py,2001,target_reference,"""as available although the target ""","f""{availability_column} marks ""
+                            f""{inconsistent_available} rows ""
+                            ""as available although the target ""
+                            ""value is missing.""
+                        ),"
+app\ml\data\dataset_audit.py,2011,target_reference,"""target_column"": (","availability_column
+                            ),
+                            ""target_column"": (
+                                target_column
+                            ),"
+app\ml\data\dataset_audit.py,2012,target_reference,target_column,"),
+                            ""target_column"": (
+                                target_column
+                            ),
+                        },"
+app\ml\data\dataset_audit.py,2023,target_reference,"""TARGET_VALUE_WITHOUT_AVAILABILITY""","AuditFinding(
+                        code=(
+                            ""TARGET_VALUE_WITHOUT_AVAILABILITY""
+                        ),
+                        severity=("
+app\ml\data\dataset_audit.py,2029,target_reference,"f""{target_column} contains ""","),
+                        message=(
+                            f""{target_column} contains ""
+                            f""{inconsistent_unavailable} ""
+                            ""values marked as unavailable."""
+app\ml\data\dataset_audit.py,2040,target_reference,"""target_column"": (","availability_column
+                            ),
+                            ""target_column"": (
+                                target_column
+                            ),"
+app\ml\data\dataset_audit.py,2041,target_reference,target_column,"),
+                            ""target_column"": (
+                                target_column
+                            ),
+                        },"
+app\ml\data\dataset_audit.py,2055,target_reference,"targets: list[TargetAudit],","summary: DatasetSummary,
+        facilities: list[FacilityAudit],
+        targets: list[TargetAudit],
+        findings: list[AuditFinding],
+    ) -> None:"
+app\ml\data\dataset_audit.py,2109,target_reference,# Identify facilities with no usable target at all.,"# ----------------------------------------------------
+        # Identify facilities with no usable target at all.
+        # ----------------------------------------------------"
+app\ml\data\dataset_audit.py,2112,target_reference,targetless_facilities = [,"# ----------------------------------------------------
+
+        targetless_facilities = [
+            facility.facility_code
+            for facility in facilities"
+app\ml\data\dataset_audit.py,2115,target_reference,if facility.target_eligible_count == 0,"facility.facility_code
+            for facility in facilities
+            if facility.target_eligible_count == 0
+        ]"
+app\ml\data\dataset_audit.py,2118,target_reference,if targetless_facilities:,"]
+
+        if targetless_facilities:
+
+            findings.append("
+app\ml\data\dataset_audit.py,2123,target_reference,"""TARGETLESS_FACILITY""","AuditFinding(
+                    code=(
+                        ""TARGETLESS_FACILITY""
+                    ),
+                    severity=("
+app\ml\data\dataset_audit.py,2129,target_reference,"f""{len(targetless_facilities)} ""","),
+                    message=(
+                        f""{len(targetless_facilities)} ""
+                        ""facilities have no target-eligible ""
+                        ""rows."""
+app\ml\data\dataset_audit.py,2130,target_reference,"""facilities have no target-eligible ""","message=(
+                        f""{len(targetless_facilities)} ""
+                        ""facilities have no target-eligible ""
+                        ""rows.""
+                    ),"
+app\ml\data\dataset_audit.py,2134,target_reference,targetless_facilities,"),
+                    count=len(
+                        targetless_facilities
+                    ),
+                    metadata={"
+app\ml\data\dataset_audit.py,2138,target_reference,targetless_facilities,"metadata={
+                        ""facilities"": (
+                            targetless_facilities
+                        ),
+                    },"
+app\ml\data\dataset_audit.py,2145,target_reference,# Target distribution.,"# ----------------------------------------------------
+        # Target distribution.
+        # ----------------------------------------------------"
+app\ml\data\dataset_audit.py,2148,target_reference,if summary.target_eligible_count == 0:,"# ----------------------------------------------------
+
+        if summary.target_eligible_count == 0:
+
+            findings.append("
+app\ml\data\dataset_audit.py,2159,target_reference,"""No supervised-learning targets ""","),
+                    message=(
+                        ""No supervised-learning targets ""
+                        ""are available.""
+                    ),"
+app\ml\data\dataset_audit.py,2355,target_reference,"f""Target eligible: ""","lines.append(
+        f""Target eligible: ""
+        f""{report.summary.target_eligible_count:,} ""
+        f""({report.summary.target_eligible_ratio:.2%})"""
+app\ml\data\dataset_audit.py,2356,target_reference,"f""{report.summary.target_eligible_count:,} ""","lines.append(
+        f""Target eligible: ""
+        f""{report.summary.target_eligible_count:,} ""
+        f""({report.summary.target_eligible_ratio:.2%})""
+    )"
+app\ml\data\dataset_audit.py,2357,target_reference,"f""({report.summary.target_eligible_ratio:.2%})""","f""Target eligible: ""
+        f""{report.summary.target_eligible_count:,} ""
+        f""({report.summary.target_eligible_ratio:.2%})""
+    )"
+app\ml\data\dataset_audit.py,2363,target_reference,"""TARGET COVERAGE""","lines.append(
+        ""TARGET COVERAGE""
+    )"
+app\ml\data\dataset_audit.py,2370,target_reference,for target in report.targets:,")
+
+    for target in report.targets:
+
+        lines.append("
+app\ml\data\dataset_audit.py,2373,target_reference,"f""{target.horizon:20s} ""","lines.append(
+            f""{target.horizon:20s} ""
+            f""{target.available_count:8,d} / ""
+            f""{target.total_rows:8,d} """
+app\ml\data\dataset_audit.py,2374,target_reference,"f""{target.available_count:8,d} / ""","lines.append(
+            f""{target.horizon:20s} ""
+            f""{target.available_count:8,d} / ""
+            f""{target.total_rows:8,d} ""
+            f""({target.availability_ratio:.2%})"""
+app\ml\data\dataset_audit.py,2375,target_reference,"f""{target.total_rows:8,d} ""","f""{target.horizon:20s} ""
+            f""{target.available_count:8,d} / ""
+            f""{target.total_rows:8,d} ""
+            f""({target.availability_ratio:.2%})""
+        )"
+app\ml\data\dataset_audit.py,2376,target_reference,"f""({target.availability_ratio:.2%})""","f""{target.available_count:8,d} / ""
+            f""{target.total_rows:8,d} ""
+            f""({target.availability_ratio:.2%})""
+        )"
+app\ml\data\dataset_audit.py,2394,target_reference,"f""30m={facility.target_30m_count:5,d} ""","f""{facility.facility_code:25s} ""
+            f""observed={facility.observed_count:5,d} ""
+            f""30m={facility.target_30m_count:5,d} ""
+            f""1h={facility.target_1h_count:5,d} ""
+            f""2h={facility.target_2h_count:5,d}"""
+app\ml\data\dataset_audit.py,2395,target_reference,"f""1h={facility.target_1h_count:5,d} ""","f""observed={facility.observed_count:5,d} ""
+            f""30m={facility.target_30m_count:5,d} ""
+            f""1h={facility.target_1h_count:5,d} ""
+            f""2h={facility.target_2h_count:5,d}""
+        )"
+app\ml\data\dataset_audit.py,2396,target_reference,"f""2h={facility.target_2h_count:5,d}""","f""30m={facility.target_30m_count:5,d} ""
+            f""1h={facility.target_1h_count:5,d} ""
+            f""2h={facility.target_2h_count:5,d}""
+        )"
+app\ml\data\dataset_audit.py,2467,target_reference,# Targets,"""QUALITY_STATUS_COLUMN"",
+
+    # Targets
+    ""TARGET_30M_COLUMN"",
+    ""TARGET_1H_COLUMN"","
+app\ml\data\dataset_audit.py,2468,target_reference,"""TARGET_30M_COLUMN"",","# Targets
+    ""TARGET_30M_COLUMN"",
+    ""TARGET_1H_COLUMN"",
+    ""TARGET_2H_COLUMN"","
+app\ml\data\dataset_audit.py,2469,target_reference,"""TARGET_1H_COLUMN"",","# Targets
+    ""TARGET_30M_COLUMN"",
+    ""TARGET_1H_COLUMN"",
+    ""TARGET_2H_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_COLUMN"","
+app\ml\data\dataset_audit.py,2470,target_reference,"""TARGET_2H_COLUMN"",","""TARGET_30M_COLUMN"",
+    ""TARGET_1H_COLUMN"",
+    ""TARGET_2H_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_COLUMN"","
+app\ml\data\dataset_audit.py,2471,target_reference,"""TARGET_TOMORROW_MORNING_COLUMN"",","""TARGET_1H_COLUMN"",
+    ""TARGET_2H_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_COLUMN"",
+
+    # Availability"
+app\ml\data\dataset_audit.py,2474,target_reference,"""TARGET_30M_AVAILABLE_COLUMN"",","# Availability
+    ""TARGET_30M_AVAILABLE_COLUMN"",
+    ""TARGET_1H_AVAILABLE_COLUMN"",
+    ""TARGET_2H_AVAILABLE_COLUMN"","
+app\ml\data\dataset_audit.py,2475,target_reference,"""TARGET_1H_AVAILABLE_COLUMN"",","# Availability
+    ""TARGET_30M_AVAILABLE_COLUMN"",
+    ""TARGET_1H_AVAILABLE_COLUMN"",
+    ""TARGET_2H_AVAILABLE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"","
+app\ml\data\dataset_audit.py,2476,target_reference,"""TARGET_2H_AVAILABLE_COLUMN"",","""TARGET_30M_AVAILABLE_COLUMN"",
+    ""TARGET_1H_AVAILABLE_COLUMN"",
+    ""TARGET_2H_AVAILABLE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",
+    ""TARGET_ELIGIBLE_COLUMN"","
+app\ml\data\dataset_audit.py,2477,target_reference,"""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",","""TARGET_1H_AVAILABLE_COLUMN"",
+    ""TARGET_2H_AVAILABLE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",
+    ""TARGET_ELIGIBLE_COLUMN"",
+    ""TARGET_EXCLUSION_REASON_COLUMN"","
+app\ml\data\dataset_audit.py,2478,target_reference,"""TARGET_ELIGIBLE_COLUMN"",","""TARGET_2H_AVAILABLE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",
+    ""TARGET_ELIGIBLE_COLUMN"",
+    ""TARGET_EXCLUSION_REASON_COLUMN"","
+app\ml\data\dataset_audit.py,2479,target_reference,"""TARGET_EXCLUSION_REASON_COLUMN"",","""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",
+    ""TARGET_ELIGIBLE_COLUMN"",
+    ""TARGET_EXCLUSION_REASON_COLUMN"",
+
+    # Enums"
+app\ml\data\dataset_audit.py,2498,target_reference,"""TargetAudit"",","""DatasetSummary"",
+    ""FacilityAudit"",
+    ""TargetAudit"",
+    ""HourlyCoverage"",
+    ""DailyCoverage"","
+app\ml\data\dataset_builder.py,47,target_reference,- builds supervised-learning targets,"- consumes temporally normalized parking observations
+- builds supervised-learning targets
+- creates 30-minute targets
+- creates 1-hour targets"
+app\ml\data\dataset_builder.py,48,target_reference,- creates 30-minute targets,"- consumes temporally normalized parking observations
+- builds supervised-learning targets
+- creates 30-minute targets
+- creates 1-hour targets
+- creates 2-hour targets"
+app\ml\data\dataset_builder.py,49,target_reference,- creates 1-hour targets,"- builds supervised-learning targets
+- creates 30-minute targets
+- creates 1-hour targets
+- creates 2-hour targets
+- creates tomorrow-morning demand targets"
+app\ml\data\dataset_builder.py,50,target_reference,- creates 2-hour targets,"- creates 30-minute targets
+- creates 1-hour targets
+- creates 2-hour targets
+- creates tomorrow-morning demand targets
+- prevents targets from crossing invalid temporal gaps"
+app\ml\data\dataset_builder.py,51,future_keyword,- creates tomorrow-morning demand targets,"- creates 1-hour targets
+- creates 2-hour targets
+- creates tomorrow-morning demand targets
+- prevents targets from crossing invalid temporal gaps
+- preserves missing observations"
+app\ml\data\dataset_builder.py,51,target_reference,- creates tomorrow-morning demand targets,"- creates 1-hour targets
+- creates 2-hour targets
+- creates tomorrow-morning demand targets
+- prevents targets from crossing invalid temporal gaps
+- preserves missing observations"
+app\ml\data\dataset_builder.py,52,target_reference,- prevents targets from crossing invalid temporal gaps,"- creates 2-hour targets
+- creates tomorrow-morning demand targets
+- prevents targets from crossing invalid temporal gaps
+- preserves missing observations
+- records target availability"
+app\ml\data\dataset_builder.py,54,target_reference,- records target availability,"- prevents targets from crossing invalid temporal gaps
+- preserves missing observations
+- records target availability
+- records target exclusion reasons
+- produces dataset statistics"
+app\ml\data\dataset_builder.py,55,target_reference,- records target exclusion reasons,"- preserves missing observations
+- records target availability
+- records target exclusion reasons
+- produces dataset statistics"
+app\ml\data\dataset_builder.py,121,target_reference,# Target columns,"# ============================================================
+# Target columns
+# ============================================================"
+app\ml\data\dataset_builder.py,124,target_reference,TARGET_30M_COLUMN = (,"# ============================================================
+
+TARGET_30M_COLUMN = (
+    ""target_occupancy_rate_30m""
+)"
+app\ml\data\dataset_builder.py,125,target_reference,"""target_occupancy_rate_30m""","TARGET_30M_COLUMN = (
+    ""target_occupancy_rate_30m""
+)"
+app\ml\data\dataset_builder.py,128,target_reference,TARGET_1H_COLUMN = (,")
+
+TARGET_1H_COLUMN = (
+    ""target_occupancy_rate_1h""
+)"
+app\ml\data\dataset_builder.py,129,target_reference,"""target_occupancy_rate_1h""","TARGET_1H_COLUMN = (
+    ""target_occupancy_rate_1h""
+)"
+app\ml\data\dataset_builder.py,132,target_reference,TARGET_2H_COLUMN = (,")
+
+TARGET_2H_COLUMN = (
+    ""target_occupancy_rate_2h""
+)"
+app\ml\data\dataset_builder.py,133,target_reference,"""target_occupancy_rate_2h""","TARGET_2H_COLUMN = (
+    ""target_occupancy_rate_2h""
+)"
+app\ml\data\dataset_builder.py,136,target_reference,TARGET_TOMORROW_MORNING_COLUMN = (,")
+
+TARGET_TOMORROW_MORNING_COLUMN = (
+    ""target_tomorrow_morning_demand""
+)"
+app\ml\data\dataset_builder.py,137,target_reference,"""target_tomorrow_morning_demand""","TARGET_TOMORROW_MORNING_COLUMN = (
+    ""target_tomorrow_morning_demand""
+)"
+app\ml\data\dataset_builder.py,140,target_reference,TARGET_TOMORROW_MORNING_RATE_COLUMN = (,")
+
+TARGET_TOMORROW_MORNING_RATE_COLUMN = (
+    ""target_tomorrow_morning_occupancy_rate""
+)"
+app\ml\data\dataset_builder.py,141,target_reference,"""target_tomorrow_morning_occupancy_rate""","TARGET_TOMORROW_MORNING_RATE_COLUMN = (
+    ""target_tomorrow_morning_occupancy_rate""
+)"
+app\ml\data\dataset_builder.py,144,target_reference,TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN = (,")
+
+TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN = (
+    ""target_tomorrow_morning_at""
+)"
+app\ml\data\dataset_builder.py,145,target_reference,"""target_tomorrow_morning_at""","TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN = (
+    ""target_tomorrow_morning_at""
+)"
+app\ml\data\dataset_builder.py,150,target_reference,# Target availability columns,"# ============================================================
+# Target availability columns
+# ============================================================"
+app\ml\data\dataset_builder.py,153,target_reference,TARGET_30M_AVAILABLE_COLUMN = (,"# ============================================================
+
+TARGET_30M_AVAILABLE_COLUMN = (
+    ""target_30m_available""
+)"
+app\ml\data\dataset_builder.py,154,target_reference,"""target_30m_available""","TARGET_30M_AVAILABLE_COLUMN = (
+    ""target_30m_available""
+)"
+app\ml\data\dataset_builder.py,157,target_reference,TARGET_1H_AVAILABLE_COLUMN = (,")
+
+TARGET_1H_AVAILABLE_COLUMN = (
+    ""target_1h_available""
+)"
+app\ml\data\dataset_builder.py,158,target_reference,"""target_1h_available""","TARGET_1H_AVAILABLE_COLUMN = (
+    ""target_1h_available""
+)"
+app\ml\data\dataset_builder.py,161,target_reference,TARGET_2H_AVAILABLE_COLUMN = (,")
+
+TARGET_2H_AVAILABLE_COLUMN = (
+    ""target_2h_available""
+)"
+app\ml\data\dataset_builder.py,162,target_reference,"""target_2h_available""","TARGET_2H_AVAILABLE_COLUMN = (
+    ""target_2h_available""
+)"
+app\ml\data\dataset_builder.py,165,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN = (,")
+
+TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN = (
+    ""target_tomorrow_morning_available""
+)"
+app\ml\data\dataset_builder.py,166,target_reference,"""target_tomorrow_morning_available""","TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN = (
+    ""target_tomorrow_morning_available""
+)"
+app\ml\data\dataset_builder.py,169,target_reference,TARGET_ELIGIBLE_COLUMN = (,")
+
+TARGET_ELIGIBLE_COLUMN = (
+    ""target_eligible""
+)"
+app\ml\data\dataset_builder.py,170,target_reference,"""target_eligible""","TARGET_ELIGIBLE_COLUMN = (
+    ""target_eligible""
+)"
+app\ml\data\dataset_builder.py,173,target_reference,TARGET_EXCLUSION_REASON_COLUMN = (,")
+
+TARGET_EXCLUSION_REASON_COLUMN = (
+    ""target_exclusion_reason""
+)"
+app\ml\data\dataset_builder.py,174,target_reference,"""target_exclusion_reason""","TARGET_EXCLUSION_REASON_COLUMN = (
+    ""target_exclusion_reason""
+)"
+app\ml\data\dataset_builder.py,183,target_reference,"class TargetHorizon(str, Enum):","class TargetHorizon(str, Enum):
+    """"""Supported SmartPark prediction horizons."""""""
+app\ml\data\dataset_builder.py,207,target_reference,"class TargetExclusionReason(str, Enum):","class TargetExclusionReason(str, Enum):
+    """"""Why a target cannot be used for training."""""""
+app\ml\data\dataset_builder.py,208,target_reference,"""""""Why a target cannot be used for training.""""""","class TargetExclusionReason(str, Enum):
+    """"""Why a target cannot be used for training.""""""
+
+    NONE = ""NONE"""
+app\ml\data\dataset_builder.py,216,target_reference,TARGET_OBSERVATION_MISSING = (,")
+
+    TARGET_OBSERVATION_MISSING = (
+        ""TARGET_OBSERVATION_MISSING""
+    )"
+app\ml\data\dataset_builder.py,217,target_reference,"""TARGET_OBSERVATION_MISSING""","TARGET_OBSERVATION_MISSING = (
+        ""TARGET_OBSERVATION_MISSING""
+    )"
+app\ml\data\dataset_builder.py,220,target_reference,TARGET_SEQUENCE_BREAK = (,")
+
+    TARGET_SEQUENCE_BREAK = (
+        ""TARGET_SEQUENCE_BREAK""
+    )"
+app\ml\data\dataset_builder.py,221,target_reference,"""TARGET_SEQUENCE_BREAK""","TARGET_SEQUENCE_BREAK = (
+        ""TARGET_SEQUENCE_BREAK""
+    )"
+app\ml\data\dataset_builder.py,224,target_reference,TARGET_OPERATIONAL_GAP = (,")
+
+    TARGET_OPERATIONAL_GAP = (
+        ""TARGET_OPERATIONAL_GAP""
+    )"
+app\ml\data\dataset_builder.py,225,target_reference,"""TARGET_OPERATIONAL_GAP""","TARGET_OPERATIONAL_GAP = (
+        ""TARGET_OPERATIONAL_GAP""
+    )"
+app\ml\data\dataset_builder.py,228,target_reference,TARGET_DATA_GAP = (,")
+
+    TARGET_DATA_GAP = (
+        ""TARGET_DATA_GAP""
+    )"
+app\ml\data\dataset_builder.py,229,target_reference,"""TARGET_DATA_GAP""","TARGET_DATA_GAP = (
+        ""TARGET_DATA_GAP""
+    )"
+app\ml\data\dataset_builder.py,232,target_reference,TARGET_OUTSIDE_DATASET = (,")
+
+    TARGET_OUTSIDE_DATASET = (
+        ""TARGET_OUTSIDE_DATASET""
+    )"
+app\ml\data\dataset_builder.py,233,target_reference,"""TARGET_OUTSIDE_DATASET""","TARGET_OUTSIDE_DATASET = (
+        ""TARGET_OUTSIDE_DATASET""
+    )"
+app\ml\data\dataset_builder.py,286,future_keyword,Tomorrow morning is configurable and defaults to:,"+2 hours
+
+    Tomorrow morning is configurable and defaults to:
+
+        08:00 - 10:00"
+app\ml\data\dataset_builder.py,366,future_keyword,"""Tomorrow morning start hour must ""","if not 0 <= self.tomorrow_morning_start_hour <= 23:
+            raise MLDatasetConfigurationError(
+                ""Tomorrow morning start hour must ""
+                ""be between 0 and 23.""
+            )"
+app\ml\data\dataset_builder.py,372,future_keyword,"""Tomorrow morning end hour must ""","if not 0 <= self.tomorrow_morning_end_hour <= 23:
+            raise MLDatasetConfigurationError(
+                ""Tomorrow morning end hour must ""
+                ""be between 0 and 23.""
+            )"
+app\ml\data\dataset_builder.py,378,future_keyword,"""Tomorrow morning start minute must ""","if not 0 <= self.tomorrow_morning_start_minute <= 59:
+            raise MLDatasetConfigurationError(
+                ""Tomorrow morning start minute must ""
+                ""be between 0 and 59.""
+            )"
+app\ml\data\dataset_builder.py,384,future_keyword,"""Tomorrow morning end minute must ""","if not 0 <= self.tomorrow_morning_end_minute <= 59:
+            raise MLDatasetConfigurationError(
+                ""Tomorrow morning end minute must ""
+                ""be between 0 and 59.""
+            )"
+app\ml\data\dataset_builder.py,400,future_keyword,"""Tomorrow morning end time must ""","if end_minutes <= start_minutes:
+            raise MLDatasetConfigurationError(
+                ""Tomorrow morning end time must ""
+                ""be later than the start time.""
+            )"
+app\ml\data\dataset_builder.py,427,target_reference,class TargetStatistics:,"@dataclass(frozen=True, slots=True)
+class TargetStatistics:
+    """"""Statistics for an individual prediction target."""""""
+app\ml\data\dataset_builder.py,428,target_reference,"""""""Statistics for an individual prediction target.""""""","@dataclass(frozen=True, slots=True)
+class TargetStatistics:
+    """"""Statistics for an individual prediction target.""""""
+
+    horizon: str"
+app\ml\data\dataset_builder.py,463,target_reference,target_30m_available: int,"facility_count: int
+
+    target_30m_available: int
+
+    target_1h_available: int"
+app\ml\data\dataset_builder.py,465,target_reference,target_1h_available: int,"target_30m_available: int
+
+    target_1h_available: int
+
+    target_2h_available: int"
+app\ml\data\dataset_builder.py,467,target_reference,target_2h_available: int,"target_1h_available: int
+
+    target_2h_available: int
+
+    target_tomorrow_morning_available: int"
+app\ml\data\dataset_builder.py,469,target_reference,target_tomorrow_morning_available: int,"target_2h_available: int
+
+    target_tomorrow_morning_available: int
+
+    fully_supervised_rows: int"
+app\ml\data\dataset_builder.py,477,target_reference,target_statistics: tuple[,"unsupervised_rows: int
+
+    target_statistics: tuple[
+        TargetStatistics,
+        ..."
+app\ml\data\dataset_builder.py,478,target_reference,"TargetStatistics,","target_statistics: tuple[
+        TargetStatistics,
+        ...
+    ]"
+app\ml\data\dataset_builder.py,530,future_keyword,Future observations may be used to construct TARGETS.,"Important design rule:
+
+        Future observations may be used to construct TARGETS.
+
+        Future observations must NEVER be used to construct"
+app\ml\data\dataset_builder.py,530,target_reference,Future observations may be used to construct TARGETS.,"Important design rule:
+
+        Future observations may be used to construct TARGETS.
+
+        Future observations must NEVER be used to construct"
+app\ml\data\dataset_builder.py,532,future_keyword,Future observations must NEVER be used to construct,"Future observations may be used to construct TARGETS.
+
+        Future observations must NEVER be used to construct
+        FEATURES."
+app\ml\data\dataset_builder.py,536,future_keyword,next stage.,"Feature engineering is intentionally deferred to the
+    next stage.
+    """""""
+app\ml\data\dataset_builder.py,559,target_reference,Build supervised-learning targets.,") -> MLDatasetResult:
+        """"""
+        Build supervised-learning targets.
+
+        The input must already be temporally normalized."
+app\ml\data\dataset_builder.py,816,target_reference,# rather than silently create ambiguous targets.,"# Temporal normalization should normally already have
+        # prevented this, but the ML boundary should fail safely
+        # rather than silently create ambiguous targets.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,840,target_reference,"""rows. ML target generation requires one row per ""","""Temporal dataset contains ""
+                f""{duplicate_count} duplicate facility/timestamp ""
+                ""rows. ML target generation requires one row per ""
+                ""facility per normalized timestamp.""
+            )"
+app\ml\data\dataset_builder.py,869,target_reference,# Initialize target columns.,"# ----------------------------------------------------
+        # Initialize target columns.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,873,target_reference,TARGET_30M_COLUMN,"result[
+            TARGET_30M_COLUMN
+        ] = np.nan"
+app\ml\data\dataset_builder.py,877,target_reference,TARGET_1H_COLUMN,"result[
+            TARGET_1H_COLUMN
+        ] = np.nan"
+app\ml\data\dataset_builder.py,881,target_reference,TARGET_2H_COLUMN,"result[
+            TARGET_2H_COLUMN
+        ] = np.nan"
+app\ml\data\dataset_builder.py,885,target_reference,TARGET_TOMORROW_MORNING_COLUMN,"result[
+            TARGET_TOMORROW_MORNING_COLUMN
+        ] = np.nan"
+app\ml\data\dataset_builder.py,889,target_reference,TARGET_TOMORROW_MORNING_RATE_COLUMN,"result[
+            TARGET_TOMORROW_MORNING_RATE_COLUMN
+        ] = np.nan"
+app\ml\data\dataset_builder.py,893,target_reference,TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,"result[
+            TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN
+        ] = pd.NaT"
+app\ml\data\dataset_builder.py,901,target_reference,TARGET_30M_AVAILABLE_COLUMN,"result[
+            TARGET_30M_AVAILABLE_COLUMN
+        ] = False"
+app\ml\data\dataset_builder.py,905,target_reference,TARGET_1H_AVAILABLE_COLUMN,"result[
+            TARGET_1H_AVAILABLE_COLUMN
+        ] = False"
+app\ml\data\dataset_builder.py,909,target_reference,TARGET_2H_AVAILABLE_COLUMN,"result[
+            TARGET_2H_AVAILABLE_COLUMN
+        ] = False"
+app\ml\data\dataset_builder.py,913,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"result[
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN
+        ] = False"
+app\ml\data\dataset_builder.py,917,target_reference,# General target eligibility.,"# ----------------------------------------------------
+        # General target eligibility.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,921,target_reference,TARGET_ELIGIBLE_COLUMN,"result[
+            TARGET_ELIGIBLE_COLUMN
+        ] = False"
+app\ml\data\dataset_builder.py,925,target_reference,TARGET_EXCLUSION_REASON_COLUMN,"result[
+            TARGET_EXCLUSION_REASON_COLUMN
+        ] = (
+            TargetExclusionReason.NONE.value"
+app\ml\data\dataset_builder.py,927,target_reference,TargetExclusionReason.NONE.value,"TARGET_EXCLUSION_REASON_COLUMN
+        ] = (
+            TargetExclusionReason.NONE.value
+        )"
+app\ml\data\dataset_builder.py,937,target_reference,"target_column=TARGET_30M_COLUMN,","result,
+            minutes=30,
+            target_column=TARGET_30M_COLUMN,
+            availability_column=(
+                TARGET_30M_AVAILABLE_COLUMN"
+app\ml\data\dataset_builder.py,939,target_reference,TARGET_30M_AVAILABLE_COLUMN,"target_column=TARGET_30M_COLUMN,
+            availability_column=(
+                TARGET_30M_AVAILABLE_COLUMN
+            ),
+        )"
+app\ml\data\dataset_builder.py,946,target_reference,"target_column=TARGET_1H_COLUMN,","result,
+            minutes=60,
+            target_column=TARGET_1H_COLUMN,
+            availability_column=(
+                TARGET_1H_AVAILABLE_COLUMN"
+app\ml\data\dataset_builder.py,948,target_reference,TARGET_1H_AVAILABLE_COLUMN,"target_column=TARGET_1H_COLUMN,
+            availability_column=(
+                TARGET_1H_AVAILABLE_COLUMN
+            ),
+        )"
+app\ml\data\dataset_builder.py,955,target_reference,"target_column=TARGET_2H_COLUMN,","result,
+            minutes=120,
+            target_column=TARGET_2H_COLUMN,
+            availability_column=(
+                TARGET_2H_AVAILABLE_COLUMN"
+app\ml\data\dataset_builder.py,957,target_reference,TARGET_2H_AVAILABLE_COLUMN,"target_column=TARGET_2H_COLUMN,
+            availability_column=(
+                TARGET_2H_AVAILABLE_COLUMN
+            ),
+        )"
+app\ml\data\dataset_builder.py,962,future_keyword,# Tomorrow morning.,"# ----------------------------------------------------
+        # Tomorrow morning.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,972,target_reference,# A row is target-eligible if at least one target is,"# ----------------------------------------------------
+        # A row is target-eligible if at least one target is
+        # available.
+        #"
+app\ml\data\dataset_builder.py,975,target_reference,# We deliberately do NOT require all four targets.,"# available.
+        #
+        # We deliberately do NOT require all four targets.
+        # This allows separate training datasets later:
+        #"
+app\ml\data\dataset_builder.py,981,future_keyword,#   Tomorrow morning,"#   XGBoost 1h
+        #   XGBoost 2h
+        #   Tomorrow morning
+        #
+        # Each model can use its own eligible subset."
+app\ml\data\dataset_builder.py,987,target_reference,TARGET_ELIGIBLE_COLUMN,"result[
+            TARGET_ELIGIBLE_COLUMN
+        ] = (
+            result["
+app\ml\data\dataset_builder.py,990,target_reference,TARGET_30M_AVAILABLE_COLUMN,"] = (
+            result[
+                TARGET_30M_AVAILABLE_COLUMN
+            ]
+            | result["
+app\ml\data\dataset_builder.py,993,target_reference,TARGET_1H_AVAILABLE_COLUMN,"]
+            | result[
+                TARGET_1H_AVAILABLE_COLUMN
+            ]
+            | result["
+app\ml\data\dataset_builder.py,996,target_reference,TARGET_2H_AVAILABLE_COLUMN,"]
+            | result[
+                TARGET_2H_AVAILABLE_COLUMN
+            ]
+            | result["
+app\ml\data\dataset_builder.py,999,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"]
+            | result[
+                TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN
+            ]
+        )"
+app\ml\data\dataset_builder.py,1006,target_reference,# Direct horizon targets,"# ========================================================
+    # Direct horizon targets
+    # ========================================================"
+app\ml\data\dataset_builder.py,1014,target_reference,"target_column: str,","*,
+        minutes: int,
+        target_column: str,
+        availability_column: str,
+    ) -> pd.DataFrame:"
+app\ml\data\dataset_builder.py,1074,future_keyword,# Future values.,"# ----------------------------------------------------
+        # Future values.
+        #
+        # IMPORTANT:"
+app\ml\data\dataset_builder.py,1151,target_reference,# Target validity.,"# ----------------------------------------------------
+        # Target validity.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1154,target_reference,target_valid = (,"# ----------------------------------------------------
+
+        target_valid = (
+            current_valid
+            & future_observed"
+app\ml\data\dataset_builder.py,1165,target_reference,target_valid = (,"):
+
+            target_valid = (
+                target_valid
+                & ~future_sequence_break"
+app\ml\data\dataset_builder.py,1166,target_reference,target_valid,"target_valid = (
+                target_valid
+                & ~future_sequence_break
+            )"
+app\ml\data\dataset_builder.py,1175,target_reference,target_valid = (,"):
+
+            target_valid = (
+                target_valid
+                & ~future_operational_gap"
+app\ml\data\dataset_builder.py,1176,target_reference,target_valid,"target_valid = (
+                target_valid
+                & ~future_operational_gap
+            )"
+app\ml\data\dataset_builder.py,1185,target_reference,target_valid = (,"):
+
+            target_valid = (
+                target_valid
+                & ~future_data_gap"
+app\ml\data\dataset_builder.py,1186,target_reference,target_valid,"target_valid = (
+                target_valid
+                & ~future_data_gap
+            )"
+app\ml\data\dataset_builder.py,1191,target_reference,# Assign target.,"# ----------------------------------------------------
+        # Assign target.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1195,target_reference,"target_valid,","result.loc[
+            target_valid,
+            target_column,
+        ] = future_occupancy["
+app\ml\data\dataset_builder.py,1196,target_reference,"target_column,","result.loc[
+            target_valid,
+            target_column,
+        ] = future_occupancy[
+            target_valid"
+app\ml\data\dataset_builder.py,1198,target_reference,target_valid,"target_column,
+        ] = future_occupancy[
+            target_valid
+        ].astype(float)"
+app\ml\data\dataset_builder.py,1202,target_reference,"target_valid,","result.loc[
+            target_valid,
+            availability_column,
+        ] = True"
+app\ml\data\dataset_builder.py,1212,target_reference,# 2. target outside dataset,"#
+        # 1. current observation missing
+        # 2. target outside dataset
+        # 3. target observation missing
+        # 4. target sequence break"
+app\ml\data\dataset_builder.py,1213,target_reference,# 3. target observation missing,"# 1. current observation missing
+        # 2. target outside dataset
+        # 3. target observation missing
+        # 4. target sequence break
+        # 5. operational gap"
+app\ml\data\dataset_builder.py,1214,target_reference,# 4. target sequence break,"# 2. target outside dataset
+        # 3. target observation missing
+        # 4. target sequence break
+        # 5. operational gap
+        # 6. data gap"
+app\ml\data\dataset_builder.py,1242,target_reference,# target availability columns remain authoritative.,"#
+        # The reason column is primarily diagnostic. Individual
+        # target availability columns remain authoritative.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1270,target_reference,"TargetExclusionReason.NONE.value,","reason = pd.Series(
+            TargetExclusionReason.NONE.value,
+            index=result.index,
+            dtype=""string"","
+app\ml\data\dataset_builder.py,1282,target_reference,TargetExclusionReason,"~current_valid
+        ] = (
+            TargetExclusionReason
+            .CURRENT_OBSERVATION_MISSING
+            .value"
+app\ml\data\dataset_builder.py,1288,future_keyword,# Determine whether a future position actually exists.,"# ----------------------------------------------------
+        # Determine whether a future position actually exists.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1314,target_reference,TargetExclusionReason,"outside_mask
+        ] = (
+            TargetExclusionReason
+            .TARGET_OUTSIDE_DATASET
+            .value"
+app\ml\data\dataset_builder.py,1315,target_reference,.TARGET_OUTSIDE_DATASET,"] = (
+            TargetExclusionReason
+            .TARGET_OUTSIDE_DATASET
+            .value
+        )"
+app\ml\data\dataset_builder.py,1320,future_keyword,# Future observation unavailable.,"# ----------------------------------------------------
+        # Future observation unavailable.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1323,target_reference,target_missing = (,"# ----------------------------------------------------
+
+        target_missing = (
+            current_valid
+            & ~outside_mask"
+app\ml\data\dataset_builder.py,1330,target_reference,target_missing,"reason.loc[
+            target_missing
+        ] = (
+            TargetExclusionReason"
+app\ml\data\dataset_builder.py,1332,target_reference,TargetExclusionReason,"target_missing
+        ] = (
+            TargetExclusionReason
+            .TARGET_OBSERVATION_MISSING
+            .value"
+app\ml\data\dataset_builder.py,1333,target_reference,.TARGET_OBSERVATION_MISSING,"] = (
+            TargetExclusionReason
+            .TARGET_OBSERVATION_MISSING
+            .value
+        )"
+app\ml\data\dataset_builder.py,1356,target_reference,TargetExclusionReason,"sequence_invalid
+            ] = (
+                TargetExclusionReason
+                .TARGET_SEQUENCE_BREAK
+                .value"
+app\ml\data\dataset_builder.py,1357,target_reference,.TARGET_SEQUENCE_BREAK,"] = (
+                TargetExclusionReason
+                .TARGET_SEQUENCE_BREAK
+                .value
+            )"
+app\ml\data\dataset_builder.py,1381,target_reference,TargetExclusionReason,"operational_invalid
+            ] = (
+                TargetExclusionReason
+                .TARGET_OPERATIONAL_GAP
+                .value"
+app\ml\data\dataset_builder.py,1382,target_reference,.TARGET_OPERATIONAL_GAP,"] = (
+                TargetExclusionReason
+                .TARGET_OPERATIONAL_GAP
+                .value
+            )"
+app\ml\data\dataset_builder.py,1407,target_reference,TargetExclusionReason,"data_invalid
+            ] = (
+                TargetExclusionReason
+                .TARGET_DATA_GAP
+                .value"
+app\ml\data\dataset_builder.py,1408,target_reference,.TARGET_DATA_GAP,"] = (
+                TargetExclusionReason
+                .TARGET_DATA_GAP
+                .value
+            )"
+app\ml\data\dataset_builder.py,1426,target_reference,TARGET_EXCLUSION_REASON_COLUMN,"current = (
+            dataframe[
+                TARGET_EXCLUSION_REASON_COLUMN
+            ]
+            .fillna("
+app\ml\data\dataset_builder.py,1429,target_reference,TargetExclusionReason.NONE.value,"]
+            .fillna(
+                TargetExclusionReason.NONE.value
+            )
+            .astype(""string"")"
+app\ml\data\dataset_builder.py,1437,target_reference,!= TargetExclusionReason.NONE.value,"meaningful_current = (
+            current
+            != TargetExclusionReason.NONE.value
+        )"
+app\ml\data\dataset_builder.py,1444,target_reference,!= TargetExclusionReason.NONE.value,"& (
+                reason
+                != TargetExclusionReason.NONE.value
+            )
+        )"
+app\ml\data\dataset_builder.py,1450,target_reference,"TARGET_EXCLUSION_REASON_COLUMN,","dataframe.loc[
+            replace_mask,
+            TARGET_EXCLUSION_REASON_COLUMN,
+        ] = reason[
+            replace_mask"
+app\ml\data\dataset_builder.py,1456,future_keyword,# Tomorrow morning target,"# ========================================================
+    # Tomorrow morning target
+    # ========================================================"
+app\ml\data\dataset_builder.py,1456,target_reference,# Tomorrow morning target,"# ========================================================
+    # Tomorrow morning target
+    # ========================================================"
+app\ml\data\dataset_builder.py,1573,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"result[
+                TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN
+            ] = False"
+app\ml\data\dataset_builder.py,1579,target_reference,# Work with a compact target dataframe.,"# ----------------------------------------------------
+        # Work with a compact target dataframe.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1638,future_keyword,# Tomorrow's date.,"# ----------------------------------------------------
+        # Tomorrow's date.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1645,target_reference,target_dates = (,")
+
+        target_dates = (
+            current_dates
+            + pd.Timedelta(days=1)"
+app\ml\data\dataset_builder.py,1650,target_reference,target_values = (,")
+
+        target_values = (
+            target_dates.map(
+                morning_values"
+app\ml\data\dataset_builder.py,1651,target_reference,target_dates.map(,"target_values = (
+            target_dates.map(
+                morning_values
+            )"
+app\ml\data\dataset_builder.py,1656,target_reference,target_counts = (,")
+
+        target_counts = (
+            target_dates.map(
+                morning_counts"
+app\ml\data\dataset_builder.py,1657,target_reference,target_dates.map(,"target_counts = (
+            target_dates.map(
+                morning_counts
+            )"
+app\ml\data\dataset_builder.py,1662,target_reference,target_available = (,")
+
+        target_available = (
+            observed
+            & occupancy.notna()"
+app\ml\data\dataset_builder.py,1665,target_reference,& target_values.notna(),"observed
+            & occupancy.notna()
+            & target_values.notna()
+            & target_counts.ge(
+                self._config"
+app\ml\data\dataset_builder.py,1666,target_reference,& target_counts.ge(,"& occupancy.notna()
+            & target_values.notna()
+            & target_counts.ge(
+                self._config
+                .minimum_tomorrow_morning_observations"
+app\ml\data\dataset_builder.py,1673,target_reference,# Assign target.,"# ----------------------------------------------------
+        # Assign target.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1677,target_reference,"target_available,","result.loc[
+            target_available,
+            TARGET_TOMORROW_MORNING_COLUMN,
+        ] = target_values["
+app\ml\data\dataset_builder.py,1678,target_reference,"TARGET_TOMORROW_MORNING_COLUMN,","result.loc[
+            target_available,
+            TARGET_TOMORROW_MORNING_COLUMN,
+        ] = target_values[
+            target_available"
+app\ml\data\dataset_builder.py,1679,target_reference,] = target_values[,"target_available,
+            TARGET_TOMORROW_MORNING_COLUMN,
+        ] = target_values[
+            target_available
+        ].astype(float)"
+app\ml\data\dataset_builder.py,1680,target_reference,target_available,"TARGET_TOMORROW_MORNING_COLUMN,
+        ] = target_values[
+            target_available
+        ].astype(float)"
+app\ml\data\dataset_builder.py,1684,target_reference,"target_available,","result.loc[
+            target_available,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,
+        ] = target_values["
+app\ml\data\dataset_builder.py,1685,target_reference,"TARGET_TOMORROW_MORNING_RATE_COLUMN,","result.loc[
+            target_available,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,
+        ] = target_values[
+            target_available"
+app\ml\data\dataset_builder.py,1686,target_reference,] = target_values[,"target_available,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,
+        ] = target_values[
+            target_available
+        ].astype(float)"
+app\ml\data\dataset_builder.py,1687,target_reference,target_available,"TARGET_TOMORROW_MORNING_RATE_COLUMN,
+        ] = target_values[
+            target_available
+        ].astype(float)"
+app\ml\data\dataset_builder.py,1691,target_reference,"target_available,","result.loc[
+            target_available,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+        ] = True"
+app\ml\data\dataset_builder.py,1692,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","result.loc[
+            target_available,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+        ] = True"
+app\ml\data\dataset_builder.py,1696,target_reference,"target_available,","result.loc[
+            target_available,
+            TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,
+        ] = ("
+app\ml\data\dataset_builder.py,1697,target_reference,"TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,","result.loc[
+            target_available,
+            TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,
+        ] = (
+            target_dates["
+app\ml\data\dataset_builder.py,1699,target_reference,target_dates[,"TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,
+        ] = (
+            target_dates[
+                target_available
+            ]"
+app\ml\data\dataset_builder.py,1700,target_reference,target_available,"] = (
+            target_dates[
+                target_available
+            ]
+            + pd.Timedelta("
+app\ml\data\dataset_builder.py,1708,future_keyword,# Mark unavailable tomorrow-morning targets.,"# ----------------------------------------------------
+        # Mark unavailable tomorrow-morning targets.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1708,target_reference,# Mark unavailable tomorrow-morning targets.,"# ----------------------------------------------------
+        # Mark unavailable tomorrow-morning targets.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1713,target_reference,& ~target_available,"unavailable = (
+            observed
+            & ~target_available
+        )"
+app\ml\data\dataset_builder.py,1718,target_reference,"TARGET_EXCLUSION_REASON_COLUMN,","result.loc[
+            unavailable,
+            TARGET_EXCLUSION_REASON_COLUMN,
+        ] = (
+            TargetExclusionReason"
+app\ml\data\dataset_builder.py,1720,target_reference,TargetExclusionReason,"TARGET_EXCLUSION_REASON_COLUMN,
+        ] = (
+            TargetExclusionReason
+            .TOMORROW_MORNING_UNAVAILABLE
+            .value"
+app\ml\data\dataset_builder.py,1759,target_reference,"TARGET_30M_AVAILABLE_COLUMN,","IS_OPERATIONAL_GAP_COLUMN,
+            IS_DATA_GAP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,"
+app\ml\data\dataset_builder.py,1760,target_reference,"TARGET_1H_AVAILABLE_COLUMN,","IS_DATA_GAP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"
+app\ml\data\dataset_builder.py,1761,target_reference,"TARGET_2H_AVAILABLE_COLUMN,","TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,"
+app\ml\data\dataset_builder.py,1762,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+        ]"
+app\ml\data\dataset_builder.py,1763,target_reference,"TARGET_ELIGIBLE_COLUMN,","TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+        ]"
+app\ml\data\dataset_builder.py,1777,target_reference,# Numeric target columns.,"# ----------------------------------------------------
+        # Numeric target columns.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1781,target_reference,"TARGET_30M_COLUMN,","numeric_target_columns = [
+            TARGET_30M_COLUMN,
+            TARGET_1H_COLUMN,
+            TARGET_2H_COLUMN,"
+app\ml\data\dataset_builder.py,1782,target_reference,"TARGET_1H_COLUMN,","numeric_target_columns = [
+            TARGET_30M_COLUMN,
+            TARGET_1H_COLUMN,
+            TARGET_2H_COLUMN,
+            TARGET_TOMORROW_MORNING_COLUMN,"
+app\ml\data\dataset_builder.py,1783,target_reference,"TARGET_2H_COLUMN,","TARGET_30M_COLUMN,
+            TARGET_1H_COLUMN,
+            TARGET_2H_COLUMN,
+            TARGET_TOMORROW_MORNING_COLUMN,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,"
+app\ml\data\dataset_builder.py,1784,target_reference,"TARGET_TOMORROW_MORNING_COLUMN,","TARGET_1H_COLUMN,
+            TARGET_2H_COLUMN,
+            TARGET_TOMORROW_MORNING_COLUMN,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,
+        ]"
+app\ml\data\dataset_builder.py,1785,target_reference,"TARGET_TOMORROW_MORNING_RATE_COLUMN,","TARGET_2H_COLUMN,
+            TARGET_TOMORROW_MORNING_COLUMN,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,
+        ]"
+app\ml\data\dataset_builder.py,1798,target_reference,# Timestamp target.,"# ----------------------------------------------------
+        # Timestamp target.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1802,target_reference,TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,"if (
+            TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN
+            in result.columns
+        ):"
+app\ml\data\dataset_builder.py,1807,target_reference,TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,"result[
+                TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN
+            ] = pd.to_datetime(
+                result["
+app\ml\data\dataset_builder.py,1810,target_reference,TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,"] = pd.to_datetime(
+                result[
+                    TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN
+                ],
+                errors=""coerce"","
+app\ml\data\dataset_builder.py,1820,target_reference,TARGET_EXCLUSION_REASON_COLUMN,"result[
+            TARGET_EXCLUSION_REASON_COLUMN
+        ] = (
+            result["
+app\ml\data\dataset_builder.py,1823,target_reference,TARGET_EXCLUSION_REASON_COLUMN,"] = (
+            result[
+                TARGET_EXCLUSION_REASON_COLUMN
+            ]
+            .fillna("
+app\ml\data\dataset_builder.py,1826,target_reference,TargetExclusionReason.NONE.value,"]
+            .fillna(
+                TargetExclusionReason.NONE.value
+            )
+            .astype(""string"")"
+app\ml\data\dataset_builder.py,1832,target_reference,# Keep targets together at the end.,"# ----------------------------------------------------
+        # Keep targets together at the end.
+        # ----------------------------------------------------"
+app\ml\data\dataset_builder.py,1835,target_reference,target_columns = [,"# ----------------------------------------------------
+
+        target_columns = [
+            TARGET_30M_COLUMN,
+            TARGET_1H_COLUMN,"
+app\ml\data\dataset_builder.py,1836,target_reference,"TARGET_30M_COLUMN,","target_columns = [
+            TARGET_30M_COLUMN,
+            TARGET_1H_COLUMN,
+            TARGET_2H_COLUMN,"
+app\ml\data\dataset_builder.py,1837,target_reference,"TARGET_1H_COLUMN,","target_columns = [
+            TARGET_30M_COLUMN,
+            TARGET_1H_COLUMN,
+            TARGET_2H_COLUMN,
+            TARGET_TOMORROW_MORNING_COLUMN,"
+app\ml\data\dataset_builder.py,1838,target_reference,"TARGET_2H_COLUMN,","TARGET_30M_COLUMN,
+            TARGET_1H_COLUMN,
+            TARGET_2H_COLUMN,
+            TARGET_TOMORROW_MORNING_COLUMN,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,"
+app\ml\data\dataset_builder.py,1839,target_reference,"TARGET_TOMORROW_MORNING_COLUMN,","TARGET_1H_COLUMN,
+            TARGET_2H_COLUMN,
+            TARGET_TOMORROW_MORNING_COLUMN,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,
+            TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,"
+app\ml\data\dataset_builder.py,1840,target_reference,"TARGET_TOMORROW_MORNING_RATE_COLUMN,","TARGET_2H_COLUMN,
+            TARGET_TOMORROW_MORNING_COLUMN,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,
+            TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,"
+app\ml\data\dataset_builder.py,1841,target_reference,"TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,","TARGET_TOMORROW_MORNING_COLUMN,
+            TARGET_TOMORROW_MORNING_RATE_COLUMN,
+            TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,"
+app\ml\data\dataset_builder.py,1842,target_reference,"TARGET_30M_AVAILABLE_COLUMN,","TARGET_TOMORROW_MORNING_RATE_COLUMN,
+            TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,"
+app\ml\data\dataset_builder.py,1843,target_reference,"TARGET_1H_AVAILABLE_COLUMN,","TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN,
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"
+app\ml\data\dataset_builder.py,1844,target_reference,"TARGET_2H_AVAILABLE_COLUMN,","TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,"
+app\ml\data\dataset_builder.py,1845,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+            TARGET_EXCLUSION_REASON_COLUMN,"
+app\ml\data\dataset_builder.py,1846,target_reference,"TARGET_ELIGIBLE_COLUMN,","TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+            TARGET_EXCLUSION_REASON_COLUMN,
+        ]"
+app\ml\data\dataset_builder.py,1847,target_reference,"TARGET_EXCLUSION_REASON_COLUMN,","TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            TARGET_ELIGIBLE_COLUMN,
+            TARGET_EXCLUSION_REASON_COLUMN,
+        ]"
+app\ml\data\dataset_builder.py,1852,target_reference,for column in target_columns,"existing_target_columns = [
+            column
+            for column in target_columns
+            if column in result.columns
+        ]"
+app\ml\data\dataset_builder.py,1878,target_reference,target_statistics: list[,") -> MLDatasetStatistics:
+
+        target_statistics: list[
+            TargetStatistics
+        ] = []"
+app\ml\data\dataset_builder.py,1879,target_reference,TargetStatistics,"target_statistics: list[
+            TargetStatistics
+        ] = []"
+app\ml\data\dataset_builder.py,1882,target_reference,target_definitions = [,"] = []
+
+        target_definitions = [
+            (
+                TargetHorizon.MINUTES_30.value,"
+app\ml\data\dataset_builder.py,1884,target_reference,"TargetHorizon.MINUTES_30.value,","target_definitions = [
+            (
+                TargetHorizon.MINUTES_30.value,
+                TARGET_30M_AVAILABLE_COLUMN,
+            ),"
+app\ml\data\dataset_builder.py,1885,target_reference,"TARGET_30M_AVAILABLE_COLUMN,","(
+                TargetHorizon.MINUTES_30.value,
+                TARGET_30M_AVAILABLE_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_builder.py,1888,target_reference,"TargetHorizon.HOUR_1.value,","),
+            (
+                TargetHorizon.HOUR_1.value,
+                TARGET_1H_AVAILABLE_COLUMN,
+            ),"
+app\ml\data\dataset_builder.py,1889,target_reference,"TARGET_1H_AVAILABLE_COLUMN,","(
+                TargetHorizon.HOUR_1.value,
+                TARGET_1H_AVAILABLE_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_builder.py,1892,target_reference,"TargetHorizon.HOURS_2.value,","),
+            (
+                TargetHorizon.HOURS_2.value,
+                TARGET_2H_AVAILABLE_COLUMN,
+            ),"
+app\ml\data\dataset_builder.py,1893,target_reference,"TARGET_2H_AVAILABLE_COLUMN,","(
+                TargetHorizon.HOURS_2.value,
+                TARGET_2H_AVAILABLE_COLUMN,
+            ),
+            ("
+app\ml\data\dataset_builder.py,1896,target_reference,"TargetHorizon.TOMORROW_MORNING.value,","),
+            (
+                TargetHorizon.TOMORROW_MORNING.value,
+                TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            ),"
+app\ml\data\dataset_builder.py,1897,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","(
+                TargetHorizon.TOMORROW_MORNING.value,
+                TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+            ),
+        ]"
+app\ml\data\dataset_builder.py,1904,target_reference,) in target_definitions:,"horizon,
+            availability_column,
+        ) in target_definitions:
+
+            available = ("
+app\ml\data\dataset_builder.py,1931,target_reference,target_statistics.append(,")
+
+            target_statistics.append(
+                TargetStatistics(
+                    horizon=horizon,"
+app\ml\data\dataset_builder.py,1932,target_reference,TargetStatistics(,"target_statistics.append(
+                TargetStatistics(
+                    horizon=horizon,
+                    total_rows=total,"
+app\ml\data\dataset_builder.py,1971,target_reference,"TARGET_30M_AVAILABLE_COLUMN,","availability_columns = [
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,"
+app\ml\data\dataset_builder.py,1972,target_reference,"TARGET_1H_AVAILABLE_COLUMN,","availability_columns = [
+            TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"
+app\ml\data\dataset_builder.py,1973,target_reference,"TARGET_2H_AVAILABLE_COLUMN,","TARGET_30M_AVAILABLE_COLUMN,
+            TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+        ]"
+app\ml\data\dataset_builder.py,1974,target_reference,"TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,","TARGET_1H_AVAILABLE_COLUMN,
+            TARGET_2H_AVAILABLE_COLUMN,
+            TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,
+        ]"
+app\ml\data\dataset_builder.py,1991,target_reference,target_count = len(,")
+
+        target_count = len(
+            availability_columns
+        )"
+app\ml\data\dataset_builder.py,1997,target_reference,target_count,"fully_supervised = int(
+            available_target_count.eq(
+                target_count
+            ).sum()
+        )"
+app\ml\data\dataset_builder.py,2005,target_reference,target_count,"available_target_count.gt(0)
+                & available_target_count.lt(
+                    target_count
+                )
+            ).sum()"
+app\ml\data\dataset_builder.py,2026,target_reference,target_30m_available=int(,"].nunique()
+            ),
+            target_30m_available=int(
+                result[
+                    TARGET_30M_AVAILABLE_COLUMN"
+app\ml\data\dataset_builder.py,2028,target_reference,TARGET_30M_AVAILABLE_COLUMN,"target_30m_available=int(
+                result[
+                    TARGET_30M_AVAILABLE_COLUMN
+                ].sum()
+            ),"
+app\ml\data\dataset_builder.py,2031,target_reference,target_1h_available=int(,"].sum()
+            ),
+            target_1h_available=int(
+                result[
+                    TARGET_1H_AVAILABLE_COLUMN"
+app\ml\data\dataset_builder.py,2033,target_reference,TARGET_1H_AVAILABLE_COLUMN,"target_1h_available=int(
+                result[
+                    TARGET_1H_AVAILABLE_COLUMN
+                ].sum()
+            ),"
+app\ml\data\dataset_builder.py,2036,target_reference,target_2h_available=int(,"].sum()
+            ),
+            target_2h_available=int(
+                result[
+                    TARGET_2H_AVAILABLE_COLUMN"
+app\ml\data\dataset_builder.py,2038,target_reference,TARGET_2H_AVAILABLE_COLUMN,"target_2h_available=int(
+                result[
+                    TARGET_2H_AVAILABLE_COLUMN
+                ].sum()
+            ),"
+app\ml\data\dataset_builder.py,2041,target_reference,target_tomorrow_morning_available=int(,"].sum()
+            ),
+            target_tomorrow_morning_available=int(
+                result[
+                    TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"
+app\ml\data\dataset_builder.py,2043,target_reference,TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN,"target_tomorrow_morning_available=int(
+                result[
+                    TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN
+                ].sum()
+            ),"
+app\ml\data\dataset_builder.py,2055,target_reference,target_statistics=tuple(,"unsupervised
+            ),
+            target_statistics=tuple(
+                target_statistics
+            ),"
+app\ml\data\dataset_builder.py,2056,target_reference,target_statistics,"),
+            target_statistics=tuple(
+                target_statistics
+            ),
+            coverage_start=("
+app\ml\data\dataset_builder.py,2074,target_reference,"""target_leakage_protection"": True,","""interpolation_applied"": False,
+                ""future_features_used"": False,
+                ""target_leakage_protection"": True,
+            },
+        )"
+app\ml\data\dataset_builder.py,2210,target_reference,# Targets,"""QUALITY_STATUS_COLUMN"",
+
+    # Targets
+    ""TARGET_30M_COLUMN"",
+    ""TARGET_1H_COLUMN"","
+app\ml\data\dataset_builder.py,2211,target_reference,"""TARGET_30M_COLUMN"",","# Targets
+    ""TARGET_30M_COLUMN"",
+    ""TARGET_1H_COLUMN"",
+    ""TARGET_2H_COLUMN"","
+app\ml\data\dataset_builder.py,2212,target_reference,"""TARGET_1H_COLUMN"",","# Targets
+    ""TARGET_30M_COLUMN"",
+    ""TARGET_1H_COLUMN"",
+    ""TARGET_2H_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_COLUMN"","
+app\ml\data\dataset_builder.py,2213,target_reference,"""TARGET_2H_COLUMN"",","""TARGET_30M_COLUMN"",
+    ""TARGET_1H_COLUMN"",
+    ""TARGET_2H_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_RATE_COLUMN"","
+app\ml\data\dataset_builder.py,2214,target_reference,"""TARGET_TOMORROW_MORNING_COLUMN"",","""TARGET_1H_COLUMN"",
+    ""TARGET_2H_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_RATE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN"","
+app\ml\data\dataset_builder.py,2215,target_reference,"""TARGET_TOMORROW_MORNING_RATE_COLUMN"",","""TARGET_2H_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_RATE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN"","
+app\ml\data\dataset_builder.py,2216,target_reference,"""TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN"",","""TARGET_TOMORROW_MORNING_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_RATE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_TIMESTAMP_COLUMN"",
+
+    # Availability"
+app\ml\data\dataset_builder.py,2219,target_reference,"""TARGET_30M_AVAILABLE_COLUMN"",","# Availability
+    ""TARGET_30M_AVAILABLE_COLUMN"",
+    ""TARGET_1H_AVAILABLE_COLUMN"",
+    ""TARGET_2H_AVAILABLE_COLUMN"","
+app\ml\data\dataset_builder.py,2220,target_reference,"""TARGET_1H_AVAILABLE_COLUMN"",","# Availability
+    ""TARGET_30M_AVAILABLE_COLUMN"",
+    ""TARGET_1H_AVAILABLE_COLUMN"",
+    ""TARGET_2H_AVAILABLE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"","
+app\ml\data\dataset_builder.py,2221,target_reference,"""TARGET_2H_AVAILABLE_COLUMN"",","""TARGET_30M_AVAILABLE_COLUMN"",
+    ""TARGET_1H_AVAILABLE_COLUMN"",
+    ""TARGET_2H_AVAILABLE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",
+    ""TARGET_ELIGIBLE_COLUMN"","
+app\ml\data\dataset_builder.py,2222,target_reference,"""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",","""TARGET_1H_AVAILABLE_COLUMN"",
+    ""TARGET_2H_AVAILABLE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",
+    ""TARGET_ELIGIBLE_COLUMN"",
+    ""TARGET_EXCLUSION_REASON_COLUMN"","
+app\ml\data\dataset_builder.py,2223,target_reference,"""TARGET_ELIGIBLE_COLUMN"",","""TARGET_2H_AVAILABLE_COLUMN"",
+    ""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",
+    ""TARGET_ELIGIBLE_COLUMN"",
+    ""TARGET_EXCLUSION_REASON_COLUMN"","
+app\ml\data\dataset_builder.py,2224,target_reference,"""TARGET_EXCLUSION_REASON_COLUMN"",","""TARGET_TOMORROW_MORNING_AVAILABLE_COLUMN"",
+    ""TARGET_ELIGIBLE_COLUMN"",
+    ""TARGET_EXCLUSION_REASON_COLUMN"",
+
+    # Enums"
+app\ml\data\dataset_builder.py,2227,target_reference,"""TargetHorizon"",","# Enums
+    ""TargetHorizon"",
+    ""DatasetBuildStatus"",
+    ""TargetExclusionReason"","
+app\ml\data\dataset_builder.py,2229,target_reference,"""TargetExclusionReason"",","""TargetHorizon"",
+    ""DatasetBuildStatus"",
+    ""TargetExclusionReason"",
+
+    # Exceptions"
+app\ml\data\dataset_builder.py,2241,target_reference,"""TargetStatistics"",","# Statistics
+    ""TargetStatistics"",
+    ""MLDatasetStatistics"","
+app\ml\data\ingestion.py,61,future_keyword,Future implementations,"Canonical ML Dataset
+
+Future implementations
+-----------------------"
+app\ml\data\ingestion.py,469,future_keyword,Future sources will be added without changing the,"LOCAL + birmingham
+
+        Future sources will be added without changing the
+        public ingestion contract.
+        """""""
+app\ml\data\ingestion.py,511,future_keyword,future source dependencies to load when only another,"Import is kept inside the method to avoid forcing all
+        future source dependencies to load when only another
+        source is being used.
+        """""""
+app\ml\data\ingestion.py,648,future_keyword,Reserved for future use where a pipeline can return,"FAILED
+            Reserved for future use where a pipeline can return
+            a result object rather than raising an exception.
+        """""""
+app\ml\data\loaders.py,130,future_keyword,These values establish the extensibility point for future,"Not every provider needs to be implemented immediately.
+    These values establish the extensibility point for future
+    adapters.
+    """""""
+app\ml\data\loaders.py,289,future_keyword,- another future source,"- REST API
+        - SmartPark PostgreSQL
+        - another future source
+
+    `dataframe` is intentionally typed as Any here so that this"
+app\ml\data\loaders.py,641,future_keyword,Parquet in the future:,")
+
+    Parquet in the future:
+
+        build_local_config("
+app\ml\data\temporal.py,18,target_reference,- create ML targets,"- forward-fill values
+    - backward-fill values
+    - create ML targets
+    - engineer predictive features
+    - modify the input DataFrame"
+app\ml\data\temporal.py,247,target_reference,target_interval_minutes: int = 30,"timestamp_column: str = TIMESTAMP_COLUMN
+
+    target_interval_minutes: int = 30
+
+    approximate_interval_tolerance_minutes: int = 10"
+app\ml\data\temporal.py,256,target_reference,if self.target_interval_minutes <= 0:,"def __post_init__(self) -> None:
+        if self.target_interval_minutes <= 0:
+            raise ValueError(
+                ""target_interval_minutes must be greater than zero."""
+app\ml\data\temporal.py,258,target_reference,"""target_interval_minutes must be greater than zero.""","if self.target_interval_minutes <= 0:
+            raise ValueError(
+                ""target_interval_minutes must be greater than zero.""
+            )"
+app\ml\data\temporal.py,425,target_reference,"""target_interval_minutes"": (","warnings=tuple(warnings),
+            metadata={
+                ""target_interval_minutes"": (
+                    self._config
+                    .target_interval_minutes"
+app\ml\data\temporal.py,427,target_reference,.target_interval_minutes,"""target_interval_minutes"": (
+                    self._config
+                    .target_interval_minutes
+                ),
+                ""approximate_tolerance_minutes"": ("
+app\ml\data\temporal.py,618,historical_shift,previous = timestamps.shift(1),")
+
+        previous = timestamps.shift(1)
+
+        frame = pd.DataFrame("
+app\ml\data\temporal.py,738,target_reference,.target_interval_minutes,"intervals
+                    == self._config
+                    .target_interval_minutes
+                ).sum()
+            ),"
+app\ml\data\temporal.py,746,target_reference,.target_interval_minutes,"intervals
+                        - self._config
+                        .target_interval_minutes
+                    ).abs()
+                    <= self._config"
+app\ml\data\temporal.py,908,target_reference,.target_interval_minutes,"intervals
+                    == self._config
+                    .target_interval_minutes
+                ).sum()
+            ),"
+app\ml\data\temporal.py,916,target_reference,.target_interval_minutes,"intervals
+                        - self._config
+                        .target_interval_minutes
+                    ).abs()
+                    <= self._config"
+app\ml\data\temporal.py,1246,target_reference,.target_interval_minutes,"overall.median_interval_minutes
+                - self._config
+                .target_interval_minutes
+            )
+            > self._config"
+app\ml\data\temporal.py,1254,target_reference,"f""{self._config.target_interval_minutes}-minute ""","""The median observation interval differs ""
+                ""materially from the proposed ""
+                f""{self._config.target_interval_minutes}-minute ""
+                ""modelling interval.""
+            )"
+app\ml\data\temporal.py,1300,target_reference,"""minutes of the target 30-minute interval.""","f""{percentage:.2f}% of intervals fall within ""
+                f""±{self._config.approximate_interval_tolerance_minutes} ""
+                ""minutes of the target 30-minute interval.""
+            )"
+app\ml\data\temporal.py,1334,target_reference,"target_interval_minutes: int = 30,","dataframe: pd.DataFrame,
+    *,
+    target_interval_minutes: int = 30,
+    approximate_interval_tolerance_minutes: int = 10,
+    large_gap_threshold_minutes: int = 60,"
+app\ml\data\temporal.py,1351,target_reference,target_interval_minutes=(,"config = TemporalAuditConfig(
+        target_interval_minutes=(
+            target_interval_minutes
+        ),"
+app\ml\data\temporal.py,1352,target_reference,target_interval_minutes,"config = TemporalAuditConfig(
+        target_interval_minutes=(
+            target_interval_minutes
+        ),
+        approximate_interval_tolerance_minutes=("
+app\ml\data\temporal_normalizer.py,68,target_reference,14. Do not create prediction targets in this module.,"13. Do not perform ML feature engineering in this module.
+
+14. Do not create prediction targets in this module.
+
+15. Do not perform train/validation/test splitting here."
+app\ml\data\temporal_normalizer.py,234,target_reference,Target interval:,"Default SmartPark AI policy:
+
+        Target interval:
+            30 minutes"
+app\ml\data\temporal_normalizer.py,262,target_reference,target_interval_minutes: int = 30,"""""""
+
+    target_interval_minutes: int = 30
+
+    alignment_tolerance_minutes: int = 15"
+app\ml\data\temporal_normalizer.py,288,target_reference,if self.target_interval_minutes <= 0:,"def __post_init__(self) -> None:
+
+        if self.target_interval_minutes <= 0:
+            raise TemporalNormalizationConfigurationError(
+                ""target_interval_minutes must be greater than zero."""
+app\ml\data\temporal_normalizer.py,290,target_reference,"""target_interval_minutes must be greater than zero.""","if self.target_interval_minutes <= 0:
+            raise TemporalNormalizationConfigurationError(
+                ""target_interval_minutes must be greater than zero.""
+            )"
+app\ml\data\temporal_normalizer.py,300,target_reference,> self.target_interval_minutes / 2,"if (
+            self.alignment_tolerance_minutes
+            > self.target_interval_minutes / 2
+        ):
+            raise TemporalNormalizationConfigurationError("
+app\ml\data\temporal_normalizer.py,304,target_reference,"""half of target_interval_minutes.""","raise TemporalNormalizationConfigurationError(
+                ""alignment_tolerance_minutes cannot exceed ""
+                ""half of target_interval_minutes.""
+            )"
+app\ml\data\temporal_normalizer.py,309,target_reference,<= self.target_interval_minutes,"if (
+            self.long_gap_threshold_minutes
+            <= self.target_interval_minutes
+        ):
+            raise TemporalNormalizationConfigurationError("
+app\ml\data\temporal_normalizer.py,313,target_reference,"""than target_interval_minutes.""","raise TemporalNormalizationConfigurationError(
+                ""long_gap_threshold_minutes must be greater ""
+                ""than target_interval_minutes.""
+            )"
+app\ml\data\temporal_normalizer.py,344,target_reference,< self.target_interval_minutes,"if (
+            self.operational_gap_minimum_minutes
+            < self.target_interval_minutes
+        ):
+            raise TemporalNormalizationConfigurationError("
+app\ml\data\temporal_normalizer.py,348,target_reference,"""least the target interval.""","raise TemporalNormalizationConfigurationError(
+                ""operational_gap_minimum_minutes must be at ""
+                ""least the target interval.""
+            )"
+app\ml\data\temporal_normalizer.py,651,target_reference,"""target_interval_minutes"": (","),
+            metadata={
+                ""target_interval_minutes"": (
+                    self._config
+                    .target_interval_minutes"
+app\ml\data\temporal_normalizer.py,653,target_reference,.target_interval_minutes,"""target_interval_minutes"": (
+                    self._config
+                    .target_interval_minutes
+                ),
+                ""alignment_tolerance_minutes"": ("
+app\ml\data\temporal_normalizer.py,1021,target_reference,"f""{self._config.target_interval_minutes}min""","frequency = (
+            f""{self._config.target_interval_minutes}min""
+        )"
+app\ml\data\temporal_normalizer.py,1048,target_reference,"f""{self._config.target_interval_minutes}min""","frequency = (
+            f""{self._config.target_interval_minutes}min""
+        )"
+app\ml\data\temporal_normalizer.py,1201,target_reference,"f""{self._config.target_interval_minutes}min""","frequency = (
+            f""{self._config.target_interval_minutes}min""
+        )"
+app\ml\data\temporal_normalizer.py,1408,historical_shift,timestamps.shift(1),"previous_timestamp = (
+            timestamps.shift(1)
+        )"
+app\ml\data\temporal_normalizer.py,1415,historical_shift,.shift(1),"OBSERVATION_PRESENT_COLUMN
+            ]
+            .shift(1)
+            .fillna(False)
+        )"
+app\ml\data\temporal_normalizer.py,1436,target_reference,.target_interval_minutes,"expected_interval = (
+            self._config
+            .target_interval_minutes
+        )"
+app\ml\data\temporal_normalizer.py,1738,historical_shift,current_status.shift(1),"previous_status = (
+            current_status.shift(1)
+        )"
+app\ml\data\temporal_normalizer.py,1912,target_reference,"""target_interval_minutes"": (","),
+            metadata={
+                ""target_interval_minutes"": (
+                    self._config
+                    .target_interval_minutes"
+app\ml\data\temporal_normalizer.py,1914,target_reference,.target_interval_minutes,"""target_interval_minutes"": (
+                    self._config
+                    .target_interval_minutes
+                ),
+            },"
+app\ml\data\temporal_normalizer.py,2278,target_reference,"target_interval_minutes: int = 30,","dataframe: pd.DataFrame,
+    *,
+    target_interval_minutes: int = 30,
+    alignment_tolerance_minutes: int = 15,
+    long_gap_threshold_minutes: int = 60,"
+app\ml\data\temporal_normalizer.py,2291,target_reference,target_interval_minutes=(,"config = TemporalNormalizationConfig(
+        target_interval_minutes=(
+            target_interval_minutes
+        ),"
+app\ml\data\temporal_normalizer.py,2292,target_reference,target_interval_minutes,"config = TemporalNormalizationConfig(
+        target_interval_minutes=(
+            target_interval_minutes
+        ),
+        alignment_tolerance_minutes=("
+app\ml\features\calendar_features.py,11,target_reference,- target columns,"- occupancy observations
+    - target columns
+    - future timestamps
+    - future observations"
+app\ml\features\calendar_features.py,12,future_keyword,- future timestamps,"- occupancy observations
+    - target columns
+    - future timestamps
+    - future observations
+    - facility-level historical values"
+app\ml\features\calendar_features.py,13,future_keyword,- future observations,"- target columns
+    - future timestamps
+    - future observations
+    - facility-level historical values"
+app\ml\features\calendar_features.py,38,future_keyword,2. No future-data leakage.,"-----------------
+1. Timestamp-only feature generation.
+2. No future-data leakage.
+3. No target-data leakage.
+4. No occupancy-data dependency."
+app\ml\features\calendar_features.py,39,target_reference,3. No target-data leakage.,"1. Timestamp-only feature generation.
+2. No future-data leakage.
+3. No target-data leakage.
+4. No occupancy-data dependency.
+5. No row removal."
+app\ml\features\calendar_features.py,296,target_reference,No occupancy or target information is consumed.,"Only the supplied timestamp is used.
+
+    No occupancy or target information is consumed.
+    """""""
+app\ml\features\calendar_features.py,1166,target_reference,"""target_data_used"":","False,
+
+            ""target_data_used"":
+                False,"
+app\ml\features\calendar_features.py,1323,target_reference,"""target_data_used"":","False,
+
+            ""target_data_used"":
+                False,"
+app\ml\features\calendar_features.py,1718,target_reference,"""target_data_used"":","False,
+
+        ""target_data_used"":
+            False,"
+app\ml\features\demand_features.py,12,target_reference,- target columns,"The module deliberately does NOT use:
+
+    - target columns
+    - future observations
+    - lag features"
+app\ml\features\demand_features.py,13,future_keyword,- future observations,"- target columns
+    - future observations
+    - lag features
+    - rolling features"
+app\ml\features\demand_features.py,48,target_reference,2. No target leakage.,"1. Current-observation only.
+2. No target leakage.
+3. No future-data leakage.
+4. No historical lookup."
+app\ml\features\demand_features.py,49,future_keyword,3. No future-data leakage.,"1. Current-observation only.
+2. No target leakage.
+3. No future-data leakage.
+4. No historical lookup.
+5. No cross-facility contamination."
+app\ml\features\demand_features.py,435,future_keyword,No historical or future observations are consulted.,"Generate demand-state features from current observations.
+
+    No historical or future observations are consulted.
+    """""""
+app\ml\features\demand_features.py,1363,target_reference,"""target_data_used"":","False,
+
+            ""target_data_used"":
+                False,"
+app\ml\features\demand_features.py,1847,target_reference,"""target_data_used"": False,","""row_count"": 0,
+            ""future_data_used"": False,
+            ""target_data_used"": False,
+            ""historical_values_used"": False,
+            ""cross_facility_data_used"": False,"
+app\ml\features\demand_features.py,2395,target_reference,"""target_data_used"":","False,
+
+        ""target_data_used"":
+            False,"
+app\ml\features\feature_pipeline.py,37,target_reference,5. Prevent target leakage.,"3. Preserve source rows.
+    4. Preserve row order.
+    5. Prevent target leakage.
+    6. Prevent future-data leakage.
+    7. Prevent cross-facility contamination."
+app\ml\features\feature_pipeline.py,38,future_keyword,6. Prevent future-data leakage.,"4. Preserve row order.
+    5. Prevent target leakage.
+    6. Prevent future-data leakage.
+    7. Prevent cross-facility contamination.
+    8. Verify feature uniqueness."
+app\ml\features\feature_pipeline.py,42,target_reference,10. Separate model features from metadata and targets.,"8. Verify feature uniqueness.
+    9. Verify expected columns.
+   10. Separate model features from metadata and targets.
+   11. Produce a final model-ready dataframe.
+   12. Expose detailed pipeline statistics."
+app\ml\features\feature_pipeline.py,52,target_reference,target_data_used       == False,"future_data_used       == False
+    target_data_used       == False
+    cross_facility_data    == False
+    forward_lookup_used    == False"
+app\ml\features\feature_pipeline.py,60,target_reference,Target columns are intentionally RETAINED in the final dataframe,"---------
+
+Target columns are intentionally RETAINED in the final dataframe
+for supervised learning."
+app\ml\features\feature_pipeline.py,74,target_reference,Complete ML dataset + engineered features + targets.,"result.dataframe
+        Complete ML dataset + engineered features + targets.
+
+    result.feature_columns"
+app\ml\features\feature_pipeline.py,79,target_reference,result.target_columns,"Columns that may be supplied to a model.
+
+    result.target_columns
+        Supervised learning targets."
+app\ml\features\feature_pipeline.py,80,target_reference,Supervised learning targets.,"result.target_columns
+        Supervised learning targets.
+
+    result.metadata_columns"
+app\ml\features\feature_pipeline.py,150,target_reference,# Target columns.,"# ------------------------------------------------------------
+# Target columns.
+#
+# These are targets, NOT model input features."
+app\ml\features\feature_pipeline.py,152,target_reference,"# These are targets, NOT model input features.","# Target columns.
+#
+# These are targets, NOT model input features.
+# ------------------------------------------------------------"
+app\ml\features\feature_pipeline.py,156,target_reference,"""target_occupancy_rate_30m"",","DEFAULT_TARGET_COLUMNS = (
+    ""target_occupancy_rate_30m"",
+    ""target_occupancy_rate_1h"",
+    ""target_occupancy_rate_2h"","
+app\ml\features\feature_pipeline.py,157,target_reference,"""target_occupancy_rate_1h"",","DEFAULT_TARGET_COLUMNS = (
+    ""target_occupancy_rate_30m"",
+    ""target_occupancy_rate_1h"",
+    ""target_occupancy_rate_2h"",
+    ""target_tomorrow_morning_demand"","
+app\ml\features\feature_pipeline.py,158,target_reference,"""target_occupancy_rate_2h"",","""target_occupancy_rate_30m"",
+    ""target_occupancy_rate_1h"",
+    ""target_occupancy_rate_2h"",
+    ""target_tomorrow_morning_demand"",
+)"
+app\ml\features\feature_pipeline.py,159,target_reference,"""target_tomorrow_morning_demand"",","""target_occupancy_rate_1h"",
+    ""target_occupancy_rate_2h"",
+    ""target_tomorrow_morning_demand"",
+)"
+app\ml\features\feature_pipeline.py,164,target_reference,"""target_30m_available"",","DEFAULT_TARGET_AVAILABILITY_COLUMNS = (
+    ""target_30m_available"",
+    ""target_1h_available"",
+    ""target_2h_available"","
+app\ml\features\feature_pipeline.py,165,target_reference,"""target_1h_available"",","DEFAULT_TARGET_AVAILABILITY_COLUMNS = (
+    ""target_30m_available"",
+    ""target_1h_available"",
+    ""target_2h_available"",
+    ""target_tomorrow_morning_available"","
+app\ml\features\feature_pipeline.py,166,target_reference,"""target_2h_available"",","""target_30m_available"",
+    ""target_1h_available"",
+    ""target_2h_available"",
+    ""target_tomorrow_morning_available"",
+)"
+app\ml\features\feature_pipeline.py,167,target_reference,"""target_tomorrow_morning_available"",","""target_1h_available"",
+    ""target_2h_available"",
+    ""target_tomorrow_morning_available"",
+)"
+app\ml\features\feature_pipeline.py,172,target_reference,"""target_exclusion_reason"",","DEFAULT_TARGET_SUPPORT_COLUMNS = (
+    ""target_exclusion_reason"",
+)"
+app\ml\features\feature_pipeline.py,243,target_reference,"target_columns: tuple[str, ...] = (",")
+
+    target_columns: tuple[str, ...] = (
+        DEFAULT_TARGET_COLUMNS
+    )"
+app\ml\features\feature_pipeline.py,247,target_reference,target_availability_columns: tuple[,")
+
+    target_availability_columns: tuple[
+        str, ...
+    ] = ("
+app\ml\features\feature_pipeline.py,253,target_reference,target_support_columns: tuple[,")
+
+    target_support_columns: tuple[
+        str, ...
+    ] = ("
+app\ml\features\feature_pipeline.py,321,target_reference,set(self.target_columns),"if (
+            len(
+                set(self.target_columns)
+            )
+            != len(self.target_columns)"
+app\ml\features\feature_pipeline.py,323,target_reference,!= len(self.target_columns),"set(self.target_columns)
+            )
+            != len(self.target_columns)
+        ):"
+app\ml\features\feature_pipeline.py,327,target_reference,"""target_columns contains duplicates.""","raise FeaturePipelineConfigurationError(
+                ""target_columns contains duplicates.""
+            )"
+app\ml\features\feature_pipeline.py,333,target_reference,self.target_availability_columns,"len(
+                set(
+                    self.target_availability_columns
+                )
+            )"
+app\ml\features\feature_pipeline.py,337,target_reference,self.target_availability_columns,")
+            != len(
+                self.target_availability_columns
+            )
+        ):"
+app\ml\features\feature_pipeline.py,342,target_reference,"""target_availability_columns contains duplicates.""","raise FeaturePipelineConfigurationError(
+                ""target_availability_columns contains duplicates.""
+            )"
+app\ml\features\feature_pipeline.py,382,target_reference,target_count: int,"feature_count: int
+
+    target_count: int
+
+    target_availability_count: int"
+app\ml\features\feature_pipeline.py,384,target_reference,target_availability_count: int,"target_count: int
+
+    target_availability_count: int
+
+    metadata_column_count: int"
+app\ml\features\feature_pipeline.py,438,target_reference,"target_columns: tuple[str, ...]","feature_columns: tuple[str, ...]
+
+    target_columns: tuple[str, ...]
+
+    target_availability_columns: tuple["
+app\ml\features\feature_pipeline.py,440,target_reference,target_availability_columns: tuple[,"target_columns: tuple[str, ...]
+
+    target_availability_columns: tuple[
+        str, ...
+    ]"
+app\ml\features\feature_pipeline.py,887,target_reference,# Target validation,"# ====================================================
+        # Target validation
+        # ===================================================="
+app\ml\features\feature_pipeline.py,890,target_reference,target_columns = tuple(,"# ====================================================
+
+        target_columns = tuple(
+            column
+            for column in config.target_columns"
+app\ml\features\feature_pipeline.py,892,target_reference,for column in config.target_columns,"target_columns = tuple(
+            column
+            for column in config.target_columns
+            if column in result.columns
+        )"
+app\ml\features\feature_pipeline.py,896,target_reference,target_availability_columns = tuple(,")
+
+        target_availability_columns = tuple(
+            column
+            for column in ("
+app\ml\features\feature_pipeline.py,899,target_reference,config.target_availability_columns,"column
+            for column in (
+                config.target_availability_columns
+            )
+            if column in result.columns"
+app\ml\features\feature_pipeline.py,905,target_reference,# Required target columns should normally exist.,"# ----------------------------------------------------
+        # Required target columns should normally exist.
+        # ----------------------------------------------------"
+app\ml\features\feature_pipeline.py,910,target_reference,for column in config.target_columns,"missing_targets = [
+            column
+            for column in config.target_columns
+            if column not in result.columns
+        ]"
+app\ml\features\feature_pipeline.py,917,target_reference,"""Expected target columns are missing: ""","raise FeaturePipelineDataError(
+                ""Expected target columns are missing: ""
+                f""{missing_targets}""
+            )"
+app\ml\features\feature_pipeline.py,922,target_reference,# Feature / target overlap.,"# ----------------------------------------------------
+        # Feature / target overlap.
+        # ----------------------------------------------------"
+app\ml\features\feature_pipeline.py,927,target_reference,& set(target_columns),"feature_target_overlap = (
+            set(feature_columns)
+            & set(target_columns)
+        )"
+app\ml\features\feature_pipeline.py,936,target_reference,"""Feature columns overlap target columns: ""","raise FeaturePipelineLeakageError(
+                ""Feature columns overlap target columns: ""
+                f""{sorted(feature_target_overlap)}""
+            )"
+app\ml\features\feature_pipeline.py,954,target_reference,# Add target-support columns to metadata.,")
+
+        # Add target-support columns to metadata.
+        #
+        # These describe target availability/exclusion but are"
+app\ml\features\feature_pipeline.py,956,target_reference,# These describe target availability/exclusion but are,"# Add target-support columns to metadata.
+        #
+        # These describe target availability/exclusion but are
+        # not model inputs.
+        # ----------------------------------------------------"
+app\ml\features\feature_pipeline.py,961,target_reference,config.target_support_columns,"for column in (
+            config.target_support_columns
+        ):"
+app\ml\features\feature_pipeline.py,1012,target_reference,target_availability_columns,"column
+            for column in (
+                target_availability_columns
+            )
+            if column in result.columns"
+app\ml\features\feature_pipeline.py,1027,target_reference,target_available_count = (,")
+
+            target_available_count = (
+                availability_frame.sum(
+                    axis=1"
+app\ml\features\feature_pipeline.py,1035,target_reference,target_available_count,"fully_supervised_rows = int(
+                (
+                    target_available_count
+                    == len(
+                        availability_columns"
+app\ml\features\feature_pipeline.py,1045,target_reference,target_available_count,"(
+                    (
+                        target_available_count
+                        > 0
+                    )"
+app\ml\features\feature_pipeline.py,1049,target_reference,target_available_count,")
+                    & (
+                        target_available_count
+                        < len(
+                            availability_columns"
+app\ml\features\feature_pipeline.py,1059,target_reference,target_available_count,"unsupervised_rows = int(
+                (
+                    target_available_count
+                    == 0
+                ).sum()"
+app\ml\features\feature_pipeline.py,1144,target_reference,"""target_data_used"":","False,
+
+            ""target_data_used"":
+                False,"
+app\ml\features\feature_pipeline.py,1178,target_reference,"""target_count"":","len(feature_columns),
+
+            ""target_count"":
+                len(target_columns),"
+app\ml\features\feature_pipeline.py,1179,target_reference,"len(target_columns),","""target_count"":
+                len(target_columns),
+
+            ""target_availability_count"":"
+app\ml\features\feature_pipeline.py,1181,target_reference,"""target_availability_count"":","len(target_columns),
+
+            ""target_availability_count"":
+                len(
+                    target_availability_columns"
+app\ml\features\feature_pipeline.py,1183,target_reference,target_availability_columns,"""target_availability_count"":
+                len(
+                    target_availability_columns
+                ),"
+app\ml\features\feature_pipeline.py,1219,target_reference,"""target_data_used"":","""future_data_used"":
+                    metadata[""future_data_used""],
+                ""target_data_used"":
+                    metadata[""target_data_used""],
+                ""cross_facility_data_used"":"
+app\ml\features\feature_pipeline.py,1220,target_reference,"metadata[""target_data_used""],","metadata[""future_data_used""],
+                ""target_data_used"":
+                    metadata[""target_data_used""],
+                ""cross_facility_data_used"":
+                    metadata[""cross_facility_data_used""],"
+app\ml\features\feature_pipeline.py,1269,target_reference,target_count=,"len(feature_columns),
+
+                target_count=
+                    len(target_columns),"
+app\ml\features\feature_pipeline.py,1270,target_reference,"len(target_columns),","target_count=
+                    len(target_columns),
+
+                target_availability_count="
+app\ml\features\feature_pipeline.py,1272,target_reference,target_availability_count=,"len(target_columns),
+
+                target_availability_count=
+                    len(
+                        target_availability_columns"
+app\ml\features\feature_pipeline.py,1274,target_reference,target_availability_columns,"target_availability_count=
+                    len(
+                        target_availability_columns
+                    ),"
+app\ml\features\feature_pipeline.py,1336,target_reference,target_columns=(,"),
+
+            target_columns=(
+                target_columns
+            ),"
+app\ml\features\feature_pipeline.py,1337,target_reference,target_columns,"target_columns=(
+                target_columns
+            ),"
+app\ml\features\feature_pipeline.py,1340,target_reference,target_availability_columns=(,"),
+
+            target_availability_columns=(
+                target_availability_columns
+            ),"
+app\ml\features\feature_pipeline.py,1341,target_reference,target_availability_columns,"target_availability_columns=(
+                target_availability_columns
+            ),"
+app\ml\features\feature_pipeline.py,1427,target_reference,target_columns=(,"),
+
+            target_columns=(
+                result.target_columns
+            ),"
+app\ml\features\feature_pipeline.py,1428,target_reference,result.target_columns,"target_columns=(
+                result.target_columns
+            ),"
+app\ml\features\feature_pipeline.py,1431,target_reference,target_availability_columns=(,"),
+
+            target_availability_columns=(
+                result.target_availability_columns
+            ),"
+app\ml\features\feature_pipeline.py,1432,target_reference,result.target_availability_columns,"target_availability_columns=(
+                result.target_availability_columns
+            ),"
+app\ml\features\feature_pipeline.py,1606,future_keyword,next stage.,"""""""
+        Verify a feature-family result before passing it to the
+        next stage.
+        """""""
+app\ml\features\feature_pipeline.py,1682,target_reference,"""target_data_used"",","forbidden_flags = (
+            ""future_data_used"",
+            ""target_data_used"",
+            ""cross_facility_data_used"",
+            ""forward_lookup_used"","
+app\ml\features\feature_pipeline.py,1722,target_reference,"""target_data_used"",","pipeline_forbidden_flags = (
+            ""future_data_used"",
+            ""target_data_used"",
+            ""cross_facility_data_used"",
+            ""forward_lookup_used"","
+app\ml\features\feature_pipeline.py,1971,target_reference,"""target_occupancy_rate_30m"": [","],
+
+            ""target_occupancy_rate_30m"": [
+                0.55
+            ],"
+app\ml\features\feature_pipeline.py,1975,target_reference,"""target_occupancy_rate_1h"": [","],
+
+            ""target_occupancy_rate_1h"": [
+                0.60
+            ],"
+app\ml\features\feature_pipeline.py,1979,target_reference,"""target_occupancy_rate_2h"": [","],
+
+            ""target_occupancy_rate_2h"": [
+                0.65
+            ],"
+app\ml\features\feature_pipeline.py,1983,target_reference,"""target_tomorrow_morning_demand"": [","],
+
+            ""target_tomorrow_morning_demand"": [
+                0.45
+            ],"
+app\ml\features\feature_pipeline.py,1987,target_reference,"""target_30m_available"": [","],
+
+            ""target_30m_available"": [
+                True
+            ],"
+app\ml\features\feature_pipeline.py,1991,target_reference,"""target_1h_available"": [","],
+
+            ""target_1h_available"": [
+                True
+            ],"
+app\ml\features\feature_pipeline.py,1995,target_reference,"""target_2h_available"": [","],
+
+            ""target_2h_available"": [
+                True
+            ],"
+app\ml\features\feature_pipeline.py,1999,target_reference,"""target_tomorrow_morning_available"": [","],
+
+            ""target_tomorrow_morning_available"": [
+                True
+            ],"
+app\ml\features\feature_pipeline.py,2003,target_reference,"""target_exclusion_reason"": [","],
+
+            ""target_exclusion_reason"": [
+                ""NONE""
+            ],"
+app\ml\features\feature_pipeline.py,2062,target_reference,"""target_count"": 0,","""row_count"": 0,
+            ""feature_count"": 0,
+            ""target_count"": 0,
+            ""future_data_used"": False,
+            ""target_data_used"": False,"
+app\ml\features\feature_pipeline.py,2064,target_reference,"""target_data_used"": False,","""target_count"": 0,
+            ""future_data_used"": False,
+            ""target_data_used"": False,
+            ""cross_facility_data_used"": False,
+            ""forward_lookup_used"": False,"
+app\ml\features\feature_pipeline.py,2077,target_reference,"*config.target_columns,","config.timestamp_column,
+        config.facility_column,
+        *config.target_columns,
+    )"
+app\ml\features\feature_pipeline.py,2178,target_reference,+ config.target_columns,"excluded = set(
+        config.metadata_columns
+        + config.target_columns
+        + config.target_availability_columns
+        + config.target_support_columns"
+app\ml\features\feature_pipeline.py,2179,target_reference,+ config.target_availability_columns,"config.metadata_columns
+        + config.target_columns
+        + config.target_availability_columns
+        + config.target_support_columns
+    )"
+app\ml\features\feature_pipeline.py,2180,target_reference,+ config.target_support_columns,"+ config.target_columns
+        + config.target_availability_columns
+        + config.target_support_columns
+    )"
+app\ml\features\feature_pipeline.py,2190,target_reference,# Leakage by target-name contamination.,"# --------------------------------------------------------
+    # Leakage by target-name contamination.
+    # --------------------------------------------------------"
+app\ml\features\feature_pipeline.py,2193,target_reference,target_overlap = [,"# --------------------------------------------------------
+
+    target_overlap = [
+        column
+        for column in feature_columns"
+app\ml\features\feature_pipeline.py,2197,target_reference,config.target_columns,"for column in feature_columns
+        if column in set(
+            config.target_columns
+        )
+        or column in set("
+app\ml\features\feature_pipeline.py,2200,target_reference,config.target_availability_columns,")
+        or column in set(
+            config.target_availability_columns
+        )
+        or column in set("
+app\ml\features\feature_pipeline.py,2203,target_reference,config.target_support_columns,")
+        or column in set(
+            config.target_support_columns
+        )
+    ]"
+app\ml\features\feature_pipeline.py,2207,target_reference,if target_overlap:,"]
+
+    if target_overlap:
+
+        errors.append("
+app\ml\features\feature_pipeline.py,2210,target_reference,"""Feature columns overlap target/support ""","errors.append(
+            ""Feature columns overlap target/support ""
+            f""columns: {target_overlap}""
+        )"
+app\ml\features\feature_pipeline.py,2211,target_reference,"f""columns: {target_overlap}""","errors.append(
+            ""Feature columns overlap target/support ""
+            f""columns: {target_overlap}""
+        )"
+app\ml\features\feature_pipeline.py,2284,target_reference,target_data_used = bool(,")
+
+    target_data_used = bool(
+        dataframe_metadata.get(
+            ""target_data_used"","
+app\ml\features\feature_pipeline.py,2286,target_reference,"""target_data_used"",","target_data_used = bool(
+        dataframe_metadata.get(
+            ""target_data_used"",
+            False,
+        )"
+app\ml\features\feature_pipeline.py,2315,future_keyword,"""Pipeline metadata indicates future ""","errors.append(
+            ""Pipeline metadata indicates future ""
+            ""data was used.""
+        )"
+app\ml\features\feature_pipeline.py,2319,target_reference,if target_data_used:,")
+
+    if target_data_used:
+
+        errors.append("
+app\ml\features\feature_pipeline.py,2322,target_reference,"""Pipeline metadata indicates target ""","errors.append(
+            ""Pipeline metadata indicates target ""
+            ""data was used.""
+        )"
+app\ml\features\feature_pipeline.py,2370,target_reference,"""target_count"":","len(feature_columns),
+
+        ""target_count"":
+            len(
+                ["
+app\ml\features\feature_pipeline.py,2375,target_reference,in config.target_columns,"column
+                    for column
+                    in config.target_columns
+                    if column
+                    in dataframe.columns"
+app\ml\features\feature_pipeline.py,2401,target_reference,"""target_data_used"":","future_data_used,
+
+        ""target_data_used"":
+            target_data_used,"
+app\ml\features\feature_pipeline.py,2402,target_reference,"target_data_used,","""target_data_used"":
+            target_data_used,
+
+        ""cross_facility_data_used"":"
+app\ml\features\lag_features.py,13,future_keyword,1. No future-data leakage.,"Design principles
+-----------------
+1. No future-data leakage.
+2. No target-data leakage.
+3. No cross-facility contamination."
+app\ml\features\lag_features.py,14,target_reference,2. No target-data leakage.,"-----------------
+1. No future-data leakage.
+2. No target-data leakage.
+3. No cross-facility contamination.
+4. Exact normalized-slot lags."
+app\ml\features\lag_features.py,61,target_reference,"""target_"",","FORBIDDEN_TARGET_PREFIXES: tuple[str, ...] = (
+    ""target_"",
+)"
+app\ml\features\lag_features.py,166,target_reference,Return True when a column represents a target.,") -> bool:
+    """"""
+    Return True when a column represents a target.
+
+    Target columns must never be used as historical"
+app\ml\features\lag_features.py,168,target_reference,Target columns must never be used as historical,"Return True when a column represents a target.
+
+    Target columns must never be used as historical
+    feature inputs.
+    """""""
+app\ml\features\lag_features.py,382,future_keyword,No future observation is ever used.,"No forward filling is performed.
+    No future observation is ever used.
+    """""""
+app\ml\features\lag_features.py,1003,target_reference,"""target_data_used"":","False,
+
+            ""target_data_used"":
+                False,"
+app\ml\features\lag_features.py,1162,target_reference,target_inputs = [,"):
+
+            target_inputs = [
+                column
+                for column in ("
+app\ml\features\lag_features.py,1173,target_reference,if target_inputs:,"]
+
+            if target_inputs:
+                raise LagFeatureConfigurationError(
+                    ""Target columns cannot be used """
+app\ml\features\lag_features.py,1175,target_reference,"""Target columns cannot be used ""","if target_inputs:
+                raise LagFeatureConfigurationError(
+                    ""Target columns cannot be used ""
+                    ""as lag inputs: ""
+                    f""{target_inputs}"""
+app\ml\features\lag_features.py,1177,target_reference,"f""{target_inputs}""","""Target columns cannot be used ""
+                    ""as lag inputs: ""
+                    f""{target_inputs}""
+                )"
+app\ml\features\lag_features.py,1388,target_reference,# Target leakage.,"# --------------------------------------------------------
+    # Target leakage.
+    # --------------------------------------------------------"
+app\ml\features\lag_features.py,1391,target_reference,target_input_columns = [,"# --------------------------------------------------------
+
+    target_input_columns = [
+        column
+        for column in config.value_columns"
+app\ml\features\lag_features.py,1399,target_reference,if target_input_columns:,"]
+
+    if target_input_columns:
+
+        errors.append("
+app\ml\features\lag_features.py,1402,target_reference,"""Target columns configured as lag inputs: ""","errors.append(
+            ""Target columns configured as lag inputs: ""
+            f""{target_input_columns}""
+        )"
+app\ml\features\lag_features.py,1403,target_reference,"f""{target_input_columns}""","errors.append(
+            ""Target columns configured as lag inputs: ""
+            f""{target_input_columns}""
+        )"
+app\ml\features\lag_features.py,1549,target_reference,"""target_data_used"":","False,
+
+        ""target_data_used"":
+            False,"
+app\ml\features\occupancy_features.py,38,future_keyword,1. No future information is used.,"-----------------
+
+1. No future information is used.
+2. The input dataframe is never modified.
+3. No target columns are used."
+app\ml\features\occupancy_features.py,40,target_reference,3. No target columns are used.,"1. No future information is used.
+2. The input dataframe is never modified.
+3. No target columns are used.
+4. No lag features are generated here.
+5. No rolling features are generated here."
+app\ml\features\occupancy_features.py,89,future_keyword,future targets,"rolling_*
+    historical averages
+    future targets
+    predictions
+"""""""
+app\ml\features\occupancy_features.py,89,target_reference,future targets,"rolling_*
+    historical averages
+    future targets
+    predictions
+"""""""
+app\ml\features\occupancy_features.py,417,future_keyword,This generator does not inspect future observations and does,"Generate current-state occupancy features.
+
+    This generator does not inspect future observations and does
+    not use target columns."
+app\ml\features\occupancy_features.py,418,target_reference,not use target columns.,"This generator does not inspect future observations and does
+    not use target columns.
+
+    It is therefore safe to execute before the train/test split"
+app\ml\features\occupancy_features.py,939,target_reference,"""target_data_used"": False,","metadata={
+                    ""future_data_used"": False,
+                    ""target_data_used"": False,
+                    ""lag_features_used"": False,
+                    ""rolling_features_used"": False,"
+app\ml\features\occupancy_features.py,968,target_reference,"""target_data_used"": False,","),
+                ""future_data_used"": False,
+                ""target_data_used"": False,
+            },
+        )"
+app\ml\features\rolling_features.py,40,future_keyword,3. Future observations are never included.,"1. Rolling calculations are performed independently per facility.
+2. Only historical/current information is used.
+3. Future observations are never included.
+4. Target columns are never used.
+5. The input dataframe is never modified."
+app\ml\features\rolling_features.py,41,target_reference,4. Target columns are never used.,"2. Only historical/current information is used.
+3. Future observations are never included.
+4. Target columns are never used.
+5. The input dataframe is never modified.
+6. Missing observations remain distinguishable from zero values."
+app\ml\features\rolling_features.py,116,future_keyword,and does not calculate rolling statistics using future rows.,"rolling(..., center=True)
+
+and does not calculate rolling statistics using future rows.
+
+By default, the current observation is included in the rolling"
+app\ml\features\rolling_features.py,905,target_reference,"""target_data_used"": False,","),
+                ""future_data_used"": False,
+                ""target_data_used"": False,
+                ""cross_facility_data_used"": False,
+                ""centered_windows_used"": False,"
+app\ml\features\rolling_features.py,920,target_reference,"""target_data_used"": False,","""generator"": ""RollingFeatureGenerator"",
+                ""future_data_used"": False,
+                ""target_data_used"": False,
+                ""cross_facility_data_used"": False,
+                ""centered_windows_used"": False,"
+app\ml\features\rolling_features.py,968,target_reference,target_columns = [,")
+
+        target_columns = [
+            column
+            for column in self._config.value_columns"
+app\ml\features\rolling_features.py,971,target_reference,"if column.startswith(""target_"")","column
+            for column in self._config.value_columns
+            if column.startswith(""target_"")
+        ]"
+app\ml\features\rolling_features.py,974,target_reference,if target_columns:,"]
+
+        if target_columns:
+            raise RollingFeatureConfigurationError(
+                ""Target columns cannot be used as rolling """
+app\ml\features\rolling_features.py,976,target_reference,"""Target columns cannot be used as rolling ""","if target_columns:
+            raise RollingFeatureConfigurationError(
+                ""Target columns cannot be used as rolling ""
+                f""feature inputs: {target_columns}""
+            )"
+app\ml\features\rolling_features.py,977,target_reference,"f""feature inputs: {target_columns}""","raise RollingFeatureConfigurationError(
+                ""Target columns cannot be used as rolling ""
+                f""feature inputs: {target_columns}""
+            )"
+app\ml\features\rolling_features.py,1069,future_keyword,No future observations are used.,"observations.
+
+        No future observations are used.
+
+        Parameters"
+app\ml\features\rolling_features.py,1177,future_keyword,# future-data leakage.,"# known at prediction time, so including the current
+        # observation is intentional and does not constitute
+        # future-data leakage.
+        # --------------------------------------------------------"
+app\ml\features\rolling_features.py,1816,target_reference,# Target leakage.,"# --------------------------------------------------------
+    # Target leakage.
+    # --------------------------------------------------------"
+app\ml\features\rolling_features.py,1819,target_reference,target_columns = [,"# --------------------------------------------------------
+
+    target_columns = [
+        column
+        for column in expected_features"
+app\ml\features\rolling_features.py,1822,target_reference,"if column.startswith(""target_"")","column
+        for column in expected_features
+        if column.startswith(""target_"")
+        or ""_target_"" in column
+    ]"
+app\ml\features\rolling_features.py,1826,target_reference,if target_columns:,"]
+
+    if target_columns:
+
+        errors.append("
+app\ml\features\rolling_features.py,1829,target_reference,"""Target-related rolling features detected: ""","errors.append(
+            ""Target-related rolling features detected: ""
+            f""{target_columns}""
+        )"
+app\ml\features\rolling_features.py,1830,target_reference,"f""{target_columns}""","errors.append(
+            ""Target-related rolling features detected: ""
+            f""{target_columns}""
+        )"
+app\ml\features\rolling_features.py,1849,target_reference,"""target_data_used"": False,","),
+        ""future_data_used"": False,
+        ""target_data_used"": False,
+        ""centered_windows_used"": False,
+    }"
+app\ml\features\temporal_features.py,37,future_keyword,1. No future information is used.,"-----------------
+
+1. No future information is used.
+2. The original dataframe is never modified.
+3. Timestamp handling is explicit and deterministic."
+app\ml\features\temporal_features.py,44,future_keyword,and future inference data.,"6. Missing timestamps are handled safely.
+7. The transformer is reusable for both historical training data
+   and future inference data.
+8. The module does not perform model-specific transformations.
+9. The module does not perform target generation."
+app\ml\features\temporal_features.py,46,target_reference,9. The module does not perform target generation.,"and future inference data.
+8. The module does not perform model-specific transformations.
+9. The module does not perform target generation.
+10. The module does not perform train/test splitting."
+app\ml\features\temporal_features.py,370,future_keyword,It does not learn anything from the target or from future,"the dataset. This is important for ML reproducibility.
+
+    It does not learn anything from the target or from future
+    observations."
+app\ml\features\temporal_features.py,370,target_reference,It does not learn anything from the target or from future,"the dataset. This is important for ML reproducibility.
+
+    It does not learn anything from the target or from future
+    observations."
+app\ml\features\temporal_features.py,585,target_reference,"""target_data_used"": False,","),
+                    ""future_data_used"": False,
+                    ""target_data_used"": False,
+                    ""data_modified"": False,
+                },"
+app\ml\features\temporal_features.py,602,target_reference,"""target_data_used"": False,","),
+                ""future_data_used"": False,
+                ""target_data_used"": False,
+            },
+        )"
+app\ml\ml_models\baseline_model.py,20,target_reference,Predicts the mean target value observed in the training dataset.,"-----------------------------
+1. MeanBaseline
+   Predicts the mean target value observed in the training dataset.
+
+2. LastValueBaseline"
+app\ml\ml_models\baseline_model.py,23,target_reference,Predicts using the most recent observed target/input value available,"2. LastValueBaseline
+   Predicts using the most recent observed target/input value available
+   in the supplied feature dataset."
+app\ml\ml_models\baseline_model.py,38,target_reference,Baseline models must never inspect validation or test targets during,"Important leakage contract
+--------------------------
+Baseline models must never inspect validation or test targets during
+fitting."
+app\ml\ml_models\baseline_model.py,130,target_reference,target_column: str,"model_name: str
+    strategy: str
+    target_column: str
+    metrics: RegressionMetrics
+    predictions: pd.Series"
+app\ml\ml_models\baseline_model.py,140,target_reference,"""target_column"": self.target_column,","""model_name"": self.model_name,
+            ""strategy"": self.strategy,
+            ""target_column"": self.target_column,
+            ""metrics"": self.metrics.to_dict(),
+            ""metadata"": self.metadata,"
+app\ml\ml_models\baseline_model.py,361,target_reference,"target_column: str,","self,
+        *,
+        target_column: str,
+        model_name: Optional[str] = None,
+    ) -> None:"
+app\ml\ml_models\baseline_model.py,365,target_reference,if not target_column:,") -> None:
+
+        if not target_column:
+            raise BaselineModelDataError(
+                ""target_column must not be empty."""
+app\ml\ml_models\baseline_model.py,367,target_reference,"""target_column must not be empty.""","if not target_column:
+            raise BaselineModelDataError(
+                ""target_column must not be empty.""
+            )"
+app\ml\ml_models\baseline_model.py,370,target_reference,self.target_column = target_column,")
+
+        self.target_column = target_column
+
+        self.model_name = ("
+app\ml\ml_models\baseline_model.py,400,target_reference,Validate training dataframe and extract target.,") -> pd.Series:
+        """"""
+        Validate training dataframe and extract target.
+        """""""
+app\ml\ml_models\baseline_model.py,411,target_reference,if self.target_column not in dataframe.columns:,")
+
+        if self.target_column not in dataframe.columns:
+            raise BaselineModelDataError(
+                ""Target column """
+app\ml\ml_models\baseline_model.py,413,target_reference,"""Target column ""","if self.target_column not in dataframe.columns:
+            raise BaselineModelDataError(
+                ""Target column ""
+                f""'{self.target_column}' ""
+                ""is missing from training data."""
+app\ml\ml_models\baseline_model.py,414,target_reference,"f""'{self.target_column}' ""","raise BaselineModelDataError(
+                ""Target column ""
+                f""'{self.target_column}' ""
+                ""is missing from training data.""
+            )"
+app\ml\ml_models\baseline_model.py,418,target_reference,target = pd.to_numeric(,")
+
+        target = pd.to_numeric(
+            dataframe[self.target_column],
+            errors=""coerce"","
+app\ml\ml_models\baseline_model.py,419,target_reference,"dataframe[self.target_column],","target = pd.to_numeric(
+            dataframe[self.target_column],
+            errors=""coerce"",
+        )"
+app\ml\ml_models\baseline_model.py,423,target_reference,target = target.dropna(),")
+
+        target = target.dropna()
+
+        if target.empty:"
+app\ml\ml_models\baseline_model.py,425,target_reference,if target.empty:,"target = target.dropna()
+
+        if target.empty:
+            raise BaselineModelDataError(
+                ""Training target contains no valid """
+app\ml\ml_models\baseline_model.py,427,target_reference,"""Training target contains no valid ""","if target.empty:
+            raise BaselineModelDataError(
+                ""Training target contains no valid ""
+                ""numeric observations.""
+            )"
+app\ml\ml_models\baseline_model.py,432,target_reference,target.to_numpy(dtype=float),"if not np.isfinite(
+            target.to_numpy(dtype=float)
+        ).all():
+            raise BaselineModelDataError("
+app\ml\ml_models\baseline_model.py,435,target_reference,"""Training target contains infinite values.""",").all():
+            raise BaselineModelDataError(
+                ""Training target contains infinite values.""
+            )"
+app\ml\ml_models\baseline_model.py,438,target_reference,return target,")
+
+        return target
+
+    def _validate_prediction_data("
+app\ml\ml_models\baseline_model.py,456,target_reference,if self.target_column not in dataframe.columns:,")
+
+        if self.target_column not in dataframe.columns:
+            raise BaselineModelDataError(
+                ""Target column """
+app\ml\ml_models\baseline_model.py,458,target_reference,"""Target column ""","if self.target_column not in dataframe.columns:
+            raise BaselineModelDataError(
+                ""Target column ""
+                f""'{self.target_column}' ""
+                ""is missing from prediction data."""
+app\ml\ml_models\baseline_model.py,459,target_reference,"f""'{self.target_column}' ""","raise BaselineModelDataError(
+                ""Target column ""
+                f""'{self.target_column}' ""
+                ""is missing from prediction data.""
+            )"
+app\ml\ml_models\baseline_model.py,463,target_reference,target = pd.to_numeric(,")
+
+        target = pd.to_numeric(
+            dataframe[self.target_column],
+            errors=""coerce"","
+app\ml\ml_models\baseline_model.py,464,target_reference,"dataframe[self.target_column],","target = pd.to_numeric(
+            dataframe[self.target_column],
+            errors=""coerce"",
+        )"
+app\ml\ml_models\baseline_model.py,468,target_reference,return target,")
+
+        return target
+
+    def fit("
+app\ml\ml_models\baseline_model.py,510,target_reference,"""No rows contain both a valid target ""","if not valid_mask.any():
+            raise BaselineModelDataError(
+                ""No rows contain both a valid target ""
+                ""and a valid prediction.""
+            )"
+app\ml\ml_models\baseline_model.py,530,target_reference,"target_column=self.target_column,","model_name=self.model_name,
+            strategy=self.strategy.value,
+            target_column=self.target_column,
+            metrics=metrics,
+            predictions=predictions_valid,"
+app\ml\ml_models\baseline_model.py,556,target_reference,"""target_column"": self.target_column,","""model_type"": self.__class__.__name__,
+            ""strategy"": self.strategy.value,
+            ""target_column"": self.target_column,
+            ""is_fitted"": self.is_fitted,
+            ""training_row_count"": ("
+app\ml\ml_models\baseline_model.py,574,target_reference,Predict the mean target observed in the training data.,"class MeanBaseline(BaseBaselineModel):
+    """"""
+    Predict the mean target observed in the training data.
+
+    This is the simplest deterministic benchmark and should generally"
+app\ml\ml_models\baseline_model.py,577,target_reference,be the first baseline established for each SmartPark target.,"This is the simplest deterministic benchmark and should generally
+    be the first baseline established for each SmartPark target.
+    """""""
+app\ml\ml_models\baseline_model.py,585,target_reference,"target_column: str,","self,
+        *,
+        target_column: str,
+        model_name: Optional[str] = None,
+    ) -> None:"
+app\ml\ml_models\baseline_model.py,590,target_reference,"target_column=target_column,","super().__init__(
+            target_column=target_column,
+            model_name=(
+                model_name"
+app\ml\ml_models\baseline_model.py,604,target_reference,target = self._validate_training_data(,") -> ""MeanBaseline"":
+
+        target = self._validate_training_data(
+            dataframe
+        )"
+app\ml\ml_models\baseline_model.py,609,target_reference,target.mean(),"self.mean_value = float(
+            target.mean()
+        )"
+app\ml\ml_models\baseline_model.py,613,target_reference,target,"self._training_row_count = len(
+            target
+        )"
+app\ml\ml_models\baseline_model.py,618,target_reference,"""min"": float(target.min()),","self._training_statistics = {
+            ""mean"": self.mean_value,
+            ""min"": float(target.min()),
+            ""max"": float(target.max()),
+            ""std"": float(target.std()),"
+app\ml\ml_models\baseline_model.py,619,target_reference,"""max"": float(target.max()),","""mean"": self.mean_value,
+            ""min"": float(target.min()),
+            ""max"": float(target.max()),
+            ""std"": float(target.std()),
+            ""median"": float(target.median()),"
+app\ml\ml_models\baseline_model.py,620,target_reference,"""std"": float(target.std()),","""min"": float(target.min()),
+            ""max"": float(target.max()),
+            ""std"": float(target.std()),
+            ""median"": float(target.median()),
+        }"
+app\ml\ml_models\baseline_model.py,621,target_reference,"""median"": float(target.median()),","""max"": float(target.max()),
+            ""std"": float(target.std()),
+            ""median"": float(target.median()),
+        }"
+app\ml\ml_models\baseline_model.py,655,target_reference,"name=self.target_column,","self.mean_value,
+            index=dataframe.index,
+            name=self.target_column,
+            dtype=float,
+        )"
+app\ml\ml_models\baseline_model.py,678,target_reference,"target_column: str,","self,
+        *,
+        target_column: str,
+        model_name: Optional[str] = None,
+    ) -> None:"
+app\ml\ml_models\baseline_model.py,683,target_reference,"target_column=target_column,","super().__init__(
+            target_column=target_column,
+            model_name=(
+                model_name"
+app\ml\ml_models\baseline_model.py,697,target_reference,target = self._validate_training_data(,") -> ""LastValueBaseline"":
+
+        target = self._validate_training_data(
+            dataframe
+        )"
+app\ml\ml_models\baseline_model.py,702,target_reference,target.iloc[-1],"self.last_value = float(
+            target.iloc[-1]
+        )"
+app\ml\ml_models\baseline_model.py,706,target_reference,target,"self._training_row_count = len(
+            target
+        )"
+app\ml\ml_models\baseline_model.py,711,target_reference,"""mean"": float(target.mean()),","self._training_statistics = {
+            ""last_value"": self.last_value,
+            ""mean"": float(target.mean()),
+            ""min"": float(target.min()),
+            ""max"": float(target.max()),"
+app\ml\ml_models\baseline_model.py,712,target_reference,"""min"": float(target.min()),","""last_value"": self.last_value,
+            ""mean"": float(target.mean()),
+            ""min"": float(target.min()),
+            ""max"": float(target.max()),
+        }"
+app\ml\ml_models\baseline_model.py,713,target_reference,"""max"": float(target.max()),","""mean"": float(target.mean()),
+            ""min"": float(target.min()),
+            ""max"": float(target.max()),
+        }"
+app\ml\ml_models\baseline_model.py,747,target_reference,"name=self.target_column,","self.last_value,
+            index=dataframe.index,
+            name=self.target_column,
+            dtype=float,
+        )"
+app\ml\ml_models\baseline_model.py,775,target_reference,target column because historical target values are used to construct,"The model requires the prediction dataframe to contain the same
+    target column because historical target values are used to construct
+    the prediction."
+app\ml\ml_models\baseline_model.py,781,future_keyword,constructed without using future observations.,"This baseline is intended primarily for diagnostic benchmarking.
+    During proper production evaluation, the historical lookup must be
+    constructed without using future observations.
+    """""""
+app\ml\ml_models\baseline_model.py,789,target_reference,"target_column: str,","self,
+        *,
+        target_column: str,
+        lag: int,
+        model_name: Optional[str] = None,"
+app\ml\ml_models\baseline_model.py,800,target_reference,"target_column=target_column,","super().__init__(
+            target_column=target_column,
+            model_name=(
+                model_name"
+app\ml\ml_models\baseline_model.py,815,target_reference,target = self._validate_training_data(,") -> ""SeasonalNaiveBaseline"":
+
+        target = self._validate_training_data(
+            dataframe
+        )"
+app\ml\ml_models\baseline_model.py,819,target_reference,self._history = target.copy(),")
+
+        self._history = target.copy()
+
+        self._training_row_count = len("
+app\ml\ml_models\baseline_model.py,822,target_reference,target,"self._training_row_count = len(
+            target
+        )"
+app\ml\ml_models\baseline_model.py,827,target_reference,"""mean"": float(target.mean()),","self._training_statistics = {
+            ""lag"": self.lag,
+            ""mean"": float(target.mean()),
+            ""min"": float(target.min()),
+            ""max"": float(target.max()),"
+app\ml\ml_models\baseline_model.py,828,target_reference,"""min"": float(target.min()),","""lag"": self.lag,
+            ""mean"": float(target.mean()),
+            ""min"": float(target.min()),
+            ""max"": float(target.max()),
+        }"
+app\ml\ml_models\baseline_model.py,829,target_reference,"""max"": float(target.max()),","""mean"": float(target.mean()),
+            ""min"": float(target.min()),
+            ""max"": float(target.max()),
+        }"
+app\ml\ml_models\baseline_model.py,860,target_reference,if self.target_column not in dataframe.columns:,")
+
+        if self.target_column not in dataframe.columns:
+            raise BaselineModelDataError(
+                f""Target column '{self.target_column}' """
+app\ml\ml_models\baseline_model.py,862,target_reference,"f""Target column '{self.target_column}' ""","if self.target_column not in dataframe.columns:
+            raise BaselineModelDataError(
+                f""Target column '{self.target_column}' ""
+                ""is required.""
+            )"
+app\ml\ml_models\baseline_model.py,870,target_reference,"dataframe[self.target_column],","self._history,
+                pd.to_numeric(
+                    dataframe[self.target_column],
+                    errors=""coerce"",
+            ),"
+app\ml\ml_models\baseline_model.py,883,target_reference,predictions.name = self.target_column,"predictions.index = dataframe.index
+        predictions.name = self.target_column
+
+        return predictions.astype(float)"
+app\ml\ml_models\baseline_model.py,896,target_reference,"target_column: str,","*,
+    strategy: BaselineStrategy | str,
+    target_column: str,
+    lag: Optional[int] = None,
+    model_name: Optional[str] = None,"
+app\ml\ml_models\baseline_model.py,920,target_reference,"target_column=target_column,","if strategy == BaselineStrategy.MEAN:
+        return MeanBaseline(
+            target_column=target_column,
+            model_name=model_name,
+        )"
+app\ml\ml_models\baseline_model.py,926,target_reference,"target_column=target_column,","if strategy == BaselineStrategy.LAST_VALUE:
+        return LastValueBaseline(
+            target_column=target_column,
+            model_name=model_name,
+        )"
+app\ml\ml_models\baseline_model.py,937,target_reference,"target_column=target_column,","return SeasonalNaiveBaseline(
+            target_column=target_column,
+            lag=lag,
+            model_name=model_name,"
+app\ml\ml_models\baseline_model.py,973,target_reference,"""target_column"": result.target_column,","""model_name"": result.model_name,
+                ""strategy"": result.strategy,
+                ""target_column"": result.target_column,
+                ""mae"": result.metrics.mae,
+                ""rmse"": result.metrics.rmse,"
+app\ml\ml_models\baseline_model.py,1003,target_reference,"target_column: str,","train_df: pd.DataFrame,
+    validation_df: pd.DataFrame,
+    target_column: str,
+    include_last_value: bool = True,
+    include_seasonal_naive: bool = False,"
+app\ml\ml_models\baseline_model.py,1042,target_reference,target_column=target_column,"mean_model = MeanBaseline(
+        target_column=target_column
+    )"
+app\ml\ml_models\baseline_model.py,1056,target_reference,target_column=target_column,"last_value_model = LastValueBaseline(
+            target_column=target_column
+        )"
+app\ml\ml_models\baseline_model.py,1076,target_reference,"target_column=target_column,","seasonal_model = SeasonalNaiveBaseline(
+            target_column=target_column,
+            lag=seasonal_lag,
+        )"
+app\ml\ml_models\baseline_model.py,1107,target_reference,"""target_column"": target_column,","return {
+        ""target_column"": target_column,
+        ""models"": models,
+        ""results"": evaluation_results,"
+app\ml\ml_models\baseline_model.py,1114,target_reference,"""target_column"": target_column,","""training_rows"": len(train_df),
+            ""validation_rows"": len(validation_df),
+            ""target_column"": target_column,
+            ""target_leakage"": False,
+            ""validation_targets_used_during_fit"": False,"
+app\ml\ml_models\baseline_model.py,1115,target_reference,"""target_leakage"": False,","""validation_rows"": len(validation_df),
+            ""target_column"": target_column,
+            ""target_leakage"": False,
+            ""validation_targets_used_during_fit"": False,
+        },"
+app\ml\ml_models\xgboost_model.py,33,target_reference,- Target creation,"- Train/validation/test splitting
+    - Feature engineering
+    - Target creation
+    - Persistence of training datasets
+    - Final production model registration"
+app\ml\ml_models\xgboost_model.py,81,target_reference,- target values do not influence encoding,"- validation data does not influence encoding
+    - test data does not influence encoding
+    - target values do not influence encoding
+    - feature engineering remains untouched
+    - the persisted 296-feature contract remains intact"
+app\ml\ml_models\xgboost_model.py,300,target_reference,target_mean: float,"sample_count: int
+
+    target_mean: float
+
+    prediction_mean: float"
+app\ml\ml_models\xgboost_model.py,304,target_reference,target_min: float,"prediction_mean: float
+
+    target_min: float
+
+    target_max: float"
+app\ml\ml_models\xgboost_model.py,306,target_reference,target_max: float,"target_min: float
+
+    target_max: float
+
+    prediction_min: float"
+app\ml\ml_models\xgboost_model.py,356,target_reference,target_column: Optional[str],"model_name: str
+
+    target_column: Optional[str]
+
+    metrics: XGBoostRegressionMetrics"
+app\ml\ml_models\xgboost_model.py,371,target_reference,"""target_column"": self.target_column,","return {
+            ""model_name"": self.model_name,
+            ""target_column"": self.target_column,
+            ""metrics"": self.metrics.to_dict(),
+            ""feature_count"": self.feature_count,"
+app\ml\ml_models\xgboost_model.py,392,target_reference,"target_column=""target_occupancy_rate_30m""","model = XGBoostModel(
+            target_column=""target_occupancy_rate_30m""
+        )"
+app\ml\ml_models\xgboost_model.py,420,target_reference,"target_column: Optional[str] = None,","self,
+        *,
+        target_column: Optional[str] = None,
+        config: Optional[XGBoostModelConfig] = None,
+        model_name: str = ""xgboost_regressor"","
+app\ml\ml_models\xgboost_model.py,425,target_reference,self.target_column = target_column,") -> None:
+
+        self.target_column = target_column
+
+        self.config = ("
+app\ml\ml_models\xgboost_model.py,897,target_reference,# TARGET VALIDATION,"# ========================================================================
+    # TARGET VALIDATION
+    # ========================================================================"
+app\ml\ml_models\xgboost_model.py,905,target_reference,Validate target values.,") -> np.ndarray:
+        """"""
+        Validate target values.
+        """""""
+app\ml\ml_models\xgboost_model.py,916,target_reference,"""Unable to convert target y to numeric values.""","except Exception as exc:
+                raise XGBoostModelDataError(
+                    ""Unable to convert target y to numeric values.""
+                ) from exc"
+app\ml\ml_models\xgboost_model.py,923,target_reference,"""Target dataframe y must contain exactly ""","if y.shape[1] != 1:
+                raise XGBoostModelDataError(
+                    ""Target dataframe y must contain exactly ""
+                    ""one column.""
+                )"
+app\ml\ml_models\xgboost_model.py,936,target_reference,"""Unable to convert target y to numeric values.""","except Exception as exc:
+                raise XGBoostModelDataError(
+                    ""Unable to convert target y to numeric values.""
+                ) from exc"
+app\ml\ml_models\xgboost_model.py,955,target_reference,"""Target y is empty.""","if len(values) == 0:
+            raise XGBoostModelDataError(
+                ""Target y is empty.""
+            )"
+app\ml\ml_models\xgboost_model.py,960,target_reference,"""Target y contains NaN or infinite values.""","if not np.isfinite(values).all():
+            raise XGBoostModelDataError(
+                ""Target y contains NaN or infinite values.""
+            )"
+app\ml\ml_models\xgboost_model.py,994,target_reference,target = self._validate_y(,")
+
+        target = self._validate_y(
+            y
+        )"
+app\ml\ml_models\xgboost_model.py,998,target_reference,if len(raw_features) != len(target):,")
+
+        if len(raw_features) != len(target):
+            raise XGBoostModelDataError(
+                ""X and y row counts do not match: """
+app\ml\ml_models\xgboost_model.py,1002,target_reference,"f""y={len(target)}.""","""X and y row counts do not match: ""
+                f""X={len(raw_features)}, ""
+                f""y={len(target)}.""
+            )"
+app\ml\ml_models\xgboost_model.py,1031,target_reference,np.mean(target),"self._training_target_mean = float(
+            np.mean(target)
+        )"
+app\ml\ml_models\xgboost_model.py,1035,target_reference,np.min(target),"self._training_target_min = float(
+            np.min(target)
+        )"
+app\ml\ml_models\xgboost_model.py,1039,target_reference,np.max(target),"self._training_target_max = float(
+            np.max(target)
+        )"
+app\ml\ml_models\xgboost_model.py,1078,target_reference,"target,","self._model.fit(
+            features,
+            target,
+            **fit_kwargs,
+        )"
+app\ml\ml_models\xgboost_model.py,1316,target_reference,Calculate MAPE while excluding zero-valued actual targets.,") -> Optional[float]:
+        """"""
+        Calculate MAPE while excluding zero-valued actual targets.
+        """""""
+app\ml\ml_models\xgboost_model.py,1385,target_reference,target_mean=float(,"),
+            sample_count=len(actual),
+            target_mean=float(
+                np.mean(actual)
+            ),"
+app\ml\ml_models\xgboost_model.py,1391,target_reference,target_min=float(,"np.mean(predicted)
+            ),
+            target_min=float(
+                np.min(actual)
+            ),"
+app\ml\ml_models\xgboost_model.py,1394,target_reference,target_max=float(,"np.min(actual)
+            ),
+            target_max=float(
+                np.max(actual)
+            ),"
+app\ml\ml_models\xgboost_model.py,1428,target_reference,target = self._validate_y(,")
+
+        target = self._validate_y(
+            y
+        )"
+app\ml\ml_models\xgboost_model.py,1436,target_reference,if len(predictions) != len(target):,")
+
+        if len(predictions) != len(target):
+            raise XGBoostModelDataError(
+                ""Prediction and target row counts do not match: """
+app\ml\ml_models\xgboost_model.py,1438,target_reference,"""Prediction and target row counts do not match: ""","if len(predictions) != len(target):
+            raise XGBoostModelDataError(
+                ""Prediction and target row counts do not match: ""
+                f""predictions={len(predictions)}, ""
+                f""target={len(target)}."""
+app\ml\ml_models\xgboost_model.py,1440,target_reference,"f""target={len(target)}.""","""Prediction and target row counts do not match: ""
+                f""predictions={len(predictions)}, ""
+                f""target={len(target)}.""
+            )"
+app\ml\ml_models\xgboost_model.py,1444,target_reference,"target,","metrics = self.calculate_metrics(
+            target,
+            predictions,
+        )"
+app\ml\ml_models\xgboost_model.py,1450,target_reference,"target_column=self.target_column,","return XGBoostEvaluationResult(
+            model_name=self.model_name,
+            target_column=self.target_column,
+            metrics=metrics,
+            feature_count=len("
+app\ml\ml_models\xgboost_model.py,1456,target_reference,target,"),
+            sample_count=len(
+                target
+            ),
+            metadata={"
+app\ml\ml_models\xgboost_model.py,1636,target_reference,"""target_column"": self.target_column,","""model_type"": self.MODEL_TYPE,
+            ""model_version"": self.MODEL_VERSION,
+            ""target_column"": self.target_column,
+            ""fitted"": self._fitted,
+            ""feature_count"": len("
+app\ml\ml_models\xgboost_model.py,1731,target_reference,"target_column: Optional[str] = None,","def build_xgboost_model(
+    *,
+    target_column: Optional[str] = None,
+    config: Optional[
+        XGBoostModelConfig"
+app\ml\ml_models\xgboost_model.py,1745,target_reference,"target_column=target_column,","return XGBoostModel(
+        target_column=target_column,
+        config=config,
+        model_name=model_name,"

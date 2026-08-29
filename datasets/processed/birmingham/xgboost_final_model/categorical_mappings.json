@@ -1,0 +1,26 @@
+{
+  "categorical_features": [
+    "occupancy_level",
+    "demand_class"
+  ],
+  "contract_version": "1.0",
+  "encoding_strategy": "Training-only ordinal mapping",
+  "mappings": {
+    "demand_class": {
+      "CAPACITY_EXCEEDED": 0,
+      "CRITICAL": 1,
+      "HIGH": 2,
+      "LOW": 3,
+      "MODERATE": 4,
+      "VERY_HIGH": 5
+    },
+    "occupancy_level": {
+      "EMPTY": 0,
+      "HIGH": 1,
+      "LOW": 2,
+      "MODERATE": 3,
+      "NEAR_FULL": 4
+    }
+  },
+  "unknown_category_code": -1
+}

@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "dataset_name": "birmingham",
+  "target_column": "target_occupancy_rate_30m",
+  "created_by": "birmingham_xgboost_benchmark.py",
+  "created_at_utc": "2026-08-22T07:43:35.557438+00:00",
+  "model": {
+    "name": "xgboost_occupancy_30m_v1",
+    "type": "xgboost_regressor",
+    "version": "1.1",
+    "config": {
+      "objective": "reg:squarederror",
+      "n_estimators": 300,
+      "learning_rate": 0.05,
+      "max_depth": 6,
+      "min_child_weight": 1.0,
+      "subsample": 0.9,
+      "colsample_bytree": 0.9,
+      "gamma": 0.0,
+      "reg_alpha": 0.0,
+      "reg_lambda": 1.0,
+      "random_state": 42,
+      "n_jobs": -1,
+      "tree_method": "hist",
+      "verbosity": 0,
+      "early_stopping_rounds": null,
+      "clip_predictions": true,
+      "prediction_min": 0.0,
+      "prediction_max": 1.0,
+      "categorical_features": [
+        "occupancy_level",
+        "demand_class"
+      ]
+    }
+  },
+  "dataset": {
+    "training_file": "C:\\agano\\Oshwal\\docs\\Project\\smart-parking-system\\datasets\\processed\\birmingham\\target_occupancy_rate_30m\\train.parquet",
+    "validation_file": "C:\\agano\\Oshwal\\docs\\Project\\smart-parking-system\\datasets\\processed\\birmingham\\target_occupancy_rate_30m\\validation.parquet",
+    "test_file": "C:\\agano\\Oshwal\\docs\\Project\\smart-parking-system\\datasets\\processed\\birmingham\\target_occupancy_rate_30m\\test.parquet",
+    "test_file_loaded": false,
+    "training_rows": 23244,
+    "validation_rows": 4980,
+    "feature_count": 296
+  },
+  "training": {
+    "duration_seconds": 18.030339800000093,
+    "rows": 23244,
+    "features": 296,
+    "validation_data_used": false,
+    "test_data_used": false
+  },
+  "evaluation": {
+    "prediction_duration_seconds": 0.18686180000031527,
+    "result": {
+      "model_name": "xgboost_occupancy_30m_v1",
+      "target_column": "target_occupancy_rate_30m",
+      "metrics": {
+        "mae": 0.013767119410825805,
+        "rmse": 0.02016716032178501,
+        "r2": 0.9947992526685988,
+        "mape": 3.4156847455745223,
+        "sample_count": 4980,
+        "target_mean": 0.5540289366253413,
+        "prediction_mean": 0.553013663053752,
+        "target_min": 0.01025236593059937,
+        "target_max": 1.0,
+        "prediction_min": 0.014833847060799599,
+        "prediction_max": 1.0
+      },
+      "feature_count": 296,
+      "sample_count": 4980,
+      "metadata": {
+        "model_type": "xgboost_regressor",
+        "model_version": "1.1",
+        "training_rows": 23244,
+        "training_feature_count": 296,
+        "encoded_feature_count": 296,
+        "validation_data_used_during_fit": false,
+        "test_data_used": false,
+        "prediction_clipping": true,
+        "categorical_features": [
+          "occupancy_level",
+          "demand_class"
+        ],
+        "categorical_encoding": "training_only_ordinal_mapping",
+        "unknown_category_code": -1
+      }
+    }
+  },
+  "baseline_comparison": {
+    "mean_baseline_mae": 0.248729,
+    "last_value_baseline_mae": 0.245388,
+    "xgboost_mae": 0.013767119410825805,
+    "xgboost_rmse": 0.02016716032178501,
+    "improvement_vs_mean_percent": 94.46501235850029,
+    "improvement_vs_last_value_percent": 94.38965254583525,
+    "beats_mean_baseline": true,
+    "beats_last_value_baseline": true
+  },
+  "leakage_contract": {
+    "future_data_used": false,
+    "validation_data_used_during_fit": false,
+    "validation_target_used_during_fit": false,
+    "test_data_loaded": false,
+    "target_data_used_as_feature": false,
+    "cross_facility_data_used": false,
+    "forward_lookup_used": false,
+    "centered_windows_used": false,
+    "target_imputation": false,
+    "random_shuffle": false,
+    "chronological_split": true
+  }
+}

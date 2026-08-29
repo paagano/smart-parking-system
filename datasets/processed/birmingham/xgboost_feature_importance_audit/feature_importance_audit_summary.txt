@@ -1,0 +1,134 @@
+SMARTPARK AI - BIRMINGHAM XGBOOST FEATURE IMPORTANCE AUDIT
+==============================================================================
+
+Target: target_occupancy_rate_30m
+Overall status: REVIEW_REQUIRED
+
+IMPORTANT:
+This audit is read-only. It does not modify datasets, models, or feature pipeline code.
+
+Priority feature findings:
+
+demand_class_code
+  Rank: 1
+  Importance: 210.46160888671875
+  Group: demand
+  Target dependency: REQUIRES_SOURCE_REVIEW
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: 0.9488221772166752
+  Audit status: REVIEW
+  Note: Feature is derived from occupancy/demand/availability information and requires source-level review.
+  Note: Current operational feature requires verification against inference-time availability.
+  Note: Priority feature selected for manual review.
+
+availability_rate
+  Rank: 2
+  Importance: 22.250736236572266
+  Group: occupancy
+  Target dependency: REQUIRES_SOURCE_REVIEW
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: -0.9849194895332796
+  Audit status: REVIEW
+  Note: Feature is derived from occupancy/demand/availability information and requires source-level review.
+  Note: Current operational feature requires verification against inference-time availability.
+  Note: Priority feature selected for manual review.
+
+available_ratio
+  Rank: 3
+  Importance: 19.433942794799805
+  Group: occupancy
+  Target dependency: NO_DIRECT_TARGET_DEPENDENCY_IDENTIFIED
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: -0.9849194895332796
+  Audit status: REVIEW
+  Note: Priority feature selected for manual review.
+
+calculated_demand_level
+  Rank: 4
+  Importance: 7.350575447082519
+  Group: demand
+  Target dependency: REQUIRES_SOURCE_REVIEW
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: 0.98490618442166
+  Audit status: REVIEW
+  Note: Feature is derived from occupancy/demand/availability information and requires source-level review.
+  Note: Current operational feature requires verification against inference-time availability.
+  Note: Priority feature selected for manual review.
+
+occupied_ratio
+  Rank: 5
+  Importance: 4.891272068023682
+  Group: occupancy
+  Target dependency: REQUIRES_SOURCE_REVIEW
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: 0.9849194895332796
+  Audit status: REVIEW
+  Note: Feature is derived from occupancy/demand/availability information and requires source-level review.
+  Note: Current operational feature requires verification against inference-time availability.
+  Note: Priority feature selected for manual review.
+
+remaining_capacity_ratio
+  Rank: 6
+  Importance: 4.231770038604736
+  Group: occupancy
+  Target dependency: NO_DIRECT_TARGET_DEPENDENCY_IDENTIFIED
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: -0.98490618442166
+  Audit status: REVIEW
+  Note: Priority feature selected for manual review.
+
+capacity_utilization
+  Rank: 7
+  Importance: 3.136606216430664
+  Group: occupancy
+  Target dependency: NO_DIRECT_TARGET_DEPENDENCY_IDENTIFIED
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: 0.9849194895332796
+  Audit status: REVIEW
+  Note: Priority feature selected for manual review.
+
+is_moderate_occupancy
+  Rank: 8
+  Importance: 2.095574378967285
+  Group: occupancy
+  Target dependency: REQUIRES_SOURCE_REVIEW
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: -0.1690770007134739
+  Audit status: REVIEW
+  Note: Feature is derived from occupancy/demand/availability information and requires source-level review.
+  Note: Current operational feature requires verification against inference-time availability.
+  Note: Priority feature selected for manual review.
+
+demand_pressure
+  Rank: 9
+  Importance: 1.0229370594024658
+  Group: demand
+  Target dependency: REQUIRES_SOURCE_REVIEW
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: 0.98490618442166
+  Audit status: REVIEW
+  Note: Feature is derived from occupancy/demand/availability information and requires source-level review.
+  Note: Current operational feature requires verification against inference-time availability.
+  Note: Priority feature selected for manual review.
+
+demand_level
+  Rank: 10
+  Importance: 0.4330626428127289
+  Group: demand
+  Target dependency: REQUIRES_SOURCE_REVIEW
+  Prediction-time status: REQUIRES_SOURCE_REVIEW
+  Future lookup status: NOT_DETERMINED_FROM_NAME
+  Target correlation: 0.9849194895332796
+  Audit status: REVIEW
+  Note: Feature is derived from occupancy/demand/availability information and requires source-level review.
+  Note: Current operational feature requires verification against inference-time availability.
+  Note: Priority feature selected for manual review.

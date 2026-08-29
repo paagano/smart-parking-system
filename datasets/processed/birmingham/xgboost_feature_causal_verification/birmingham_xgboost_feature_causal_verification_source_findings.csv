@@ -1,0 +1,47 @@
+file,line_number,operation,context,target_context,feature_context,future_or_forward,negative_shift,centered_rolling,expression
+data\dataset_builder.py,64,FUTURE_OR_FORWARD,- forward-fill occupancy,False,True,True,False,False,- forward-fill occupancy
+data\dataset_builder.py,1084,SHIFT,occupancy.shift(,False,True,False,False,False,occupancy.shift(
+data\dataset_builder.py,1091,SHIFT,.shift(,False,False,False,False,False,.shift(
+data\dataset_builder.py,1100,SHIFT,.shift(,False,False,False,False,False,.shift(
+data\dataset_builder.py,1109,SHIFT,.shift(,False,False,False,False,False,.shift(
+data\dataset_builder.py,1118,SHIFT,.shift(,False,False,False,False,False,.shift(
+data\temporal.py,16,FUTURE_OR_FORWARD,- forward-fill values,False,False,True,False,False,- forward-fill values
+data\temporal.py,530,DIFF,.diff(),False,False,False,False,False,.diff()
+data\temporal.py,618,SHIFT,previous = timestamps.shift(1),False,False,False,False,False,previous = timestamps.shift(1)
+data\temporal.py,987,DIFF,.diff(),False,False,False,False,False,.diff()
+data\temporal_normalizer.py,47,FUTURE_OR_FORWARD,4. Never forward-fill or backward-fill observations.,False,False,True,False,False,4. Never forward-fill or backward-fill observations.
+data\temporal_normalizer.py,542,FUTURE_OR_FORWARD,This class never forward-fills occupancy.,False,True,True,False,False,This class never forward-fills occupancy.
+data\temporal_normalizer.py,660,FUTURE_OR_FORWARD,"""forward_fill_used"": False,",False,False,True,False,False,"""forward_fill_used"": False,"
+data\temporal_normalizer.py,1408,SHIFT,timestamps.shift(1),False,False,False,False,False,timestamps.shift(1)
+data\temporal_normalizer.py,1415,SHIFT,.shift(1),False,False,False,False,False,.shift(1)
+data\temporal_normalizer.py,1738,SHIFT,current_status.shift(1),False,False,False,False,False,current_status.shift(1)
+data\temporal_normalizer.py,2045,FUTURE_OR_FORWARD,"""forward_fill_used"": False,",False,False,True,False,False,"""forward_fill_used"": False,"
+features\calendar_features.py,1341,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\calendar_features.py,1736,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\demand_features.py,17,FUTURE_OR_FORWARD,- forward lookups,False,False,True,False,False,- forward lookups
+features\demand_features.py,1372,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\demand_features.py,1850,FUTURE_OR_FORWARD,"""forward_lookup_used"": False,",False,False,True,False,False,"""forward_lookup_used"": False,"
+features\demand_features.py,2404,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\feature_pipeline.py,54,FUTURE_OR_FORWARD,forward_lookup_used    == False,False,False,True,False,False,forward_lookup_used    == False
+features\feature_pipeline.py,1150,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\feature_pipeline.py,1223,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\feature_pipeline.py,1224,FUTURE_OR_FORWARD,"metadata[""forward_lookup_used""],",False,False,True,False,False,"metadata[""forward_lookup_used""],"
+features\feature_pipeline.py,1684,FUTURE_OR_FORWARD,"""forward_lookup_used"",",False,False,True,False,False,"""forward_lookup_used"","
+features\feature_pipeline.py,1724,FUTURE_OR_FORWARD,"""forward_lookup_used"",",False,False,True,False,False,"""forward_lookup_used"","
+features\feature_pipeline.py,2066,FUTURE_OR_FORWARD,"""forward_lookup_used"": False,",False,False,True,False,False,"""forward_lookup_used"": False,"
+features\feature_pipeline.py,2298,FUTURE_OR_FORWARD,forward_lookup_used = bool(,False,False,True,False,False,forward_lookup_used = bool(
+features\feature_pipeline.py,2300,FUTURE_OR_FORWARD,"""forward_lookup_used"",",False,False,True,False,False,"""forward_lookup_used"","
+features\feature_pipeline.py,2333,FUTURE_OR_FORWARD,if forward_lookup_used:,False,False,True,False,False,if forward_lookup_used:
+features\feature_pipeline.py,2336,FUTURE_OR_FORWARD,"""Pipeline metadata indicates forward """,False,True,True,False,False,"""Pipeline metadata indicates forward """
+features\feature_pipeline.py,2407,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\feature_pipeline.py,2408,FUTURE_OR_FORWARD,"forward_lookup_used,",False,False,True,False,False,"forward_lookup_used,"
+features\lag_features.py,381,FUTURE_OR_FORWARD,No forward filling is performed.,False,False,True,False,False,No forward filling is performed.
+features\lag_features.py,1009,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\lag_features.py,1227,DIFF,deltas = timestamps.diff(),False,False,False,False,False,deltas = timestamps.diff()
+features\lag_features.py,1555,FUTURE_OR_FORWARD,"""forward_lookup_used"":",False,False,True,False,False,"""forward_lookup_used"":"
+features\rolling_features.py,1193,ROLLING,"#     grouped[""__value""].rolling(on=""__timestamp"")",False,True,False,False,False,"#     grouped[""__value""].rolling(on=""__timestamp"")"
+features\rolling_features.py,1195,ROLLING,# because pandas treats that as SeriesGroupBy.rolling(),False,True,False,False,False,# because pandas treats that as SeriesGroupBy.rolling()
+features\rolling_features.py,1200,ROLLING,"#     grouped.rolling(on=""__timestamp"")",False,True,False,False,False,"#     grouped.rolling(on=""__timestamp"")"
+features\rolling_features.py,1203,ROLLING,rolling_object = grouped.rolling(,False,True,False,False,False,rolling_object = grouped.rolling(
+features\rolling_features.py,1489,ROLLING,pandas can return a MultiIndex after groupby().rolling().,False,True,False,False,False,pandas can return a MultiIndex after groupby().rolling().
+ml_models\baseline_model.py,876,SHIFT,predictions = combined.shift(,False,False,False,False,False,predictions = combined.shift(

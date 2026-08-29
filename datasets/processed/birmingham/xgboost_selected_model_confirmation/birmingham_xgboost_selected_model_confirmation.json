@@ -1,0 +1,75 @@
+{
+  "audit": {
+    "audit_name": "Birmingham XGBoost Selected Model Confirmation",
+    "target": "target_occupancy_rate_30m",
+    "candidate_id": "TUNE_014",
+    "description": "Higher L1 regularisation",
+    "prediction_contract": {
+      "prediction_timestamp": "T",
+      "forecast_horizon": "T + 30 minutes",
+      "feature_information": "available at or before T"
+    },
+    "generated_at": "2026-08-22T12:35:48.105540+00:00"
+  },
+  "selected_parameters": {
+    "n_estimators": 300,
+    "learning_rate": 0.05,
+    "max_depth": 6,
+    "min_child_weight": 1.0,
+    "subsample": 0.9,
+    "colsample_bytree": 0.9,
+    "gamma": 0.0,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0
+  },
+  "baseline": {
+    "mae": 0.013767,
+    "rmse": 0.020167,
+    "r2": 0.994799,
+    "mape": 3.4157,
+    "n": 4980
+  },
+  "confirmation": {
+    "mae": 0.01349578909833505,
+    "rmse": 0.0198053984965012,
+    "r2": 0.9949841628990295,
+    "mape": 3.3279361306647544,
+    "n": 4980
+  },
+  "comparison": {
+    "mae_change": -0.0002712109016649502,
+    "mae_improvement_pct": 1.9700072758404168,
+    "rmse_change": -0.00036160150349880127,
+    "rmse_improvement_pct": 1.7930356696524086,
+    "r2_change": 0.00018516289902947847,
+    "r2_improvement_pct": 0.01861309661846046,
+    "mape_change": -0.08776386933524583,
+    "mape_improvement_pct": 2.5694255741208485
+  },
+  "expected_metrics": {
+    "mae": 0.013496,
+    "rmse": 0.019805,
+    "r2": 0.994984,
+    "mape": 3.3279
+  },
+  "verification": {
+    "expected_metrics_within_tolerance": true,
+    "better_than_baseline_mae": true,
+    "better_than_baseline_rmse": true,
+    "better_than_baseline_r2": true,
+    "better_than_baseline_mape": true
+  },
+  "experiment_controls": {
+    "validation_passed_to_fit": false,
+    "test_dataset_loaded": false,
+    "test_dataset_passed_to_fit": false,
+    "feature_pipeline_rebuilt": false,
+    "hyperparameter_tuning_performed": false,
+    "persisted_datasets_modified": false,
+    "early_stopping": false
+  },
+  "result": {
+    "verdict": "CONFIRMED_SELECTED_MODEL",
+    "execution_seconds": 22.0138721000003
+  }
+}

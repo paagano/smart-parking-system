@@ -175,23 +175,49 @@ class ParkingFacilityUpdate(BaseModel):
     All fields are optional.
     """
 
-    name: str | None = Field(None, min_length=3, max_length=150)
+    name: str | None = Field(
+        None,
+        min_length=3,
+        max_length=150,
+    )
 
-    code: str | None = Field(None, min_length=2, max_length=30)
+    code: str | None = Field(
+        None,
+        min_length=2,
+        max_length=30,
+    )
 
     facility_type: FacilityType | None = None
 
-    description: str | None = Field(None, max_length=1000)
+    description: str | None = Field(
+        None,
+        max_length=1000,
+    )
 
-    country: str | None = Field(None, max_length=100)
+    country: str | None = Field(
+        None,
+        max_length=100,
+    )
 
-    county: str | None = Field(None, max_length=100)
+    county: str | None = Field(
+        None,
+        max_length=100,
+    )
 
-    city: str | None = Field(None, max_length=100)
+    city: str | None = Field(
+        None,
+        max_length=100,
+    )
 
-    address: str | None = Field(None, max_length=255)
+    address: str | None = Field(
+        None,
+        max_length=255,
+    )
 
-    postal_code: str | None = Field(None, max_length=20)
+    postal_code: str | None = Field(
+        None,
+        max_length=20,
+    )
 
     latitude: float | None = Field(
         None,
@@ -264,9 +290,45 @@ class ParkingFacilityUpdate(BaseModel):
 class ParkingFacilityResponse(ParkingFacilityBase):
     """
     Response schema returned to API clients.
+
+    Existing facilities in the database may have incomplete
+    geographic/location information. Those fields are therefore
+    nullable in API responses.
+
+    IMPORTANT:
+    ParkingFacilityCreate continues to require these fields.
+    This change only affects responses returned to clients.
     """
 
     id: int
+
+    # ----------------------------------------------------------
+    # Existing database records may not yet have these values.
+    # ----------------------------------------------------------
+
+    county: str | None = Field(
+        default=None,
+        max_length=100,
+    )
+
+    address: str | None = Field(
+        default=None,
+        max_length=255,
+    )
+
+    latitude: float | None = Field(
+        default=None,
+        ge=-90,
+        le=90,
+        description="Latitude in decimal degrees, when available.",
+    )
+
+    longitude: float | None = Field(
+        default=None,
+        ge=-180,
+        le=180,
+        description="Longitude in decimal degrees, when available.",
+    )
 
     created_at: datetime
 

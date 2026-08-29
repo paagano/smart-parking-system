@@ -1,0 +1,10 @@
+category,status,count
+classification,temporal_calendar,11
+classification,other,51
+classification,current_state,213
+classification,historical_lag,21
+availability,SAFE,11
+availability,REVIEW,51
+availability,CURRENT_STATE_REVIEW,213
+availability,SAFE_IF_GENERATED_CAUSALLY,21
+leakage,NO_CONFIRMED_LEAKAGE,296

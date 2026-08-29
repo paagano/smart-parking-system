@@ -1,0 +1,3 @@
+model_name,strategy,target_column,mae,rmse,r2,mape,sample_count
+last_value_baseline,last_value,target_occupancy_rate_30m,0.24538771287344072,0.2797816365333356,-0.0009552589329264727,89.12006606308422,4980
+mean_baseline,mean,target_occupancy_rate_30m,0.24872897374305522,0.2855932939619513,-0.042971075398945846,81.68296887689016,4980

@@ -1,0 +1,13 @@
+metric,value
+mean_error,-0.0015245065356567866
+median_error,-0.0011750745298683418
+mean_absolute_error,0.014114561178049344
+underprediction_rate_pct,53.412284223203535
+overprediction_rate_pct,46.06583701324769
+exact_prediction_rate_pct,0.5218787635487756
+p50_absolute_error,0.010071518762828857
+p75_absolute_error,0.019138705468485118
+p90_absolute_error,0.031190812768730626
+p95_absolute_error,0.04017660142490138
+p99_absolute_error,0.06420478532484909
+maximum_absolute_error,0.1986699598845436

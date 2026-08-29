@@ -1,0 +1,77 @@
+{
+  "audit": "Birmingham XGBoost Production Inference Smoke Test",
+  "status": "PASS",
+  "target": "target_occupancy_rate_30m",
+  "production_contract": {
+    "prediction_timestamp": "T",
+    "forecast_horizon": "T+30m",
+    "feature_availability": "at_or_before_T"
+  },
+  "model": {
+    "candidate": "TUNE_014",
+    "feature_count": 296,
+    "artifact_directory": "C:\\agano\\Oshwal\\docs\\Project\\smart-parking-system\\datasets\\processed\\birmingham\\xgboost_final_model",
+    "model_file": "C:\\agano\\Oshwal\\docs\\Project\\smart-parking-system\\datasets\\processed\\birmingham\\xgboost_final_model\\model.json"
+  },
+  "xgboost": {
+    "booster_loaded": true,
+    "feature_count": 296,
+    "feature_names_available": true
+  },
+  "inference": {
+    "fixture_type": "synthetic",
+    "fixture_rows": 1,
+    "matrix_shape": [
+      1,
+      296
+    ],
+    "prediction": 0.6520485877990723,
+    "prediction_finite": true,
+    "prediction_range_valid": true
+  },
+  "datasets": {
+    "training_loaded": false,
+    "validation_loaded": false,
+    "test_loaded": false
+  },
+  "training_performed": false,
+  "hyperparameter_tuning": false,
+  "feature_pipeline_rebuilt": false,
+  "persisted_datasets_modified": false,
+  "xgboost_model_source": "frozen_model.json",
+  "categorical_features": [
+    "occupancy_level",
+    "demand_class"
+  ],
+  "categorical_mapping_sizes": {
+    "occupancy_level": 5,
+    "demand_class": 6
+  },
+  "checksums": {
+    "model.json": {
+      "actual_sha256": "63e313050d5194be0d80ab0dc5509782a92679b9702b3c7356890e305cb35960",
+      "expected_sha256": "63e313050d5194be0d80ab0dc5509782a92679b9702b3c7356890e305cb35960",
+      "status": "PASS"
+    },
+    "model_metadata.json": {
+      "actual_sha256": "e04a508c956c460f9fa6937f8aa0374be73d6a1546699845e36e051f29d00c48",
+      "expected_sha256": "e04a508c956c460f9fa6937f8aa0374be73d6a1546699845e36e051f29d00c48",
+      "status": "PASS"
+    },
+    "feature_contract.json": {
+      "actual_sha256": "1a70ae924ddd67e81023c23a59bfc1f55a90cba9a08c53316c08fcc1bdf805db",
+      "expected_sha256": "1a70ae924ddd67e81023c23a59bfc1f55a90cba9a08c53316c08fcc1bdf805db",
+      "status": "PASS"
+    },
+    "categorical_mappings.json": {
+      "actual_sha256": "750add17fafc02409aa00d88ab7e2c3a077593b43fa97132f32ac292c13c34ff",
+      "expected_sha256": "750add17fafc02409aa00d88ab7e2c3a077593b43fa97132f32ac292c13c34ff",
+      "status": "PASS"
+    },
+    "release_manifest.json": {
+      "actual_sha256": "7e51adad845c72ac58647f8ea209284689f00be22285f1f69d2e1fc89696c002",
+      "expected_sha256": "7e51adad845c72ac58647f8ea209284689f00be22285f1f69d2e1fc89696c002",
+      "status": "PASS"
+    }
+  }
+}

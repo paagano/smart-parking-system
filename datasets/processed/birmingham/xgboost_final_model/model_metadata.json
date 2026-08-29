@@ -1,0 +1,90 @@
+{
+  "artifact_type": "SmartPark AI Birmingham XGBoost production model artifact",
+  "artifact_version": "1.0",
+  "candidate": "TUNE_014",
+  "confirmed_validation_metrics": {
+    "mae": 0.013496,
+    "mape": 3.3279,
+    "r2": 0.994984,
+    "rmse": 0.019805
+  },
+  "description": "Higher L1 regularisation",
+  "established_baseline_metrics": {
+    "mae": 0.013767,
+    "mape": 3.4157,
+    "r2": 0.994799,
+    "rmse": 0.020167
+  },
+  "fit_metadata": {
+    "categorical_encoding": "training_only_ordinal_mapping",
+    "categorical_features": [
+      "occupancy_level",
+      "demand_class"
+    ],
+    "early_stopping_used": false,
+    "encoded_feature_count": 296,
+    "random_state": 42,
+    "test_data_used": false,
+    "training_feature_count": 296,
+    "training_rows": 23244,
+    "training_target_max": 1.0,
+    "training_target_mean": 0.49605937921471194,
+    "training_target_min": 0.0,
+    "unknown_category_code": -1,
+    "validation_data_used": false
+  },
+  "model_name": "birmingham_xgboost_tune_014",
+  "model_type": "xgboost_regressor",
+  "model_version": "1.1",
+  "production_contract": {
+    "feature_availability": "at_or_before_T",
+    "forecast_horizon_minutes": 30,
+    "prediction_timestamp": "T"
+  },
+  "release_policy": {
+    "early_stopping": false,
+    "feature_pipeline_rebuilt": false,
+    "hyperparameter_tuning": false,
+    "test_loaded": false,
+    "training_dataset": "train.parquet",
+    "validation_used_for_fit": false
+  },
+  "selected_configuration": {
+    "categorical_features": [
+      "occupancy_level",
+      "demand_class"
+    ],
+    "clip_predictions": true,
+    "colsample_bytree": 0.9,
+    "early_stopping_rounds": null,
+    "gamma": 0.0,
+    "learning_rate": 0.05,
+    "max_depth": 6,
+    "min_child_weight": 1.0,
+    "n_estimators": 300,
+    "n_jobs": -1,
+    "objective": "reg:squarederror",
+    "prediction_max": 1.0,
+    "prediction_min": 0.0,
+    "random_state": 42,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "subsample": 0.9,
+    "tree_method": "hist",
+    "verbosity": 0
+  },
+  "target_column": "target_occupancy_rate_30m",
+  "training": {
+    "feature_count": 296,
+    "rows": 23244,
+    "target_max": 1.0,
+    "target_mean": 0.49605937921471194,
+    "target_min": 0.0,
+    "training_time_seconds": 20.29830590000347
+  },
+  "training_feature_count_internal": 296,
+  "training_rows_internal": 23244,
+  "training_target_max_internal": 1.0,
+  "training_target_mean_internal": 0.49605937921471194,
+  "training_target_min_internal": 0.0
+}

@@ -1,0 +1,64 @@
+{
+  "artifact_files": {
+    "categorical_mappings": "categorical_mappings.json",
+    "checksums": "checksums.json",
+    "feature_contract": "feature_contract.json",
+    "model": "model.json",
+    "model_metadata": "model_metadata.json",
+    "release_manifest": "release_manifest.json"
+  },
+  "case_study": "Birmingham parking dataset",
+  "configuration": {
+    "categorical_features": [
+      "occupancy_level",
+      "demand_class"
+    ],
+    "clip_predictions": true,
+    "colsample_bytree": 0.9,
+    "early_stopping_rounds": null,
+    "gamma": 0.0,
+    "learning_rate": 0.05,
+    "max_depth": 6,
+    "min_child_weight": 1.0,
+    "n_estimators": 300,
+    "n_jobs": -1,
+    "objective": "reg:squarederror",
+    "prediction_max": 1.0,
+    "prediction_min": 0.0,
+    "random_state": 42,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "subsample": 0.9,
+    "tree_method": "hist",
+    "verbosity": 0
+  },
+  "confirmed_validation_metrics": {
+    "mae": 0.013496,
+    "mape": 3.3279,
+    "r2": 0.994984,
+    "rmse": 0.019805
+  },
+  "generated_at_utc": "2026-08-22T12:59:07.100810+00:00",
+  "model": {
+    "candidate": "TUNE_014",
+    "description": "Higher L1 regularisation",
+    "feature_count": 296,
+    "model_type": "xgboost_regressor",
+    "target": "target_occupancy_rate_30m"
+  },
+  "production_prediction_contract": {
+    "feature_cutoff": "available_at_or_before_T",
+    "forecast_horizon_minutes": 30,
+    "prediction_timestamp": "T"
+  },
+  "project": "SmartPark AI",
+  "release_type": "SmartPark AI production model release",
+  "release_version": "1.0",
+  "training": {
+    "dataset": "C:\\agano\\Oshwal\\docs\\Project\\smart-parking-system\\datasets\\processed\\birmingham\\target_occupancy_rate_30m\\train.parquet",
+    "rows": 23244,
+    "test_loaded": false,
+    "training_time_seconds": 20.29830590000347,
+    "validation_used_for_fit": false
+  }
+}

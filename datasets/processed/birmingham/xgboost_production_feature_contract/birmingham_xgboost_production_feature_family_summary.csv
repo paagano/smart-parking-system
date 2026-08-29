@@ -1,0 +1,6 @@
+feature_family,production_status,feature_count
+current_state,REQUIRES_DOCUMENTATION,6
+current_state,REQUIRES_REALTIME_SOURCE,33
+historical_lag,SAFE_HISTORICAL_IF_GENERATED_CAUSALLY,129
+other,REQUIRES_DOCUMENTATION,72
+temporal_calendar,SAFE_DETERMINISTIC,56

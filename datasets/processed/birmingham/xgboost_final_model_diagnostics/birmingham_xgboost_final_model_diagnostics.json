@@ -1,0 +1,3195 @@
+{
+  "generated_at": "2026-08-22T12:44:28.358419+00:00",
+  "audit": {
+    "type": "final_model_diagnostics",
+    "selected_candidate": "TUNE_014",
+    "target": "target_occupancy_rate_30m",
+    "feature_count": 296,
+    "test_used_for_selection": false,
+    "test_used_for_tuning": false,
+    "test_passed_to_fit": false,
+    "validation_passed_to_fit": false,
+    "feature_pipeline_rebuilt": false,
+    "hyperparameter_tuning": false
+  },
+  "selected_model": {
+    "candidate": "TUNE_014",
+    "description": "Higher L1 regularisation",
+    "parameters": {
+      "n_estimators": 300,
+      "learning_rate": 0.05,
+      "max_depth": 6,
+      "min_child_weight": 1.0,
+      "subsample": 0.9,
+      "colsample_bytree": 0.9,
+      "gamma": 0.0,
+      "reg_alpha": 0.1,
+      "reg_lambda": 1.0
+    }
+  },
+  "datasets": {
+    "training_rows": 23244,
+    "validation_rows": 4980,
+    "test_rows": 4982
+  },
+  "validation_metrics": {
+    "mae": 0.01349578909833505,
+    "rmse": 0.0198053984965012,
+    "r2": 0.9949841628990295,
+    "mape": 3.327936130664755,
+    "n": 4980
+  },
+  "established_validation_reference": {
+    "mae": 0.013496,
+    "rmse": 0.019805,
+    "r2": 0.994984,
+    "mape": 3.3279
+  },
+  "test_metrics": {
+    "mae": 0.014114561178049344,
+    "rmse": 0.020056260823837876,
+    "r2": 0.9941634569325468,
+    "mape": 3.664481600508012,
+    "n": 4982
+  },
+  "established_test_reference": {
+    "mae": 0.014115,
+    "rmse": 0.020056,
+    "r2": 0.994163,
+    "mape": 3.6645
+  },
+  "error_summary": {
+    "mean_error": -0.0015245065356567866,
+    "median_error": -0.0011750745298683418,
+    "mean_absolute_error": 0.014114561178049344,
+    "p50_absolute_error": 0.010071518762828857,
+    "p75_absolute_error": 0.019138705468485118,
+    "p90_absolute_error": 0.031190812768730626,
+    "p95_absolute_error": 0.04017660142490138,
+    "p99_absolute_error": 0.06420478532484909,
+    "maximum_absolute_error": 0.1986699598845436,
+    "underprediction_rate_pct": 53.412284223203535,
+    "overprediction_rate_pct": 46.06583701324769
+  },
+  "prediction_range": {
+    "minimum": 0.01031816191971302,
+    "maximum": 1.0,
+    "outside_0_1_count": 0
+  },
+  "bias_analysis": [
+    {
+      "metric": "mean_error",
+      "value": -0.0015245065356567866
+    },
+    {
+      "metric": "median_error",
+      "value": -0.0011750745298683418
+    },
+    {
+      "metric": "mean_absolute_error",
+      "value": 0.014114561178049344
+    },
+    {
+      "metric": "underprediction_rate_pct",
+      "value": 53.412284223203535
+    },
+    {
+      "metric": "overprediction_rate_pct",
+      "value": 46.06583701324769
+    },
+    {
+      "metric": "exact_prediction_rate_pct",
+      "value": 0.5218787635487756
+    },
+    {
+      "metric": "p50_absolute_error",
+      "value": 0.010071518762828857
+    },
+    {
+      "metric": "p75_absolute_error",
+      "value": 0.019138705468485118
+    },
+    {
+      "metric": "p90_absolute_error",
+      "value": 0.031190812768730626
+    },
+    {
+      "metric": "p95_absolute_error",
+      "value": 0.04017660142490138
+    },
+    {
+      "metric": "p99_absolute_error",
+      "value": 0.06420478532484909
+    },
+    {
+      "metric": "maximum_absolute_error",
+      "value": 0.1986699598845436
+    }
+  ],
+  "regime_analysis": [
+    {
+      "regime": "LOW",
+      "n": 864,
+      "mean_actual": 0.16535037629557628,
+      "mean_prediction": 0.16761812257808978,
+      "mean_error": 0.002267746282513536,
+      "mean_absolute_error": 0.01092182962775052,
+      "rmse": 0.01712555107707776,
+      "underprediction_rate_pct": 43.40277777777778,
+      "overprediction_rate_pct": 56.59722222222222
+    },
+    {
+      "regime": "MODERATE",
+      "n": 1317,
+      "mean_actual": 0.3768232405419897,
+      "mean_prediction": 0.37654465217434646,
+      "mean_error": -0.0002785883676432469,
+      "mean_absolute_error": 0.014665711155062483,
+      "rmse": 0.020223484093356427,
+      "underprediction_rate_pct": 49.278663629460894,
+      "overprediction_rate_pct": 50.721336370539106
+    },
+    {
+      "regime": "HIGH",
+      "n": 1485,
+      "mean_actual": 0.6346035198898934,
+      "mean_prediction": 0.6340642920046141,
+      "mean_error": -0.0005392278852791524,
+      "mean_absolute_error": 0.015369695183099987,
+      "rmse": 0.02158608664464084,
+      "underprediction_rate_pct": 52.92929292929293,
+      "overprediction_rate_pct": 47.070707070707066
+    },
+    {
+      "regime": "VERY_HIGH",
+      "n": 1316,
+      "mean_actual": 0.8756527735297729,
+      "mean_prediction": 0.8692798479530949,
+      "mean_error": -0.0063729255766778944,
+      "mean_absolute_error": 0.01424281462959316,
+      "rmse": 0.01987883856343905,
+      "underprediction_rate_pct": 64.66565349544074,
+      "overprediction_rate_pct": 33.358662613981764
+    }
+  ],
+  "feature_importance": [
+    {
+      "rank": 1,
+      "feature": "demand_class_code",
+      "importance": 197.9620819091797,
+      "importance_pct": 71.94818845503636,
+      "cumulative_importance_pct": 71.94818845503636,
+      "categorical": false
+    },
+    {
+      "rank": 2,
+      "feature": "availability_rate",
+      "importance": 22.826248168945312,
+      "importance_pct": 8.296069576264395,
+      "cumulative_importance_pct": 80.24425803130076,
+      "categorical": false
+    },
+    {
+      "rank": 3,
+      "feature": "available_ratio",
+      "importance": 19.46377182006836,
+      "importance_pct": 7.073996744480425,
+      "cumulative_importance_pct": 87.31825477578118,
+      "categorical": false
+    },
+    {
+      "rank": 4,
+      "feature": "remaining_capacity_ratio",
+      "importance": 8.152198791503906,
+      "importance_pct": 2.9628701078377806,
+      "cumulative_importance_pct": 90.28112488361897,
+      "categorical": false
+    },
+    {
+      "rank": 5,
+      "feature": "calculated_demand_level",
+      "importance": 7.099939823150635,
+      "importance_pct": 2.5804325933984424,
+      "cumulative_importance_pct": 92.86155747701741,
+      "categorical": false
+    },
+    {
+      "rank": 6,
+      "feature": "occupied_ratio",
+      "importance": 4.765911102294922,
+      "importance_pct": 1.7321431803550082,
+      "cumulative_importance_pct": 94.59370065737242,
+      "categorical": false
+    },
+    {
+      "rank": 7,
+      "feature": "demand_pressure",
+      "importance": 3.781080484390259,
+      "importance_pct": 1.374212114920962,
+      "cumulative_importance_pct": 95.96791277229339,
+      "categorical": false
+    },
+    {
+      "rank": 8,
+      "feature": "capacity_utilization",
+      "importance": 3.4595694541931152,
+      "importance_pct": 1.2573607665823976,
+      "cumulative_importance_pct": 97.22527353887578,
+      "categorical": false
+    },
+    {
+      "rank": 9,
+      "feature": "is_moderate_occupancy",
+      "importance": 3.136728048324585,
+      "importance_pct": 1.140025900801514,
+      "cumulative_importance_pct": 98.3652994396773,
+      "categorical": false
+    },
+    {
+      "rank": 10,
+      "feature": "demand_class",
+      "importance": 1.0235446691513062,
+      "importance_pct": 0.3720014663314731,
+      "cumulative_importance_pct": 98.73730090600877,
+      "categorical": true
+    },
+    {
+      "rank": 11,
+      "feature": "demand_level",
+      "importance": 0.42832955718040466,
+      "importance_pct": 0.15567393211704242,
+      "cumulative_importance_pct": 98.89297483812581,
+      "categorical": false
+    },
+    {
+      "rank": 12,
+      "feature": "occupancy_level",
+      "importance": 0.3355245590209961,
+      "importance_pct": 0.12194448538286556,
+      "cumulative_importance_pct": 99.01491932350868,
+      "categorical": true
+    },
+    {
+      "rank": 13,
+      "feature": "occupancy_rate_roll_missing_6h",
+      "importance": 0.31386688351631165,
+      "importance_pct": 0.11407312686975427,
+      "cumulative_importance_pct": 99.12899245037843,
+      "categorical": false
+    },
+    {
+      "rank": 14,
+      "feature": "occupancy_rate_roll_count_6h",
+      "importance": 0.1603548675775528,
+      "importance_pct": 0.05828006111516438,
+      "cumulative_importance_pct": 99.1872725114936,
+      "categorical": false
+    },
+    {
+      "rank": 15,
+      "feature": "occupancy_rate_roll_trend_1h",
+      "importance": 0.15741683542728424,
+      "importance_pct": 0.057212250104106945,
+      "cumulative_importance_pct": 99.2444847615977,
+      "categorical": false
+    },
+    {
+      "rank": 16,
+      "feature": "hour",
+      "importance": 0.10400836169719696,
+      "importance_pct": 0.03780124524919188,
+      "cumulative_importance_pct": 99.2822860068469,
+      "categorical": false
+    },
+    {
+      "rank": 17,
+      "feature": "occupancy_rate_roll_max_6h",
+      "importance": 0.09533461928367615,
+      "importance_pct": 0.034648823089554553,
+      "cumulative_importance_pct": 99.31693482993646,
+      "categorical": false
+    },
+    {
+      "rank": 18,
+      "feature": "occupancy_rate_roll_max_2h",
+      "importance": 0.09264326840639114,
+      "importance_pct": 0.03367066697879813,
+      "cumulative_importance_pct": 99.35060549691525,
+      "categorical": false
+    },
+    {
+      "rank": 19,
+      "feature": "half_hour_slot",
+      "importance": 0.08641387522220612,
+      "importance_pct": 0.03140662959116405,
+      "cumulative_importance_pct": 99.38201212650641,
+      "categorical": false
+    },
+    {
+      "rank": 20,
+      "feature": "occupancy_rate_lag_1h",
+      "importance": 0.07980788499116898,
+      "importance_pct": 0.029005720156937944,
+      "cumulative_importance_pct": 99.41101784666334,
+      "categorical": false
+    },
+    {
+      "rank": 21,
+      "feature": "occupancy_rate_lag_2h",
+      "importance": 0.0775303840637207,
+      "importance_pct": 0.028177975447677188,
+      "cumulative_importance_pct": 99.43919582211102,
+      "categorical": false
+    },
+    {
+      "rank": 22,
+      "feature": "occupancy_rate_lag_3h",
+      "importance": 0.07541880756616592,
+      "importance_pct": 0.0274105350251573,
+      "cumulative_importance_pct": 99.46660635713617,
+      "categorical": false
+    },
+    {
+      "rank": 23,
+      "feature": "occupancy_rate_roll_max_3h",
+      "importance": 0.06855593621730804,
+      "importance_pct": 0.024916263615257565,
+      "cumulative_importance_pct": 99.49152262075143,
+      "categorical": false
+    },
+    {
+      "rank": 24,
+      "feature": "occupancy_rate_roll_trend_2h",
+      "importance": 0.06330345571041107,
+      "importance_pct": 0.02300727956274592,
+      "cumulative_importance_pct": 99.51452990031417,
+      "categorical": false
+    },
+    {
+      "rank": 25,
+      "feature": "occupancy_within_capacity",
+      "importance": 0.05845584347844124,
+      "importance_pct": 0.021245442573262673,
+      "cumulative_importance_pct": 99.53577534288743,
+      "categorical": false
+    },
+    {
+      "rank": 26,
+      "feature": "occupancy_rate_roll_max_1h",
+      "importance": 0.047885049134492874,
+      "importance_pct": 0.017403547720253643,
+      "cumulative_importance_pct": 99.55317889060768,
+      "categorical": false
+    },
+    {
+      "rank": 27,
+      "feature": "occupancy_rate_roll_std_1h",
+      "importance": 0.046879902482032776,
+      "importance_pct": 0.01703823290804973,
+      "cumulative_importance_pct": 99.57021712351573,
+      "categorical": false
+    },
+    {
+      "rank": 28,
+      "feature": "occupied_spaces_roll_trend_1h",
+      "importance": 0.04624762386083603,
+      "importance_pct": 0.016808434853011974,
+      "cumulative_importance_pct": 99.58702555836875,
+      "categorical": false
+    },
+    {
+      "rank": 29,
+      "feature": "available_spaces_roll_min_12h",
+      "importance": 0.045766837894916534,
+      "importance_pct": 0.01663369593862542,
+      "cumulative_importance_pct": 99.60365925430737,
+      "categorical": false
+    },
+    {
+      "rank": 30,
+      "feature": "occupancy_rate_roll_count_12h",
+      "importance": 0.04321388527750969,
+      "importance_pct": 0.015705839885271553,
+      "cumulative_importance_pct": 99.61936509419264,
+      "categorical": false
+    },
+    {
+      "rank": 31,
+      "feature": "occupancy_rate_roll_trend_3h",
+      "importance": 0.038753099739551544,
+      "importance_pct": 0.014084592849236867,
+      "cumulative_importance_pct": 99.63344968704189,
+      "categorical": false
+    },
+    {
+      "rank": 32,
+      "feature": "available_spaces_roll_trend_1h",
+      "importance": 0.03733702376484871,
+      "importance_pct": 0.013569928120961729,
+      "cumulative_importance_pct": 99.64701961516285,
+      "categorical": false
+    },
+    {
+      "rank": 33,
+      "feature": "occupancy_rate_lag_6h",
+      "importance": 0.034450963139534,
+      "importance_pct": 0.01252100586393037,
+      "cumulative_importance_pct": 99.65954062102678,
+      "categorical": false
+    },
+    {
+      "rank": 34,
+      "feature": "occupancy_rate_lag_30m",
+      "importance": 0.03403831645846367,
+      "importance_pct": 0.012371031783598089,
+      "cumulative_importance_pct": 99.67191165281038,
+      "categorical": false
+    },
+    {
+      "rank": 35,
+      "feature": "available_spaces_lag_6h",
+      "importance": 0.03339505195617676,
+      "importance_pct": 0.012137240972799246,
+      "cumulative_importance_pct": 99.68404889378319,
+      "categorical": false
+    },
+    {
+      "rank": 36,
+      "feature": "occupancy_rate_roll_median_1d",
+      "importance": 0.030539054423570633,
+      "importance_pct": 0.011099244975175138,
+      "cumulative_importance_pct": 99.69514813875836,
+      "categorical": false
+    },
+    {
+      "rank": 37,
+      "feature": "occupancy_rate_roll_mean_1d",
+      "importance": 0.023091837763786316,
+      "importance_pct": 0.00839259659819218,
+      "cumulative_importance_pct": 99.70354073535655,
+      "categorical": false
+    },
+    {
+      "rank": 38,
+      "feature": "occupancy_rate_roll_max_1d",
+      "importance": 0.02172260731458664,
+      "importance_pct": 0.007894957608708385,
+      "cumulative_importance_pct": 99.71143569296527,
+      "categorical": false
+    },
+    {
+      "rank": 39,
+      "feature": "occupancy_rate_roll_missing_12h",
+      "importance": 0.021389398723840714,
+      "importance_pct": 0.007773854848772655,
+      "cumulative_importance_pct": 99.71920954781405,
+      "categorical": false
+    },
+    {
+      "rank": 40,
+      "feature": "month",
+      "importance": 0.02002856321632862,
+      "importance_pct": 0.007279266952916398,
+      "cumulative_importance_pct": 99.72648881476697,
+      "categorical": false
+    },
+    {
+      "rank": 41,
+      "feature": "day_of_week_sin",
+      "importance": 0.01845466159284115,
+      "importance_pct": 0.00670724139365644,
+      "cumulative_importance_pct": 99.73319605616062,
+      "categorical": false
+    },
+    {
+      "rank": 42,
+      "feature": "time_slot",
+      "importance": 0.015895703807473183,
+      "importance_pct": 0.005777202796292105,
+      "cumulative_importance_pct": 99.73897325895692,
+      "categorical": false
+    },
+    {
+      "rank": 43,
+      "feature": "demand_excess_pressure",
+      "importance": 0.015713511034846306,
+      "importance_pct": 0.005710985873264806,
+      "cumulative_importance_pct": 99.74468424483018,
+      "categorical": false
+    },
+    {
+      "rank": 44,
+      "feature": "occupied_spaces_roll_max_12h",
+      "importance": 0.014823570847511292,
+      "importance_pct": 0.005387542193068185,
+      "cumulative_importance_pct": 99.75007178702324,
+      "categorical": false
+    },
+    {
+      "rank": 45,
+      "feature": "occupied_spaces_roll_trend_2h",
+      "importance": 0.014370374381542206,
+      "importance_pct": 0.0052228305249232745,
+      "cumulative_importance_pct": 99.75529461754817,
+      "categorical": false
+    },
+    {
+      "rank": 46,
+      "feature": "occupied_spaces_lag_2h",
+      "importance": 0.01407240517437458,
+      "importance_pct": 0.005114535317758654,
+      "cumulative_importance_pct": 99.76040915286593,
+      "categorical": false
+    },
+    {
+      "rank": 47,
+      "feature": "occupied_spaces_roll_median_12h",
+      "importance": 0.01359571423381567,
+      "importance_pct": 0.004941284716959883,
+      "cumulative_importance_pct": 99.7653504375829,
+      "categorical": false
+    },
+    {
+      "rank": 48,
+      "feature": "occupied_spaces_lag_6h",
+      "importance": 0.013143558986485004,
+      "importance_pct": 0.0047769514737845305,
+      "cumulative_importance_pct": 99.77012738905668,
+      "categorical": false
+    },
+    {
+      "rank": 49,
+      "feature": "available_spaces_roll_min_1h",
+      "importance": 0.013083260506391525,
+      "importance_pct": 0.004755036335453604,
+      "cumulative_importance_pct": 99.77488242539214,
+      "categorical": false
+    },
+    {
+      "rank": 50,
+      "feature": "available_spaces_roll_min_1d",
+      "importance": 0.012291742488741875,
+      "importance_pct": 0.004467363630912436,
+      "cumulative_importance_pct": 99.77934978902304,
+      "categorical": false
+    },
+    {
+      "rank": 51,
+      "feature": "occupancy_rate_roll_count_1h",
+      "importance": 0.011805634945631027,
+      "importance_pct": 0.004290690619677894,
+      "cumulative_importance_pct": 99.78364047964273,
+      "categorical": false
+    },
+    {
+      "rank": 52,
+      "feature": "available_spaces_roll_trend_2h",
+      "importance": 0.011401223950088024,
+      "importance_pct": 0.004143709752230936,
+      "cumulative_importance_pct": 99.78778418939496,
+      "categorical": false
+    },
+    {
+      "rank": 53,
+      "feature": "day_of_week",
+      "importance": 0.011241720989346504,
+      "importance_pct": 0.004085739311791579,
+      "cumulative_importance_pct": 99.79186992870675,
+      "categorical": false
+    },
+    {
+      "rank": 54,
+      "feature": "occupancy_rate_roll_count_3h",
+      "importance": 0.010946393013000488,
+      "importance_pct": 0.003978404044889628,
+      "cumulative_importance_pct": 99.79584833275163,
+      "categorical": false
+    },
+    {
+      "rank": 55,
+      "feature": "occupied_spaces_roll_trend_6h",
+      "importance": 0.01017699670046568,
+      "importance_pct": 0.0036987713477741233,
+      "cumulative_importance_pct": 99.7995471040994,
+      "categorical": false
+    },
+    {
+      "rank": 56,
+      "feature": "available_spaces_roll_mean_1h",
+      "importance": 0.010171185247600079,
+      "importance_pct": 0.003696659208409153,
+      "cumulative_importance_pct": 99.80324376330782,
+      "categorical": false
+    },
+    {
+      "rank": 57,
+      "feature": "occupied_spaces_roll_max_6h",
+      "importance": 0.00997341051697731,
+      "importance_pct": 0.003624779111709528,
+      "cumulative_importance_pct": 99.80686854241952,
+      "categorical": false
+    },
+    {
+      "rank": 58,
+      "feature": "occupancy_rate_roll_min_12h",
+      "importance": 0.009849491529166698,
+      "importance_pct": 0.003579741463074141,
+      "cumulative_importance_pct": 99.8104482838826,
+      "categorical": false
+    },
+    {
+      "rank": 59,
+      "feature": "occupied_spaces_lag_3h",
+      "importance": 0.009530717507004738,
+      "importance_pct": 0.0034638848646797032,
+      "cumulative_importance_pct": 99.81391216874728,
+      "categorical": false
+    },
+    {
+      "rank": 60,
+      "feature": "occupancy_rate_roll_std_1d",
+      "importance": 0.009461551904678345,
+      "importance_pct": 0.0034387470213978343,
+      "cumulative_importance_pct": 99.81735091576867,
+      "categorical": false
+    },
+    {
+      "rank": 61,
+      "feature": "is_friday",
+      "importance": 0.009422238916158676,
+      "importance_pct": 0.003424458940168009,
+      "cumulative_importance_pct": 99.82077537470884,
+      "categorical": false
+    },
+    {
+      "rank": 62,
+      "feature": "occupancy_rate_roll_min_1h",
+      "importance": 0.009373682551085949,
+      "importance_pct": 0.003406811406502714,
+      "cumulative_importance_pct": 99.82418218611535,
+      "categorical": false
+    },
+    {
+      "rank": 63,
+      "feature": "occupied_spaces_roll_median_1d",
+      "importance": 0.009173482656478882,
+      "importance_pct": 0.0033340498977988604,
+      "cumulative_importance_pct": 99.82751623601315,
+      "categorical": false
+    },
+    {
+      "rank": 64,
+      "feature": "is_saturday",
+      "importance": 0.008638042956590652,
+      "importance_pct": 0.0031394473958331545,
+      "cumulative_importance_pct": 99.83065568340899,
+      "categorical": false
+    },
+    {
+      "rank": 65,
+      "feature": "available_spaces_roll_max_1d",
+      "importance": 0.008402771316468716,
+      "importance_pct": 0.003053939261455256,
+      "cumulative_importance_pct": 99.83370962267044,
+      "categorical": false
+    },
+    {
+      "rank": 66,
+      "feature": "occupancy_rate_roll_median_6h",
+      "importance": 0.008306118659675121,
+      "importance_pct": 0.0030188114051577265,
+      "cumulative_importance_pct": 99.8367284340756,
+      "categorical": false
+    },
+    {
+      "rank": 67,
+      "feature": "occupied_spaces_roll_mean_3h",
+      "importance": 0.008160071447491646,
+      "importance_pct": 0.00296573137970957,
+      "cumulative_importance_pct": 99.8396941654553,
+      "categorical": false
+    },
+    {
+      "rank": 68,
+      "feature": "available_spaces_roll_trend_6h",
+      "importance": 0.008154358714818954,
+      "importance_pct": 0.0029636551196350943,
+      "cumulative_importance_pct": 99.84265782057493,
+      "categorical": false
+    },
+    {
+      "rank": 69,
+      "feature": "available_spaces_roll_median_1d",
+      "importance": 0.008109066635370255,
+      "importance_pct": 0.002947193971943232,
+      "cumulative_importance_pct": 99.84560501454688,
+      "categorical": false
+    },
+    {
+      "rank": 70,
+      "feature": "occupied_spaces_roll_min_2h",
+      "importance": 0.008079889230430126,
+      "importance_pct": 0.0029365896106988178,
+      "cumulative_importance_pct": 99.84854160415757,
+      "categorical": false
+    },
+    {
+      "rank": 71,
+      "feature": "minute",
+      "importance": 0.008045441471040249,
+      "importance_pct": 0.002924069769219409,
+      "cumulative_importance_pct": 99.8514656739268,
+      "categorical": false
+    },
+    {
+      "rank": 72,
+      "feature": "minutes_since_week_start",
+      "importance": 0.007905260659754276,
+      "importance_pct": 0.002873121853684705,
+      "cumulative_importance_pct": 99.85433879578048,
+      "categorical": false
+    },
+    {
+      "rank": 73,
+      "feature": "available_spaces_lag_2h",
+      "importance": 0.007654047571122646,
+      "importance_pct": 0.0027818198908596613,
+      "cumulative_importance_pct": 99.85712061567133,
+      "categorical": false
+    },
+    {
+      "rank": 74,
+      "feature": "available_spaces_lag_1h",
+      "importance": 0.007615725044161081,
+      "importance_pct": 0.002767891787228336,
+      "cumulative_importance_pct": 99.85988850745856,
+      "categorical": false
+    },
+    {
+      "rank": 75,
+      "feature": "day_of_month",
+      "importance": 0.007540508639067411,
+      "importance_pct": 0.002740554814226241,
+      "cumulative_importance_pct": 99.86262906227279,
+      "categorical": false
+    },
+    {
+      "rank": 76,
+      "feature": "occupancy_rate_roll_std_12h",
+      "importance": 0.007161988411098719,
+      "importance_pct": 0.0026029837984373233,
+      "cumulative_importance_pct": 99.86523204607123,
+      "categorical": false
+    },
+    {
+      "rank": 77,
+      "feature": "occupancy_rate_roll_mean_12h",
+      "importance": 0.007156548090279102,
+      "importance_pct": 0.002601006544895581,
+      "cumulative_importance_pct": 99.86783305261612,
+      "categorical": false
+    },
+    {
+      "rank": 78,
+      "feature": "available_spaces_roll_max_1h",
+      "importance": 0.006990897934883833,
+      "importance_pct": 0.002540801941655185,
+      "cumulative_importance_pct": 99.87037385455777,
+      "categorical": false
+    },
+    {
+      "rank": 79,
+      "feature": "occupied_spaces_roll_min_12h",
+      "importance": 0.006792193278670311,
+      "importance_pct": 0.0024685838688087774,
+      "cumulative_importance_pct": 99.87284243842657,
+      "categorical": false
+    },
+    {
+      "rank": 80,
+      "feature": "calendar_day_of_week_sin",
+      "importance": 0.006741387769579887,
+      "importance_pct": 0.0024501188965911744,
+      "cumulative_importance_pct": 99.87529255732316,
+      "categorical": false
+    },
+    {
+      "rank": 81,
+      "feature": "available_spaces_roll_max_3h",
+      "importance": 0.006606979761272669,
+      "importance_pct": 0.0024012690733407277,
+      "cumulative_importance_pct": 99.87769382639651,
+      "categorical": false
+    },
+    {
+      "rank": 82,
+      "feature": "occupancy_rate_lag_1d",
+      "importance": 0.00631755730137229,
+      "importance_pct": 0.0022960801326748787,
+      "cumulative_importance_pct": 99.87998990652919,
+      "categorical": false
+    },
+    {
+      "rank": 83,
+      "feature": "occupied_spaces_roll_mean_1d",
+      "importance": 0.00619492819532752,
+      "importance_pct": 0.0022515112842030308,
+      "cumulative_importance_pct": 99.88224141781339,
+      "categorical": false
+    },
+    {
+      "rank": 84,
+      "feature": "available_spaces_lag_30m",
+      "importance": 0.006107768975198269,
+      "importance_pct": 0.002219833763260761,
+      "cumulative_importance_pct": 99.88446125157665,
+      "categorical": false
+    },
+    {
+      "rank": 85,
+      "feature": "available_spaces_roll_median_2h",
+      "importance": 0.0059070466086268425,
+      "importance_pct": 0.002146882365104384,
+      "cumulative_importance_pct": 99.88660813394176,
+      "categorical": false
+    },
+    {
+      "rank": 86,
+      "feature": "available_spaces_roll_max_12h",
+      "importance": 0.005863829515874386,
+      "importance_pct": 0.0021311753594806552,
+      "cumulative_importance_pct": 99.88873930930124,
+      "categorical": false
+    },
+    {
+      "rank": 87,
+      "feature": "occupied_spaces_roll_median_3h",
+      "importance": 0.005855558440089226,
+      "importance_pct": 0.0021281692842081714,
+      "cumulative_importance_pct": 99.89086747858545,
+      "categorical": false
+    },
+    {
+      "rank": 88,
+      "feature": "available_spaces_roll_max_6h",
+      "importance": 0.005699553061276674,
+      "importance_pct": 0.0020714700199523316,
+      "cumulative_importance_pct": 99.8929389486054,
+      "categorical": false
+    },
+    {
+      "rank": 89,
+      "feature": "occupancy_rate_roll_trend_6h",
+      "importance": 0.005534999072551727,
+      "importance_pct": 0.002011663812229976,
+      "cumulative_importance_pct": 99.89495061241763,
+      "categorical": false
+    },
+    {
+      "rank": 90,
+      "feature": "occupied_spaces_roll_std_1h",
+      "importance": 0.00552504463121295,
+      "importance_pct": 0.0020080459273577834,
+      "cumulative_importance_pct": 99.89695865834499,
+      "categorical": false
+    },
+    {
+      "rank": 91,
+      "feature": "occupied_spaces_roll_max_1d",
+      "importance": 0.005446293391287327,
+      "importance_pct": 0.001979424238817268,
+      "cumulative_importance_pct": 99.8989380825838,
+      "categorical": false
+    },
+    {
+      "rank": 92,
+      "feature": "occupancy_rate_roll_median_2h",
+      "importance": 0.0053087561391294,
+      "importance_pct": 0.0019294371097549146,
+      "cumulative_importance_pct": 99.90086751969355,
+      "categorical": false
+    },
+    {
+      "rank": 93,
+      "feature": "occupied_spaces_roll_count_1d",
+      "importance": 0.0052939169108867645,
+      "importance_pct": 0.0019240438769709803,
+      "cumulative_importance_pct": 99.90279156357052,
+      "categorical": false
+    },
+    {
+      "rank": 94,
+      "feature": "available_spaces_roll_mean_6h",
+      "importance": 0.005287289619445801,
+      "importance_pct": 0.0019216352257336205,
+      "cumulative_importance_pct": 99.90471319879624,
+      "categorical": false
+    },
+    {
+      "rank": 95,
+      "feature": "day_of_week_cos",
+      "importance": 0.0051867421716451645,
+      "importance_pct": 0.0018850918298809135,
+      "cumulative_importance_pct": 99.90659829062612,
+      "categorical": false
+    },
+    {
+      "rank": 96,
+      "feature": "occupied_spaces_roll_min_3h",
+      "importance": 0.005159751512110233,
+      "importance_pct": 0.001875282228769344,
+      "cumulative_importance_pct": 99.90847357285489,
+      "categorical": false
+    },
+    {
+      "rank": 97,
+      "feature": "occupancy_rate_roll_median_1h",
+      "importance": 0.005100441165268421,
+      "importance_pct": 0.0018537262218272367,
+      "cumulative_importance_pct": 99.91032729907671,
+      "categorical": false
+    },
+    {
+      "rank": 98,
+      "feature": "available_spaces_roll_median_6h",
+      "importance": 0.0050871227867901325,
+      "importance_pct": 0.0018488857332072445,
+      "cumulative_importance_pct": 99.91217618480992,
+      "categorical": false
+    },
+    {
+      "rank": 99,
+      "feature": "available_spaces_roll_mean_1d",
+      "importance": 0.005071765277534723,
+      "importance_pct": 0.001843304134148213,
+      "cumulative_importance_pct": 99.91401948894408,
+      "categorical": false
+    },
+    {
+      "rank": 100,
+      "feature": "hour_cos",
+      "importance": 0.005041409283876419,
+      "importance_pct": 0.0018322714215630344,
+      "cumulative_importance_pct": 99.91585176036564,
+      "categorical": false
+    },
+    {
+      "rank": 101,
+      "feature": "occupied_spaces_roll_trend_3h",
+      "importance": 0.004908651113510132,
+      "importance_pct": 0.0017840212224928835,
+      "cumulative_importance_pct": 99.91763578158813,
+      "categorical": false
+    },
+    {
+      "rank": 102,
+      "feature": "is_tuesday",
+      "importance": 0.004868219140917063,
+      "importance_pct": 0.001769326452890139,
+      "cumulative_importance_pct": 99.91940510804102,
+      "categorical": false
+    },
+    {
+      "rank": 103,
+      "feature": "occupancy_rate_roll_min_2h",
+      "importance": 0.004387599881738424,
+      "importance_pct": 0.0015946481271167771,
+      "cumulative_importance_pct": 99.92099975616813,
+      "categorical": false
+    },
+    {
+      "rank": 104,
+      "feature": "occupancy_rate_roll_count_2h",
+      "importance": 0.004363256506621838,
+      "importance_pct": 0.0015858006664130483,
+      "cumulative_importance_pct": 99.92258555683455,
+      "categorical": false
+    },
+    {
+      "rank": 105,
+      "feature": "occupancy_rate_roll_std_3h",
+      "importance": 0.004356452729552984,
+      "importance_pct": 0.0015833278724818323,
+      "cumulative_importance_pct": 99.92416888470703,
+      "categorical": false
+    },
+    {
+      "rank": 106,
+      "feature": "occupied_spaces_roll_max_1h",
+      "importance": 0.004346954170614481,
+      "importance_pct": 0.001579875675465273,
+      "cumulative_importance_pct": 99.92574876038249,
+      "categorical": false
+    },
+    {
+      "rank": 107,
+      "feature": "occupancy_rate_roll_trend_1d",
+      "importance": 0.0043316008523106575,
+      "importance_pct": 0.0015742955995836686,
+      "cumulative_importance_pct": 99.92732305598207,
+      "categorical": false
+    },
+    {
+      "rank": 108,
+      "feature": "occupancy_rate_roll_count_1d",
+      "importance": 0.0042687831446528435,
+      "importance_pct": 0.0015514648623773822,
+      "cumulative_importance_pct": 99.92887452084445,
+      "categorical": false
+    },
+    {
+      "rank": 109,
+      "feature": "available_spaces_roll_mean_12h",
+      "importance": 0.004250875674188137,
+      "importance_pct": 0.0015449564944751961,
+      "cumulative_importance_pct": 99.93041947733892,
+      "categorical": false
+    },
+    {
+      "rank": 110,
+      "feature": "occupied_spaces_roll_std_12h",
+      "importance": 0.004202470649033785,
+      "importance_pct": 0.0015273639644391972,
+      "cumulative_importance_pct": 99.93194684130336,
+      "categorical": false
+    },
+    {
+      "rank": 111,
+      "feature": "occupied_spaces_roll_max_2h",
+      "importance": 0.004146162886172533,
+      "importance_pct": 0.0015068992295023244,
+      "cumulative_importance_pct": 99.93345374053285,
+      "categorical": false
+    },
+    {
+      "rank": 112,
+      "feature": "available_spaces_lag_1d",
+      "importance": 0.0041192579083144665,
+      "importance_pct": 0.0014971207689070329,
+      "cumulative_importance_pct": 99.93495086130176,
+      "categorical": false
+    },
+    {
+      "rank": 113,
+      "feature": "occupancy_rate_roll_min_6h",
+      "importance": 0.004005729220807552,
+      "importance_pct": 0.0014558594155962118,
+      "cumulative_importance_pct": 99.93640672071736,
+      "categorical": false
+    },
+    {
+      "rank": 114,
+      "feature": "occupied_spaces_lag_30m",
+      "importance": 0.003953489940613508,
+      "importance_pct": 0.0014368733474567545,
+      "cumulative_importance_pct": 99.93784359406482,
+      "categorical": false
+    },
+    {
+      "rank": 115,
+      "feature": "occupancy_rate_roll_std_6h",
+      "importance": 0.003899764036759734,
+      "importance_pct": 0.001417346974435673,
+      "cumulative_importance_pct": 99.93926094103925,
+      "categorical": false
+    },
+    {
+      "rank": 116,
+      "feature": "available_spaces_roll_trend_3h",
+      "importance": 0.0038843199145048857,
+      "importance_pct": 0.0014117338963764907,
+      "cumulative_importance_pct": 99.94067267493563,
+      "categorical": false
+    },
+    {
+      "rank": 117,
+      "feature": "occupancy_rate_roll_mean_6h",
+      "importance": 0.003859172575175762,
+      "importance_pct": 0.0014025942394697475,
+      "cumulative_importance_pct": 99.94207526917509,
+      "categorical": false
+    },
+    {
+      "rank": 118,
+      "feature": "occupancy_rate_roll_min_1d",
+      "importance": 0.0038410816341638565,
+      "importance_pct": 0.0013960191902446606,
+      "cumulative_importance_pct": 99.94347128836533,
+      "categorical": false
+    },
+    {
+      "rank": 119,
+      "feature": "is_weekday",
+      "importance": 0.0037576365284621716,
+      "importance_pct": 0.001365691542986285,
+      "cumulative_importance_pct": 99.94483697990832,
+      "categorical": false
+    },
+    {
+      "rank": 120,
+      "feature": "available_spaces_roll_std_3h",
+      "importance": 0.0037260763347148895,
+      "importance_pct": 0.0013542211707538458,
+      "cumulative_importance_pct": 99.94619120107907,
+      "categorical": false
+    },
+    {
+      "rank": 121,
+      "feature": "available_spaces_roll_min_3h",
+      "importance": 0.0037160420324653387,
+      "importance_pct": 0.0013505742608895786,
+      "cumulative_importance_pct": 99.94754177533996,
+      "categorical": false
+    },
+    {
+      "rank": 122,
+      "feature": "occupied_spaces_roll_median_1h",
+      "importance": 0.0036799414083361626,
+      "importance_pct": 0.0013374536951572882,
+      "cumulative_importance_pct": 99.94887922903511,
+      "categorical": false
+    },
+    {
+      "rank": 123,
+      "feature": "occupied_spaces_roll_max_3h",
+      "importance": 0.0036657487507909536,
+      "importance_pct": 0.0013322954548019008,
+      "cumulative_importance_pct": 99.95021152448992,
+      "categorical": false
+    },
+    {
+      "rank": 124,
+      "feature": "occupancy_rate_roll_mean_1h",
+      "importance": 0.0036277214530855417,
+      "importance_pct": 0.0013184746505581872,
+      "cumulative_importance_pct": 99.95152999914048,
+      "categorical": false
+    },
+    {
+      "rank": 125,
+      "feature": "available_spaces_roll_min_6h",
+      "importance": 0.0035716018173843622,
+      "importance_pct": 0.0012980782893635778,
+      "cumulative_importance_pct": 99.95282807742984,
+      "categorical": false
+    },
+    {
+      "rank": 126,
+      "feature": "occupied_spaces_roll_mean_1h",
+      "importance": 0.003477066056802869,
+      "importance_pct": 0.0012637198069084482,
+      "cumulative_importance_pct": 99.95409179723676,
+      "categorical": false
+    },
+    {
+      "rank": 127,
+      "feature": "is_wednesday",
+      "importance": 0.0034620058722794056,
+      "importance_pct": 0.0012582462688257418,
+      "cumulative_importance_pct": 99.95535004350558,
+      "categorical": false
+    },
+    {
+      "rank": 128,
+      "feature": "occupied_spaces_roll_trend_1d",
+      "importance": 0.003373319748789072,
+      "importance_pct": 0.0012260138035743585,
+      "cumulative_importance_pct": 99.95657605730915,
+      "categorical": false
+    },
+    {
+      "rank": 129,
+      "feature": "day_of_year",
+      "importance": 0.003333084285259247,
+      "importance_pct": 0.0012113904540687309,
+      "cumulative_importance_pct": 99.95778744776322,
+      "categorical": false
+    },
+    {
+      "rank": 130,
+      "feature": "calendar_day_of_week_cos",
+      "importance": 0.003249675501137972,
+      "importance_pct": 0.0011810760076813864,
+      "cumulative_importance_pct": 99.9589685237709,
+      "categorical": false
+    },
+    {
+      "rank": 131,
+      "feature": "occupancy_rate_roll_median_12h",
+      "importance": 0.003220338374376297,
+      "importance_pct": 0.0011704135964528228,
+      "cumulative_importance_pct": 99.96013893736736,
+      "categorical": false
+    },
+    {
+      "rank": 132,
+      "feature": "occupancy_rate_roll_mean_3h",
+      "importance": 0.003149268217384815,
+      "importance_pct": 0.0011445835536515046,
+      "cumulative_importance_pct": 99.96128352092101,
+      "categorical": false
+    },
+    {
+      "rank": 133,
+      "feature": "occupied_spaces_roll_min_1d",
+      "importance": 0.003149149240925908,
+      "importance_pct": 0.0011445403123367809,
+      "cumulative_importance_pct": 99.96242806123335,
+      "categorical": false
+    },
+    {
+      "rank": 134,
+      "feature": "available_spaces_roll_max_2h",
+      "importance": 0.0031071873381733894,
+      "importance_pct": 0.0011292894983523372,
+      "cumulative_importance_pct": 99.9635573507317,
+      "categorical": false
+    },
+    {
+      "rank": 135,
+      "feature": "occupied_spaces_roll_min_6h",
+      "importance": 0.003024648642167449,
+      "importance_pct": 0.0010992912805229613,
+      "cumulative_importance_pct": 99.96465664201223,
+      "categorical": false
+    },
+    {
+      "rank": 136,
+      "feature": "available_spaces_lag_3h",
+      "importance": 0.003003113204613328,
+      "importance_pct": 0.0010914643486950953,
+      "cumulative_importance_pct": 99.96574810636092,
+      "categorical": false
+    },
+    {
+      "rank": 137,
+      "feature": "occupied_spaces_roll_std_2h",
+      "importance": 0.0029348586685955524,
+      "importance_pct": 0.001066657627261589,
+      "cumulative_importance_pct": 99.96681476398818,
+      "categorical": false
+    },
+    {
+      "rank": 138,
+      "feature": "available_spaces_roll_std_1h",
+      "importance": 0.0029002625960856676,
+      "importance_pct": 0.0010540838822254701,
+      "cumulative_importance_pct": 99.9678688478704,
+      "categorical": false
+    },
+    {
+      "rank": 139,
+      "feature": "occupied_spaces_roll_std_1d",
+      "importance": 0.0028739499393850565,
+      "importance_pct": 0.0010445206973731468,
+      "cumulative_importance_pct": 99.96891336856778,
+      "categorical": false
+    },
+    {
+      "rank": 140,
+      "feature": "occupied_spaces_roll_std_3h",
+      "importance": 0.0028604750987142324,
+      "importance_pct": 0.001039623343462559,
+      "cumulative_importance_pct": 99.96995299191124,
+      "categorical": false
+    },
+    {
+      "rank": 141,
+      "feature": "available_spaces_roll_mean_3h",
+      "importance": 0.0028395343106240034,
+      "importance_pct": 0.0010320125335873426,
+      "cumulative_importance_pct": 99.97098500444483,
+      "categorical": false
+    },
+    {
+      "rank": 142,
+      "feature": "occupied_spaces_roll_std_6h",
+      "importance": 0.0028190903831273317,
+      "importance_pct": 0.0010245823048581537,
+      "cumulative_importance_pct": 99.97200958674969,
+      "categorical": false
+    },
+    {
+      "rank": 143,
+      "feature": "occupancy_rate_roll_median_3h",
+      "importance": 0.0027491061482578516,
+      "importance_pct": 0.0009991469342522771,
+      "cumulative_importance_pct": 99.97300873368394,
+      "categorical": false
+    },
+    {
+      "rank": 144,
+      "feature": "occupied_spaces_lag_1h",
+      "importance": 0.0027347172144800425,
+      "importance_pct": 0.0009939173584207408,
+      "cumulative_importance_pct": 99.97400265104235,
+      "categorical": false
+    },
+    {
+      "rank": 145,
+      "feature": "occupancy_rate_roll_std_2h",
+      "importance": 0.0027050760108977556,
+      "importance_pct": 0.0009831444322077761,
+      "cumulative_importance_pct": 99.97498579547457,
+      "categorical": false
+    },
+    {
+      "rank": 146,
+      "feature": "occupancy_rate_roll_max_12h",
+      "importance": 0.002622203901410103,
+      "importance_pct": 0.0009530250371520124,
+      "cumulative_importance_pct": 99.97593882051171,
+      "categorical": false
+    },
+    {
+      "rank": 147,
+      "feature": "available_spaces_roll_min_2h",
+      "importance": 0.0026188641786575317,
+      "importance_pct": 0.0009518112339848997,
+      "cumulative_importance_pct": 99.9768906317457,
+      "categorical": false
+    },
+    {
+      "rank": 148,
+      "feature": "occupancy_rate_roll_mean_2h",
+      "importance": 0.0026090703904628754,
+      "importance_pct": 0.0009482517375807291,
+      "cumulative_importance_pct": 99.97783888348329,
+      "categorical": false
+    },
+    {
+      "rank": 149,
+      "feature": "occupancy_rate_roll_missing_1d",
+      "importance": 0.0025469970423728228,
+      "importance_pct": 0.0009256915336096117,
+      "cumulative_importance_pct": 99.9787645750169,
+      "categorical": false
+    },
+    {
+      "rank": 150,
+      "feature": "days_to_month_end",
+      "importance": 0.002544696908444166,
+      "importance_pct": 0.000924855563065279,
+      "cumulative_importance_pct": 99.97968943057997,
+      "categorical": false
+    },
+    {
+      "rank": 151,
+      "feature": "calendar_day_of_month",
+      "importance": 0.0025035992730408907,
+      "importance_pct": 0.0009099188621146001,
+      "cumulative_importance_pct": 99.98059934944209,
+      "categorical": false
+    },
+    {
+      "rank": 152,
+      "feature": "occupied_spaces_lag_1d",
+      "importance": 0.002492288826033473,
+      "importance_pct": 0.0009058081447239146,
+      "cumulative_importance_pct": 99.98150515758681,
+      "categorical": false
+    },
+    {
+      "rank": 153,
+      "feature": "occupied_spaces_roll_median_6h",
+      "importance": 0.0024688795674592257,
+      "importance_pct": 0.0008973001833443949,
+      "cumulative_importance_pct": 99.98240245777015,
+      "categorical": false
+    },
+    {
+      "rank": 154,
+      "feature": "occupied_spaces_roll_mean_2h",
+      "importance": 0.0024375985376536846,
+      "importance_pct": 0.0008859312716527648,
+      "cumulative_importance_pct": 99.9832883890418,
+      "categorical": false
+    },
+    {
+      "rank": 155,
+      "feature": "occupancy_rate_roll_min_3h",
+      "importance": 0.0023574356455355883,
+      "importance_pct": 0.0008567965261823694,
+      "cumulative_importance_pct": 99.98414518556798,
+      "categorical": false
+    },
+    {
+      "rank": 156,
+      "feature": "calendar_week_of_quarter",
+      "importance": 0.0023178327828645706,
+      "importance_pct": 0.0008424030918471994,
+      "cumulative_importance_pct": 99.98498758865983,
+      "categorical": false
+    },
+    {
+      "rank": 157,
+      "feature": "available_spaces_roll_std_1d",
+      "importance": 0.00231178873218596,
+      "importance_pct": 0.0008402064161350496,
+      "cumulative_importance_pct": 99.98582779507596,
+      "categorical": false
+    },
+    {
+      "rank": 158,
+      "feature": "available_spaces_roll_trend_1d",
+      "importance": 0.0023035595659166574,
+      "importance_pct": 0.0008372155726368326,
+      "cumulative_importance_pct": 99.9866650106486,
+      "categorical": false
+    },
+    {
+      "rank": 159,
+      "feature": "available_spaces_roll_median_12h",
+      "importance": 0.0022789323702454567,
+      "importance_pct": 0.0008282649589729316,
+      "cumulative_importance_pct": 99.98749327560756,
+      "categorical": false
+    },
+    {
+      "rank": 160,
+      "feature": "available_spaces_roll_trend_12h",
+      "importance": 0.0022004113998264074,
+      "importance_pct": 0.0007997269605699145,
+      "cumulative_importance_pct": 99.98829300256813,
+      "categorical": false
+    },
+    {
+      "rank": 161,
+      "feature": "available_spaces_roll_median_1h",
+      "importance": 0.002126353560015559,
+      "importance_pct": 0.0007728110615053234,
+      "cumulative_importance_pct": 99.98906581362964,
+      "categorical": false
+    },
+    {
+      "rank": 162,
+      "feature": "available_spaces_roll_mean_2h",
+      "importance": 0.002079123631119728,
+      "importance_pct": 0.0007556456134955666,
+      "cumulative_importance_pct": 99.98982145924313,
+      "categorical": false
+    },
+    {
+      "rank": 163,
+      "feature": "occupancy_rate_roll_trend_12h",
+      "importance": 0.0020606659818440676,
+      "importance_pct": 0.000748937286245647,
+      "cumulative_importance_pct": 99.99057039652938,
+      "categorical": false
+    },
+    {
+      "rank": 164,
+      "feature": "occupied_spaces_roll_min_1h",
+      "importance": 0.002041958272457123,
+      "importance_pct": 0.0007421380760759365,
+      "cumulative_importance_pct": 99.99131253460546,
+      "categorical": false
+    },
+    {
+      "rank": 165,
+      "feature": "occupied_spaces_roll_median_2h",
+      "importance": 0.0020323763601481915,
+      "importance_pct": 0.0007386555847527804,
+      "cumulative_importance_pct": 99.99205119019021,
+      "categorical": false
+    },
+    {
+      "rank": 166,
+      "feature": "available_spaces_roll_std_2h",
+      "importance": 0.0019404783379286528,
+      "importance_pct": 0.0007052557732457977,
+      "cumulative_importance_pct": 99.99275644596345,
+      "categorical": false
+    },
+    {
+      "rank": 167,
+      "feature": "occupied_spaces_roll_mean_12h",
+      "importance": 0.0018359781242907047,
+      "importance_pct": 0.0006672757672168451,
+      "cumulative_importance_pct": 99.99342372173066,
+      "categorical": false
+    },
+    {
+      "rank": 168,
+      "feature": "occupied_spaces_roll_trend_12h",
+      "importance": 0.0018255477771162987,
+      "importance_pct": 0.0006634849170857583,
+      "cumulative_importance_pct": 99.99408720664775,
+      "categorical": false
+    },
+    {
+      "rank": 169,
+      "feature": "is_thursday",
+      "importance": 0.0017592348158359528,
+      "importance_pct": 0.0006393838499056368,
+      "cumulative_importance_pct": 99.99472659049765,
+      "categorical": false
+    },
+    {
+      "rank": 170,
+      "feature": "occupancy_rate_roll_missing_3h",
+      "importance": 0.0017282775370404124,
+      "importance_pct": 0.0006281326036702165,
+      "cumulative_importance_pct": 99.99535472310131,
+      "categorical": false
+    },
+    {
+      "rank": 171,
+      "feature": "available_spaces_roll_median_3h",
+      "importance": 0.0016349065117537975,
+      "importance_pct": 0.0005941974376082463,
+      "cumulative_importance_pct": 99.99594892053892,
+      "categorical": false
+    },
+    {
+      "rank": 172,
+      "feature": "day_of_year_sin",
+      "importance": 0.0016267243772745132,
+      "importance_pct": 0.0005912236875455951,
+      "cumulative_importance_pct": 99.99654014422647,
+      "categorical": false
+    },
+    {
+      "rank": 173,
+      "feature": "calendar_day_of_week",
+      "importance": 0.001604839926585555,
+      "importance_pct": 0.0005832699088864756,
+      "cumulative_importance_pct": 99.99712341413536,
+      "categorical": false
+    },
+    {
+      "rank": 174,
+      "feature": "vacancy_ratio",
+      "importance": 0.0016025882214307785,
+      "importance_pct": 0.0005824515395035178,
+      "cumulative_importance_pct": 99.99770586567486,
+      "categorical": false
+    },
+    {
+      "rank": 175,
+      "feature": "occupied_spaces_roll_mean_6h",
+      "importance": 0.0014795996248722076,
+      "importance_pct": 0.00053775203625685,
+      "cumulative_importance_pct": 99.99824361771111,
+      "categorical": false
+    },
+    {
+      "rank": 176,
+      "feature": "is_moderate_demand",
+      "importance": 0.001464895554818213,
+      "importance_pct": 0.0005324079259449257,
+      "cumulative_importance_pct": 99.99877602563706,
+      "categorical": false
+    },
+    {
+      "rank": 177,
+      "feature": "available_spaces_roll_std_6h",
+      "importance": 0.0013049626722931862,
+      "importance_pct": 0.000474281232887884,
+      "cumulative_importance_pct": 99.99925030686994,
+      "categorical": false
+    },
+    {
+      "rank": 178,
+      "feature": "week_of_year",
+      "importance": 0.0008520782575942576,
+      "importance_pct": 0.00030968297799553436,
+      "cumulative_importance_pct": 99.99955998984794,
+      "categorical": false
+    },
+    {
+      "rank": 179,
+      "feature": "day_of_year_cos",
+      "importance": 0.0008453276823274791,
+      "importance_pct": 0.0003072295199555401,
+      "cumulative_importance_pct": 99.9998672193679,
+      "categorical": false
+    },
+    {
+      "rank": 180,
+      "feature": "is_high_demand",
+      "importance": 0.0003166116075590253,
+      "importance_pct": 0.00011507068115276502,
+      "cumulative_importance_pct": 99.99998229004905,
+      "categorical": false
+    },
+    {
+      "rank": 181,
+      "feature": "calendar_day_of_year",
+      "importance": 4.872810313827358e-05,
+      "importance_pct": 1.7709950884722357e-05,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 182,
+      "feature": "occupancy_rate_roll_6h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 183,
+      "feature": "occupancy_rate_roll_coverage_ratio_6h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 184,
+      "feature": "has_capacity_violation",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 185,
+      "feature": "occupancy_rate_lag_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 186,
+      "feature": "is_capacity_exceeded",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 187,
+      "feature": "occupancy_rate_roll_3h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 188,
+      "feature": "occupancy_rate_roll_coverage_ratio_3h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 189,
+      "feature": "occupancy_rate_roll_1h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 190,
+      "feature": "occupancy_rate_roll_missing_2h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 191,
+      "feature": "occupancy_rate_roll_coverage_ratio_2h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 192,
+      "feature": "occupancy_rate_roll_2h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 193,
+      "feature": "occupancy_rate_roll_missing_1h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 194,
+      "feature": "occupancy_rate_roll_coverage_ratio_1h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 195,
+      "feature": "available_spaces_lag_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 196,
+      "feature": "has_valid_occupancy",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 197,
+      "feature": "has_consistency_issue",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 198,
+      "feature": "is_near_full",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 199,
+      "feature": "occupancy_capacity_difference",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 200,
+      "feature": "is_high_occupancy",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 201,
+      "feature": "has_valid_capacity",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 202,
+      "feature": "has_negative_values",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 203,
+      "feature": "available_spaces_roll_coverage_ratio_6h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 204,
+      "feature": "is_weekend",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 205,
+      "feature": "is_monday",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 206,
+      "feature": "minutes_since_midnight",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 207,
+      "feature": "quarter",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 208,
+      "feature": "available_spaces_roll_count_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 209,
+      "feature": "available_spaces_roll_12h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 210,
+      "feature": "available_spaces_roll_coverage_ratio_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 211,
+      "feature": "available_spaces_roll_missing_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 212,
+      "feature": "is_low_demand",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 213,
+      "feature": "is_very_high_demand",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 214,
+      "feature": "is_critical_demand",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 215,
+      "feature": "occupancy_rate_consistent",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 216,
+      "feature": "space_count_consistent",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 217,
+      "feature": "available_spaces_roll_std_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 218,
+      "feature": "available_spaces_roll_6h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 219,
+      "feature": "is_zero_capacity",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 220,
+      "feature": "is_full",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 221,
+      "feature": "is_low_availability",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 222,
+      "feature": "is_critical_availability",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 223,
+      "feature": "availability_pressure",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 224,
+      "feature": "occupancy_state_valid",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 225,
+      "feature": "occupied_spaces_lag_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 226,
+      "feature": "calendar_day_of_year_sin",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 227,
+      "feature": "calendar_quarter_sin",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 228,
+      "feature": "calendar_day_of_year_cos",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 229,
+      "feature": "calendar_quarter_cos",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 230,
+      "feature": "is_empty",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 231,
+      "feature": "is_low_occupancy",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 232,
+      "feature": "occupied_spaces_roll_missing_1h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 233,
+      "feature": "occupied_spaces_roll_count_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 234,
+      "feature": "occupied_spaces_roll_missing_6h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 235,
+      "feature": "occupied_spaces_roll_coverage_ratio_6h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 236,
+      "feature": "occupied_spaces_roll_6h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 237,
+      "feature": "occupied_spaces_roll_3h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 238,
+      "feature": "occupied_spaces_roll_coverage_ratio_3h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 239,
+      "feature": "occupied_spaces_roll_missing_3h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 240,
+      "feature": "occupied_spaces_roll_count_6h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 241,
+      "feature": "occupied_spaces_roll_missing_2h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 242,
+      "feature": "occupied_spaces_roll_count_2h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 243,
+      "feature": "occupied_spaces_roll_1h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 244,
+      "feature": "occupied_spaces_roll_coverage_ratio_1h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 245,
+      "feature": "occupied_spaces_roll_coverage_ratio_2h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 246,
+      "feature": "occupied_spaces_roll_2h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 247,
+      "feature": "occupied_spaces_roll_count_3h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 248,
+      "feature": "occupancy_rate_roll_coverage_ratio_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 249,
+      "feature": "calendar_week_of_month",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 250,
+      "feature": "occupancy_rate_roll_1d_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 251,
+      "feature": "occupancy_rate_roll_12h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 252,
+      "feature": "occupancy_rate_roll_coverage_ratio_1d",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 253,
+      "feature": "is_quarter_end",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 254,
+      "feature": "is_month_start",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 255,
+      "feature": "is_month_end",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 256,
+      "feature": "is_quarter_start",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 257,
+      "feature": "is_year_start",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 258,
+      "feature": "is_quarter_end_month",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 259,
+      "feature": "is_quarter_start_month",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 260,
+      "feature": "is_year_end",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 261,
+      "feature": "calendar_month_cos",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 262,
+      "feature": "calendar_month_sin",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 263,
+      "feature": "occupied_spaces_roll_count_1h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 264,
+      "feature": "available_spaces_roll_count_1h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 265,
+      "feature": "is_sunday",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 266,
+      "feature": "available_spaces_roll_missing_2h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 267,
+      "feature": "available_spaces_roll_coverage_ratio_2h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 268,
+      "feature": "available_spaces_roll_2h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 269,
+      "feature": "available_spaces_roll_count_2h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 270,
+      "feature": "available_spaces_roll_1h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 271,
+      "feature": "available_spaces_roll_missing_1h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 272,
+      "feature": "available_spaces_roll_coverage_ratio_1h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 273,
+      "feature": "occupied_spaces_roll_1d_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 274,
+      "feature": "occupied_spaces_roll_coverage_ratio_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 275,
+      "feature": "occupied_spaces_roll_12h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 276,
+      "feature": "occupied_spaces_roll_missing_12h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 277,
+      "feature": "occupied_spaces_roll_missing_1d",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 278,
+      "feature": "occupied_spaces_roll_coverage_ratio_1d",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 279,
+      "feature": "calendar_year",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 280,
+      "feature": "month_cos",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 281,
+      "feature": "available_spaces_roll_count_3h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 282,
+      "feature": "calendar_month",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 283,
+      "feature": "calendar_quarter",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 284,
+      "feature": "calendar_week_of_year",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 285,
+      "feature": "hour_sin",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 286,
+      "feature": "month_sin",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 287,
+      "feature": "available_spaces_roll_missing_3h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 288,
+      "feature": "available_spaces_roll_3h_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 289,
+      "feature": "available_spaces_roll_coverage_ratio_3h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 290,
+      "feature": "available_spaces_roll_count_6h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 291,
+      "feature": "available_spaces_roll_missing_6h",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 292,
+      "feature": "year",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 293,
+      "feature": "available_spaces_roll_count_1d",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 294,
+      "feature": "available_spaces_roll_missing_1d",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 295,
+      "feature": "available_spaces_roll_coverage_ratio_1d",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    },
+    {
+      "rank": 296,
+      "feature": "available_spaces_roll_1d_available",
+      "importance": 0.0,
+      "importance_pct": 0.0,
+      "cumulative_importance_pct": 99.99999999999993,
+      "categorical": false
+    }
+  ],
+  "top_20_features": [
+    {
+      "rank": 1,
+      "feature": "demand_class_code",
+      "importance": 197.9620819091797,
+      "importance_pct": 71.94818845503636,
+      "cumulative_importance_pct": 71.94818845503636,
+      "categorical": false
+    },
+    {
+      "rank": 2,
+      "feature": "availability_rate",
+      "importance": 22.826248168945312,
+      "importance_pct": 8.296069576264395,
+      "cumulative_importance_pct": 80.24425803130076,
+      "categorical": false
+    },
+    {
+      "rank": 3,
+      "feature": "available_ratio",
+      "importance": 19.46377182006836,
+      "importance_pct": 7.073996744480425,
+      "cumulative_importance_pct": 87.31825477578118,
+      "categorical": false
+    },
+    {
+      "rank": 4,
+      "feature": "remaining_capacity_ratio",
+      "importance": 8.152198791503906,
+      "importance_pct": 2.9628701078377806,
+      "cumulative_importance_pct": 90.28112488361897,
+      "categorical": false
+    },
+    {
+      "rank": 5,
+      "feature": "calculated_demand_level",
+      "importance": 7.099939823150635,
+      "importance_pct": 2.5804325933984424,
+      "cumulative_importance_pct": 92.86155747701741,
+      "categorical": false
+    },
+    {
+      "rank": 6,
+      "feature": "occupied_ratio",
+      "importance": 4.765911102294922,
+      "importance_pct": 1.7321431803550082,
+      "cumulative_importance_pct": 94.59370065737242,
+      "categorical": false
+    },
+    {
+      "rank": 7,
+      "feature": "demand_pressure",
+      "importance": 3.781080484390259,
+      "importance_pct": 1.374212114920962,
+      "cumulative_importance_pct": 95.96791277229339,
+      "categorical": false
+    },
+    {
+      "rank": 8,
+      "feature": "capacity_utilization",
+      "importance": 3.4595694541931152,
+      "importance_pct": 1.2573607665823976,
+      "cumulative_importance_pct": 97.22527353887578,
+      "categorical": false
+    },
+    {
+      "rank": 9,
+      "feature": "is_moderate_occupancy",
+      "importance": 3.136728048324585,
+      "importance_pct": 1.140025900801514,
+      "cumulative_importance_pct": 98.3652994396773,
+      "categorical": false
+    },
+    {
+      "rank": 10,
+      "feature": "demand_class",
+      "importance": 1.0235446691513062,
+      "importance_pct": 0.3720014663314731,
+      "cumulative_importance_pct": 98.73730090600877,
+      "categorical": true
+    },
+    {
+      "rank": 11,
+      "feature": "demand_level",
+      "importance": 0.42832955718040466,
+      "importance_pct": 0.15567393211704242,
+      "cumulative_importance_pct": 98.89297483812581,
+      "categorical": false
+    },
+    {
+      "rank": 12,
+      "feature": "occupancy_level",
+      "importance": 0.3355245590209961,
+      "importance_pct": 0.12194448538286556,
+      "cumulative_importance_pct": 99.01491932350868,
+      "categorical": true
+    },
+    {
+      "rank": 13,
+      "feature": "occupancy_rate_roll_missing_6h",
+      "importance": 0.31386688351631165,
+      "importance_pct": 0.11407312686975427,
+      "cumulative_importance_pct": 99.12899245037843,
+      "categorical": false
+    },
+    {
+      "rank": 14,
+      "feature": "occupancy_rate_roll_count_6h",
+      "importance": 0.1603548675775528,
+      "importance_pct": 0.05828006111516438,
+      "cumulative_importance_pct": 99.1872725114936,
+      "categorical": false
+    },
+    {
+      "rank": 15,
+      "feature": "occupancy_rate_roll_trend_1h",
+      "importance": 0.15741683542728424,
+      "importance_pct": 0.057212250104106945,
+      "cumulative_importance_pct": 99.2444847615977,
+      "categorical": false
+    },
+    {
+      "rank": 16,
+      "feature": "hour",
+      "importance": 0.10400836169719696,
+      "importance_pct": 0.03780124524919188,
+      "cumulative_importance_pct": 99.2822860068469,
+      "categorical": false
+    },
+    {
+      "rank": 17,
+      "feature": "occupancy_rate_roll_max_6h",
+      "importance": 0.09533461928367615,
+      "importance_pct": 0.034648823089554553,
+      "cumulative_importance_pct": 99.31693482993646,
+      "categorical": false
+    },
+    {
+      "rank": 18,
+      "feature": "occupancy_rate_roll_max_2h",
+      "importance": 0.09264326840639114,
+      "importance_pct": 0.03367066697879813,
+      "cumulative_importance_pct": 99.35060549691525,
+      "categorical": false
+    },
+    {
+      "rank": 19,
+      "feature": "half_hour_slot",
+      "importance": 0.08641387522220612,
+      "importance_pct": 0.03140662959116405,
+      "cumulative_importance_pct": 99.38201212650641,
+      "categorical": false
+    },
+    {
+      "rank": 20,
+      "feature": "occupancy_rate_lag_1h",
+      "importance": 0.07980788499116898,
+      "importance_pct": 0.029005720156937944,
+      "cumulative_importance_pct": 99.41101784666334,
+      "categorical": false
+    }
+  ],
+  "dominant_features": [
+    {
+      "rank": 1,
+      "feature": "demand_class_code",
+      "importance": 197.9620819091797,
+      "importance_pct": 71.94818845503636,
+      "cumulative_importance_pct": 71.94818845503636,
+      "categorical": false
+    },
+    {
+      "rank": 2,
+      "feature": "availability_rate",
+      "importance": 22.826248168945312,
+      "importance_pct": 8.296069576264395,
+      "cumulative_importance_pct": 80.24425803130076,
+      "categorical": false
+    },
+    {
+      "rank": 3,
+      "feature": "available_ratio",
+      "importance": 19.46377182006836,
+      "importance_pct": 7.073996744480425,
+      "cumulative_importance_pct": 87.31825477578118,
+      "categorical": false
+    }
+  ],
+  "worst_20_predictions": [
+    {
+      "normalized_at": "2016-12-13T10:00:00",
+      "source_facility_code": "BHMMBMMBX01",
+      "actual_occupancy": 0.7117903930131004,
+      "predicted_occupancy": 0.910460352897644,
+      "error": 0.1986699598845436,
+      "absolute_error": 0.1986699598845436,
+      "squared_error": 0.03946975296052617,
+      "underprediction": false,
+      "overprediction": true,
+      "occupancy_regime": "HIGH"
+    },
+    {
+      "normalized_at": "2016-12-18T15:30:00",
+      "source_facility_code": "BHMNCPNHS01",
+      "actual_occupancy": 0.076,
+      "predicted_occupancy": 0.24547366797924042,
+      "error": 0.1694736679792404,
+      "absolute_error": 0.1694736679792404,
+      "squared_error": 0.028721324138337816,
+      "underprediction": false,
+      "overprediction": true,
+      "occupancy_regime": "LOW"
+    },
+    {
+      "normalized_at": "2016-12-18T08:00:00",
+      "source_facility_code": "BHMEURBRD02",
+      "actual_occupancy": 0.11363636363636363,
+      "predicted_occupancy": 0.26218050718307495,
+      "error": 0.1485441435467113,
+      "absolute_error": 0.1485441435467113,
+      "squared_error": 0.022065362582025974,
+      "underprediction": false,
+      "overprediction": true,
+      "occupancy_regime": "LOW"
+    },
+    {
+      "normalized_at": "2016-12-11T10:30:00",
+      "source_facility_code": "BHMBCCTHL01",
+      "actual_occupancy": 0.958656330749354,
+      "predicted_occupancy": 0.8126472234725952,
+      "error": -0.14600910727675875,
+      "absolute_error": 0.14600910727675875,
+      "squared_error": 0.021318659407756044,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "VERY_HIGH"
+    },
+    {
+      "normalized_at": "2016-12-14T08:00:00",
+      "source_facility_code": "BHMEURBRD02",
+      "actual_occupancy": 0.5954545454545455,
+      "predicted_occupancy": 0.47269564867019653,
+      "error": -0.12275889678434893,
+      "absolute_error": 0.12275889678434893,
+      "squared_error": 0.015069746739710434,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "HIGH"
+    },
+    {
+      "normalized_at": "2016-12-19T10:00:00",
+      "source_facility_code": "BHMBRCBRG01",
+      "actual_occupancy": 0.692079207920792,
+      "predicted_occupancy": 0.579548716545105,
+      "error": -0.11253049137568705,
+      "absolute_error": 0.11253049137568705,
+      "squared_error": 0.012663111489253576,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "HIGH"
+    },
+    {
+      "normalized_at": "2016-12-11T10:30:00",
+      "source_facility_code": "BHMBRCBRG01",
+      "actual_occupancy": 0.6663366336633664,
+      "predicted_occupancy": 0.5552233457565308,
+      "error": -0.11111328790683561,
+      "absolute_error": 0.11111328790683561,
+      "squared_error": 0.012346162749467341,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "HIGH"
+    },
+    {
+      "normalized_at": "2016-12-17T08:30:00",
+      "source_facility_code": "BHMBRCBRG01",
+      "actual_occupancy": 0.27623762376237626,
+      "predicted_occupancy": 0.17572906613349915,
+      "error": -0.10050855762887712,
+      "absolute_error": 0.10050855762887712,
+      "squared_error": 0.010101970156637313,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "MODERATE"
+    },
+    {
+      "normalized_at": "2016-12-18T11:00:00",
+      "source_facility_code": "BHMBRCBRG01",
+      "actual_occupancy": 0.996039603960396,
+      "predicted_occupancy": 0.8982213735580444,
+      "error": -0.0978182304023516,
+      "absolute_error": 0.0978182304023516,
+      "squared_error": 0.009568406199047544,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "VERY_HIGH"
+    },
+    {
+      "normalized_at": "2016-12-14T08:00:00",
+      "source_facility_code": "BHMNCPNHS01",
+      "actual_occupancy": 0.532,
+      "predicted_occupancy": 0.4384366273880005,
+      "error": -0.09356337261199954,
+      "absolute_error": 0.09356337261199954,
+      "squared_error": 0.008754104694531866,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "HIGH"
+    },
+    {
+      "normalized_at": "2016-12-11T11:00:00",
+      "source_facility_code": "BHMBRCBRG01",
+      "actual_occupancy": 0.9653465346534653,
+      "predicted_occupancy": 0.8719077706336975,
+      "error": -0.0934387640197678,
+      "absolute_error": 0.0934387640197678,
+      "squared_error": 0.008730802621541855,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "VERY_HIGH"
+    },
+    {
+      "normalized_at": "2016-12-19T14:00:00",
+      "source_facility_code": "BHMBCCPST01",
+      "actual_occupancy": 0.9842271293375394,
+      "predicted_occupancy": 0.8909159302711487,
+      "error": -0.09331119906639074,
+      "absolute_error": 0.09331119906639074,
+      "squared_error": 0.0087069798712076,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "VERY_HIGH"
+    },
+    {
+      "normalized_at": "2016-12-19T08:30:00",
+      "source_facility_code": "BHMEURBRD02",
+      "actual_occupancy": 0.5727272727272728,
+      "predicted_occupancy": 0.6638849973678589,
+      "error": 0.09115772464058614,
+      "absolute_error": 0.09115772464058614,
+      "squared_error": 0.008309730761648924,
+      "underprediction": false,
+      "overprediction": true,
+      "occupancy_regime": "HIGH"
+    },
+    {
+      "normalized_at": "2016-12-19T10:30:00",
+      "source_facility_code": "BHMBRCBRG01",
+      "actual_occupancy": 0.9217821782178218,
+      "predicted_occupancy": 0.8320828080177307,
+      "error": -0.08969937020009111,
+      "absolute_error": 0.08969937020009111,
+      "squared_error": 0.008045977014292993,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "VERY_HIGH"
+    },
+    {
+      "normalized_at": "2016-12-11T10:30:00",
+      "source_facility_code": "Bull Ring",
+      "actual_occupancy": 0.47330494595479855,
+      "predicted_occupancy": 0.3837949335575104,
+      "error": -0.08951001239728817,
+      "absolute_error": 0.08951001239728817,
+      "squared_error": 0.008012042319362683,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "MODERATE"
+    },
+    {
+      "normalized_at": "2016-12-18T10:30:00",
+      "source_facility_code": "BHMBCCTHL01",
+      "actual_occupancy": 0.8940568475452196,
+      "predicted_occupancy": 0.8056164383888245,
+      "error": -0.08844040915639517,
+      "absolute_error": 0.08844040915639517,
+      "squared_error": 0.007821705971750586,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "VERY_HIGH"
+    },
+    {
+      "normalized_at": "2016-12-15T08:00:00",
+      "source_facility_code": "BHMNCPRAN01",
+      "actual_occupancy": 0.645,
+      "predicted_occupancy": 0.558269739151001,
+      "error": -0.08673026084899904,
+      "absolute_error": 0.08673026084899904,
+      "squared_error": 0.0075221381469354155,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "HIGH"
+    },
+    {
+      "normalized_at": "2016-12-18T08:00:00",
+      "source_facility_code": "Broad Street",
+      "actual_occupancy": 0.12608695652173912,
+      "predicted_occupancy": 0.21082478761672974,
+      "error": 0.08473783109499061,
+      "absolute_error": 0.08473783109499061,
+      "squared_error": 0.007180500018683158,
+      "underprediction": false,
+      "overprediction": true,
+      "occupancy_regime": "LOW"
+    },
+    {
+      "normalized_at": "2016-12-17T15:30:00",
+      "source_facility_code": "BHMNCPNHS01",
+      "actual_occupancy": 0.216,
+      "predicted_occupancy": 0.30052492022514343,
+      "error": 0.08452492022514344,
+      "absolute_error": 0.08452492022514344,
+      "squared_error": 0.007144462139066862,
+      "underprediction": false,
+      "overprediction": true,
+      "occupancy_regime": "LOW"
+    },
+    {
+      "normalized_at": "2016-12-11T10:30:00",
+      "source_facility_code": "BHMBRCBRG02",
+      "actual_occupancy": 0.5,
+      "predicted_occupancy": 0.4162413477897644,
+      "error": -0.0837586522102356,
+      "absolute_error": 0.0837586522102356,
+      "squared_error": 0.007015511820075204,
+      "underprediction": true,
+      "overprediction": false,
+      "occupancy_regime": "MODERATE"
+    }
+  ],
+  "diagnostic_summary": {
+    "selected_candidate": "TUNE_014",
+    "description": "Higher L1 regularisation",
+    "target": "target_occupancy_rate_30m",
+    "feature_count": 296,
+    "validation_metrics": {
+      "mae": 0.01349578909833505,
+      "rmse": 0.0198053984965012,
+      "r2": 0.9949841628990295,
+      "mape": 3.327936130664755,
+      "n": 4980
+    },
+    "test_metrics": {
+      "mae": 0.014114561178049344,
+      "rmse": 0.020056260823837876,
+      "r2": 0.9941634569325468,
+      "mape": 3.664481600508012,
+      "n": 4982
+    },
+    "test_bias": {
+      "mean_error": -0.0015245065356567866,
+      "median_error": -0.0011750745298683418,
+      "underprediction_rate_pct": 53.412284223203535,
+      "overprediction_rate_pct": 46.06583701324769
+    },
+    "test_error_distribution": {
+      "p95_absolute_error": 0.04017660142490138,
+      "p99_absolute_error": 0.06420478532484909,
+      "maximum_absolute_error": 0.1986699598845436
+    },
+    "regime_count": 4,
+    "top_20_features": [
+      {
+        "rank": 1,
+        "feature": "demand_class_code",
+        "importance": 197.9620819091797,
+        "importance_pct": 71.94818845503636,
+        "cumulative_importance_pct": 71.94818845503636,
+        "categorical": false
+      },
+      {
+        "rank": 2,
+        "feature": "availability_rate",
+        "importance": 22.826248168945312,
+        "importance_pct": 8.296069576264395,
+        "cumulative_importance_pct": 80.24425803130076,
+        "categorical": false
+      },
+      {
+        "rank": 3,
+        "feature": "available_ratio",
+        "importance": 19.46377182006836,
+        "importance_pct": 7.073996744480425,
+        "cumulative_importance_pct": 87.31825477578118,
+        "categorical": false
+      },
+      {
+        "rank": 4,
+        "feature": "remaining_capacity_ratio",
+        "importance": 8.152198791503906,
+        "importance_pct": 2.9628701078377806,
+        "cumulative_importance_pct": 90.28112488361897,
+        "categorical": false
+      },
+      {
+        "rank": 5,
+        "feature": "calculated_demand_level",
+        "importance": 7.099939823150635,
+        "importance_pct": 2.5804325933984424,
+        "cumulative_importance_pct": 92.86155747701741,
+        "categorical": false
+      },
+      {
+        "rank": 6,
+        "feature": "occupied_ratio",
+        "importance": 4.765911102294922,
+        "importance_pct": 1.7321431803550082,
+        "cumulative_importance_pct": 94.59370065737242,
+        "categorical": false
+      },
+      {
+        "rank": 7,
+        "feature": "demand_pressure",
+        "importance": 3.781080484390259,
+        "importance_pct": 1.374212114920962,
+        "cumulative_importance_pct": 95.96791277229339,
+        "categorical": false
+      },
+      {
+        "rank": 8,
+        "feature": "capacity_utilization",
+        "importance": 3.4595694541931152,
+        "importance_pct": 1.2573607665823976,
+        "cumulative_importance_pct": 97.22527353887578,
+        "categorical": false
+      },
+      {
+        "rank": 9,
+        "feature": "is_moderate_occupancy",
+        "importance": 3.136728048324585,
+        "importance_pct": 1.140025900801514,
+        "cumulative_importance_pct": 98.3652994396773,
+        "categorical": false
+      },
+      {
+        "rank": 10,
+        "feature": "demand_class",
+        "importance": 1.0235446691513062,
+        "importance_pct": 0.3720014663314731,
+        "cumulative_importance_pct": 98.73730090600877,
+        "categorical": true
+      },
+      {
+        "rank": 11,
+        "feature": "demand_level",
+        "importance": 0.42832955718040466,
+        "importance_pct": 0.15567393211704242,
+        "cumulative_importance_pct": 98.89297483812581,
+        "categorical": false
+      },
+      {
+        "rank": 12,
+        "feature": "occupancy_level",
+        "importance": 0.3355245590209961,
+        "importance_pct": 0.12194448538286556,
+        "cumulative_importance_pct": 99.01491932350868,
+        "categorical": true
+      },
+      {
+        "rank": 13,
+        "feature": "occupancy_rate_roll_missing_6h",
+        "importance": 0.31386688351631165,
+        "importance_pct": 0.11407312686975427,
+        "cumulative_importance_pct": 99.12899245037843,
+        "categorical": false
+      },
+      {
+        "rank": 14,
+        "feature": "occupancy_rate_roll_count_6h",
+        "importance": 0.1603548675775528,
+        "importance_pct": 0.05828006111516438,
+        "cumulative_importance_pct": 99.1872725114936,
+        "categorical": false
+      },
+      {
+        "rank": 15,
+        "feature": "occupancy_rate_roll_trend_1h",
+        "importance": 0.15741683542728424,
+        "importance_pct": 0.057212250104106945,
+        "cumulative_importance_pct": 99.2444847615977,
+        "categorical": false
+      },
+      {
+        "rank": 16,
+        "feature": "hour",
+        "importance": 0.10400836169719696,
+        "importance_pct": 0.03780124524919188,
+        "cumulative_importance_pct": 99.2822860068469,
+        "categorical": false
+      },
+      {
+        "rank": 17,
+        "feature": "occupancy_rate_roll_max_6h",
+        "importance": 0.09533461928367615,
+        "importance_pct": 0.034648823089554553,
+        "cumulative_importance_pct": 99.31693482993646,
+        "categorical": false
+      },
+      {
+        "rank": 18,
+        "feature": "occupancy_rate_roll_max_2h",
+        "importance": 0.09264326840639114,
+        "importance_pct": 0.03367066697879813,
+        "cumulative_importance_pct": 99.35060549691525,
+        "categorical": false
+      },
+      {
+        "rank": 19,
+        "feature": "half_hour_slot",
+        "importance": 0.08641387522220612,
+        "importance_pct": 0.03140662959116405,
+        "cumulative_importance_pct": 99.38201212650641,
+        "categorical": false
+      },
+      {
+        "rank": 20,
+        "feature": "occupancy_rate_lag_1h",
+        "importance": 0.07980788499116898,
+        "importance_pct": 0.029005720156937944,
+        "cumulative_importance_pct": 99.41101784666334,
+        "categorical": false
+      }
+    ],
+    "dominant_features_5pct_or_more": [
+      {
+        "rank": 1,
+        "feature": "demand_class_code",
+        "importance": 197.9620819091797,
+        "importance_pct": 71.94818845503636,
+        "cumulative_importance_pct": 71.94818845503636,
+        "categorical": false
+      },
+      {
+        "rank": 2,
+        "feature": "availability_rate",
+        "importance": 22.826248168945312,
+        "importance_pct": 8.296069576264395,
+        "cumulative_importance_pct": 80.24425803130076,
+        "categorical": false
+      },
+      {
+        "rank": 3,
+        "feature": "available_ratio",
+        "importance": 19.46377182006836,
+        "importance_pct": 7.073996744480425,
+        "cumulative_importance_pct": 87.31825477578118,
+        "categorical": false
+      }
+    ]
+  }
+}

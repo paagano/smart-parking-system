@@ -1,0 +1,39 @@
+file,line_number,operation,direction,severity,expression,context,target_related
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1084,shift,DYNAMIC,MEDIUM,"occupancy.shift(
+                -steps
+            )",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1090,shift,DYNAMIC,MEDIUM,"observation_present
+            .shift(
+                -steps
+            )",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1099,shift,DYNAMIC,MEDIUM,"sequence_break
+            .shift(
+                -steps
+            )",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1108,shift,DYNAMIC,MEDIUM,"operational_gap
+            .shift(
+                -steps
+            )",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1117,shift,DYNAMIC,MEDIUM,"data_gap
+            .shift(
+                -steps
+            )",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal.py,618,shift,HISTORICAL,LOW,timestamps.shift(1),Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal.py,529,diff,HISTORICAL_OR_CURRENT,LOW,"timestamps
+            .diff()",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal.py,986,diff,HISTORICAL_OR_CURRENT,LOW,"timestamps
+            .diff()",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1408,shift,HISTORICAL,LOW,timestamps.shift(1),Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1738,shift,HISTORICAL,LOW,current_status.shift(1),Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\temporal_normalizer.py,1412,shift,HISTORICAL,LOW,"result[
+                OBSERVATION_PRESENT_COLUMN
+            ]
+            .shift(1)",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\lag_features.py,1227,diff,HISTORICAL_OR_CURRENT,LOW,timestamps.diff(),Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,1203,rolling,TRAILING_OR_DEFAULT,LOW,"grouped.rolling(
+            on=""__timestamp"",
+            **rolling_kwargs,
+        )",Feature-generation source,False
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\ml_models\baseline_model.py,876,shift,DYNAMIC,MEDIUM,"combined.shift(
+            self.lag
+        )",Feature-generation source,False

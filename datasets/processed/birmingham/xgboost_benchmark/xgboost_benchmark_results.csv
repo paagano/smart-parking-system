@@ -1,0 +1,4 @@
+model,mae,rmse,r2,improvement_vs_last_value_percent
+mean_baseline,0.248729,,,-1.361517270608184
+last_value_baseline,0.245388,,,0.0
+xgboost_occupancy_30m_v1,0.013767119410825805,0.02016716032178501,0.9947992526685988,94.38965254583525

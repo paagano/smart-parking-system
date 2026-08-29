@@ -1,0 +1,79 @@
+file,line_number,line_text,finding_type,severity,feature,context
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1083,future_occupancy = (,FUTURE_NAMED_VARIABLE,MEDIUM,,Likely target-generation context
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1089,future_observed = (,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1098,future_sequence_break = (,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1107,future_operational_gap = (,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1116,future_data_gap = (,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1156,& future_observed,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1157,& future_occupancy.notna(),FUTURE_NAMED_VARIABLE,MEDIUM,,Likely target-generation context
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1167,& ~future_sequence_break,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1177,& ~future_operational_gap,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1187,& ~future_data_gap,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1197,] = future_occupancy[,FUTURE_NAMED_VARIABLE,MEDIUM,,Likely target-generation context
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1224,"future_occupancy=future_occupancy,",FUTURE_NAMED_VARIABLE,MEDIUM,,Likely target-generation context
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1225,"future_observed=future_observed,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1226,future_sequence_break=(,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1227,future_sequence_break,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1229,future_operational_gap=(,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1230,future_operational_gap,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1232,future_data_gap=(,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1233,future_data_gap,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1262,"future_occupancy: pd.Series,",FUTURE_NAMED_VARIABLE,MEDIUM,,Likely target-generation context
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1263,"future_observed: pd.Series,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1264,"future_sequence_break: pd.Series,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1265,"future_operational_gap: pd.Series,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1266,"future_data_gap: pd.Series,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1291,future_index = (,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1299,future_index,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1326,& ~future_observed,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1344,& future_observed,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1345,& future_sequence_break,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1368,& future_observed,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1369,& ~future_sequence_break,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1370,& future_operational_gap,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1393,& future_observed,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1394,& ~future_sequence_break,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1395,& ~future_operational_gap,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,1396,& future_data_gap,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\data\dataset_builder.py,2073,"""future_features_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\calendar_features.py,1163,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\calendar_features.py,1320,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\calendar_features.py,1715,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\demand_features.py,1360,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\demand_features.py,1846,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\demand_features.py,2392,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,51,future_data_used       == False,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,1141,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,1217,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,1218,"metadata[""future_data_used""],",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,1681,"""future_data_used"",",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,1721,"""future_data_used"",",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,2063,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,2277,future_data_used = bool(,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,2279,"""future_data_used"",",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,2312,if future_data_used:,FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,2398,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\feature_pipeline.py,2399,"future_data_used,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\lag_features.py,1000,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\lag_features.py,1546,"""future_data_used"":",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\occupancy_features.py,938,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\occupancy_features.py,967,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,114,"rolling(..., center=True)",CENTERED_ROLLING,HIGH,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,904,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,919,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,1848,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\temporal_features.py,584,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\temporal_features.py,601,"""future_data_used"": False,",FUTURE_NAMED_VARIABLE,MEDIUM,,Requires causal review
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,73,occupancy_rate_roll_mean_1h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_mean_1h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,80,occupancy_rate_roll_std_1h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_std_1h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,84,occupancy_rate_roll_min_1h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_min_1h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,85,occupancy_rate_roll_max_1h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_max_1h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,87,occupancy_rate_roll_median_1h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_median_1h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,92,occupancy_rate_roll_trend_1h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_trend_1h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,89,occupancy_rate_roll_count_1h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_count_1h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,90,occupancy_rate_roll_missing_1h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_missing_1h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,74,occupancy_rate_roll_mean_2h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_mean_2h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,81,occupancy_rate_roll_std_2h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_std_2h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,75,occupancy_rate_roll_mean_3h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_mean_3h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,76,occupancy_rate_roll_mean_6h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_mean_6h,Feature name occurs in ML source code.
+C:\agano\Oshwal\docs\Project\smart-parking-system\backend\app\ml\features\rolling_features.py,77,occupancy_rate_roll_mean_12h,FEATURE_SOURCE_REFERENCE,INFO,occupancy_rate_roll_mean_12h,Feature name occurs in ML source code.

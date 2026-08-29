@@ -1,0 +1,19 @@
+category,metric,value
+summary,historical_features_audited,201
+verdict_counts,NO_SOURCE_EVIDENCE,188
+verdict_counts,REQUIRES_CAUSAL_REVIEW,13
+causal_direction_counts,UNKNOWN,188
+causal_direction_counts,SOURCE_REFERENCE_ONLY,13
+summary,feature_specific_future_signal_count,0
+summary,feature_specific_negative_shift_count,0
+summary,feature_specific_centered_rolling_count,0
+summary,feature_specific_forward_operation_count,0
+summary,ast_future_operation_count,0
+summary,ast_centered_operation_count,0
+summary,target_related_ast_finding_count,0
+summary,source_future_findings_in_target_context,21
+summary,source_future_findings_requiring_review,44
+final_verdict,verdict,PASS_WITH_CAUSAL_REVIEW
+final_verdict,reason_1,201 historical feature(s) remain conditional because static source analysis does not formally prove their causal cutoff.
+final_verdict,reason_2,Historical feature approval requires proof that source information is available at or before prediction timestamp T.
+final_verdict,reason_3,44 source-level future construct(s) remain unresolved outside clearly identifiable target-generation context.

@@ -1,0 +1,181 @@
+source_file,line_number,finding_type,context,function_name,target_context,feature_context,future_or_forward,negative_shift,centered_rolling,classification
+data\dataset_audit.py,1313,FUTURE_OR_FORWARD,"""TOMORROW_MORNING"",",_audit_facilities,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_audit.py,1385,FUTURE_OR_FORWARD,"""tomorrow_morning"",",_audit_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,38,FUTURE_OR_FORWARD,Forecasting,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,64,FUTURE_OR_FORWARD,- forward-fill occupancy,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,192,FUTURE_OR_FORWARD,"TOMORROW_MORNING = ""tomorrow_morning""",,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,236,FUTURE_OR_FORWARD,TOMORROW_MORNING_UNAVAILABLE = (,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,237,FUTURE_OR_FORWARD,"""TOMORROW_MORNING_UNAVAILABLE""",,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,299,FUTURE_OR_FORWARD,tomorrow_morning_start_hour: int = 8,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,301,FUTURE_OR_FORWARD,tomorrow_morning_start_minute: int = 0,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,303,FUTURE_OR_FORWARD,tomorrow_morning_end_hour: int = 10,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,305,FUTURE_OR_FORWARD,tomorrow_morning_end_minute: int = 0,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,321,FUTURE_OR_FORWARD,"tomorrow_morning_aggregation: str = ""mean""",,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,364,FUTURE_OR_FORWARD,if not 0 <= self.tomorrow_morning_start_hour <= 23:,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,370,FUTURE_OR_FORWARD,if not 0 <= self.tomorrow_morning_end_hour <= 23:,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,376,FUTURE_OR_FORWARD,if not 0 <= self.tomorrow_morning_start_minute <= 59:,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,382,FUTURE_OR_FORWARD,if not 0 <= self.tomorrow_morning_end_minute <= 59:,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,389,FUTURE_OR_FORWARD,self.tomorrow_morning_start_hour * 60,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,390,FUTURE_OR_FORWARD,+ self.tomorrow_morning_start_minute,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,394,FUTURE_OR_FORWARD,self.tomorrow_morning_end_hour * 60,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,395,FUTURE_OR_FORWARD,+ self.tomorrow_morning_end_minute,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,410,FUTURE_OR_FORWARD,if self.tomorrow_morning_aggregation not in {,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,416,FUTURE_OR_FORWARD,"""tomorrow_morning_aggregation must """,__post_init__,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,642,FUTURE_OR_FORWARD,"""tomorrow_morning"": {",build,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,645,FUTURE_OR_FORWARD,".tomorrow_morning_start_hour,",build,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,647,FUTURE_OR_FORWARD,".tomorrow_morning_start_minute,",build,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,651,FUTURE_OR_FORWARD,".tomorrow_morning_end_hour,",build,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,653,FUTURE_OR_FORWARD,".tomorrow_morning_end_minute,",build,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,1083,FUTURE_OR_FORWARD,future_occupancy = (,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1084,SHIFT,occupancy.shift(,_build_horizon_targets,True,False,False,False,False,TEMPORAL_OPERATION
+data\dataset_builder.py,1089,FUTURE_OR_FORWARD,future_observed = (,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1091,SHIFT,.shift(,_build_horizon_targets,True,False,False,False,False,TEMPORAL_OPERATION
+data\dataset_builder.py,1098,FUTURE_OR_FORWARD,future_sequence_break = (,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1100,SHIFT,.shift(,_build_horizon_targets,True,False,False,False,False,TEMPORAL_OPERATION
+data\dataset_builder.py,1107,FUTURE_OR_FORWARD,future_operational_gap = (,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1109,SHIFT,.shift(,_build_horizon_targets,True,False,False,False,False,TEMPORAL_OPERATION
+data\dataset_builder.py,1116,FUTURE_OR_FORWARD,future_data_gap = (,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1118,SHIFT,.shift(,_build_horizon_targets,True,False,False,False,False,TEMPORAL_OPERATION
+data\dataset_builder.py,1156,FUTURE_OR_FORWARD,& future_observed,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1157,FUTURE_OR_FORWARD,& future_occupancy.notna(),_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1167,FUTURE_OR_FORWARD,& ~future_sequence_break,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1177,FUTURE_OR_FORWARD,& ~future_operational_gap,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1187,FUTURE_OR_FORWARD,& ~future_data_gap,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1197,FUTURE_OR_FORWARD,] = future_occupancy[,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1224,FUTURE_OR_FORWARD,"future_occupancy=future_occupancy,",_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1225,FUTURE_OR_FORWARD,"future_observed=future_observed,",_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1226,FUTURE_OR_FORWARD,future_sequence_break=(,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1227,FUTURE_OR_FORWARD,future_sequence_break,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1229,FUTURE_OR_FORWARD,future_operational_gap=(,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1230,FUTURE_OR_FORWARD,future_operational_gap,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1232,FUTURE_OR_FORWARD,future_data_gap=(,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1233,FUTURE_OR_FORWARD,future_data_gap,_build_horizon_targets,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1262,FUTURE_OR_FORWARD,"future_occupancy: pd.Series,",_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1263,FUTURE_OR_FORWARD,"future_observed: pd.Series,",_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1264,FUTURE_OR_FORWARD,"future_sequence_break: pd.Series,",_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1265,FUTURE_OR_FORWARD,"future_operational_gap: pd.Series,",_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1266,FUTURE_OR_FORWARD,"future_data_gap: pd.Series,",_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1291,FUTURE_OR_FORWARD,future_index = (,_build_horizon_reasons,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,1299,FUTURE_OR_FORWARD,future_index,_build_horizon_reasons,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,1326,FUTURE_OR_FORWARD,& ~future_observed,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1344,FUTURE_OR_FORWARD,& future_observed,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1345,FUTURE_OR_FORWARD,& future_sequence_break,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1368,FUTURE_OR_FORWARD,& future_observed,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1369,FUTURE_OR_FORWARD,& ~future_sequence_break,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1370,FUTURE_OR_FORWARD,& future_operational_gap,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1393,FUTURE_OR_FORWARD,& future_observed,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1394,FUTURE_OR_FORWARD,& ~future_sequence_break,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1395,FUTURE_OR_FORWARD,& ~future_operational_gap,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1396,FUTURE_OR_FORWARD,& future_data_gap,_build_horizon_reasons,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1514,FUTURE_OR_FORWARD,.tomorrow_morning_start_hour,_build_tomorrow_morning_target,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1517,FUTURE_OR_FORWARD,.tomorrow_morning_start_minute,_build_tomorrow_morning_target,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1522,FUTURE_OR_FORWARD,.tomorrow_morning_end_hour,_build_tomorrow_morning_target,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1525,FUTURE_OR_FORWARD,.tomorrow_morning_end_minute,_build_tomorrow_morning_target,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1609,FUTURE_OR_FORWARD,.tomorrow_morning_aggregation,_build_tomorrow_morning_target,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1619,FUTURE_OR_FORWARD,.tomorrow_morning_aggregation,_build_tomorrow_morning_target,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1721,FUTURE_OR_FORWARD,.TOMORROW_MORNING_UNAVAILABLE,_build_tomorrow_morning_target,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,1896,FUTURE_OR_FORWARD,"TargetHorizon.TOMORROW_MORNING.value,",_build_statistics,True,False,True,False,False,TARGET_FUTURE_LOGIC
+data\dataset_builder.py,2073,FUTURE_OR_FORWARD,"""future_features_used"": False,",_build_statistics,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+data\dataset_builder.py,2100,FUTURE_OR_FORWARD,"tomorrow_morning_start_hour: int = 8,",build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2101,FUTURE_OR_FORWARD,"tomorrow_morning_start_minute: int = 0,",build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2102,FUTURE_OR_FORWARD,"tomorrow_morning_end_hour: int = 10,",build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2103,FUTURE_OR_FORWARD,"tomorrow_morning_end_minute: int = 0,",build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2111,FUTURE_OR_FORWARD,tomorrow_morning_start_hour=(,build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2112,FUTURE_OR_FORWARD,tomorrow_morning_start_hour,build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2114,FUTURE_OR_FORWARD,tomorrow_morning_start_minute=(,build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2115,FUTURE_OR_FORWARD,tomorrow_morning_start_minute,build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2117,FUTURE_OR_FORWARD,tomorrow_morning_end_hour=(,build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2118,FUTURE_OR_FORWARD,tomorrow_morning_end_hour,build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2120,FUTURE_OR_FORWARD,tomorrow_morning_end_minute=(,build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2121,FUTURE_OR_FORWARD,tomorrow_morning_end_minute,build_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2142,FUTURE_OR_FORWARD,"tomorrow_morning_start_hour: int = 8,",build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2143,FUTURE_OR_FORWARD,"tomorrow_morning_start_minute: int = 0,",build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2144,FUTURE_OR_FORWARD,"tomorrow_morning_end_hour: int = 10,",build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2145,FUTURE_OR_FORWARD,"tomorrow_morning_end_minute: int = 0,",build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2174,FUTURE_OR_FORWARD,tomorrow_morning_start_hour=(,build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2175,FUTURE_OR_FORWARD,tomorrow_morning_start_hour,build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2177,FUTURE_OR_FORWARD,tomorrow_morning_start_minute=(,build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2178,FUTURE_OR_FORWARD,tomorrow_morning_start_minute,build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2180,FUTURE_OR_FORWARD,tomorrow_morning_end_hour=(,build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2181,FUTURE_OR_FORWARD,tomorrow_morning_end_hour,build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2183,FUTURE_OR_FORWARD,tomorrow_morning_end_minute=(,build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\dataset_builder.py,2184,FUTURE_OR_FORWARD,tomorrow_morning_end_minute,build_birmingham_ml_dataset,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\loaders.py,86,FUTURE_OR_FORWARD,- forecasting,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\temporal.py,16,FUTURE_OR_FORWARD,- forward-fill values,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\temporal.py,530,DIFF,.diff(),_audit_facility,False,False,False,False,False,TEMPORAL_OPERATION
+data\temporal.py,618,SHIFT,previous = timestamps.shift(1),_build_interval_frame,False,False,False,False,False,TEMPORAL_OPERATION
+data\temporal.py,987,DIFF,.diff(),_facility_interval_values,False,False,False,False,False,TEMPORAL_OPERATION
+data\temporal_normalizer.py,47,FUTURE_OR_FORWARD,4. Never forward-fill or backward-fill observations.,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\temporal_normalizer.py,542,FUTURE_OR_FORWARD,This class never forward-fills occupancy.,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\temporal_normalizer.py,660,FUTURE_OR_FORWARD,"""forward_fill_used"": False,",normalize,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\temporal_normalizer.py,1408,SHIFT,timestamps.shift(1),_assign_gap_status,False,False,False,False,False,TEMPORAL_OPERATION
+data\temporal_normalizer.py,1415,SHIFT,.shift(1),_assign_gap_status,False,False,False,False,False,TEMPORAL_OPERATION
+data\temporal_normalizer.py,1738,SHIFT,current_status.shift(1),_assign_sequence_boundaries,False,False,False,False,False,TEMPORAL_OPERATION
+data\temporal_normalizer.py,2045,FUTURE_OR_FORWARD,"""forward_fill_used"": False,",_build_overall_statistics,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+data\transformers.py,47,FUTURE_OR_FORWARD,FORECASTING,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\calendar_features.py,5,FUTURE_OR_FORWARD,Calendar-based feature engineering for parking demand forecasting.,,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\calendar_features.py,1163,FUTURE_OR_FORWARD,"""future_data_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\calendar_features.py,1320,FUTURE_OR_FORWARD,"""future_data_used"":",leakage_metadata,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\calendar_features.py,1341,FUTURE_OR_FORWARD,"""forward_lookup_used"":",leakage_metadata,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\calendar_features.py,1715,FUTURE_OR_FORWARD,"""future_data_used"":",validate_calendar_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\calendar_features.py,1736,FUTURE_OR_FORWARD,"""forward_lookup_used"":",validate_calendar_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\demand_features.py,5,FUTURE_OR_FORWARD,Demand-oriented feature engineering for parking forecasting.,,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\demand_features.py,17,FUTURE_OR_FORWARD,- forward lookups,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\demand_features.py,1360,FUTURE_OR_FORWARD,"""future_data_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\demand_features.py,1372,FUTURE_OR_FORWARD,"""forward_lookup_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\demand_features.py,1846,FUTURE_OR_FORWARD,"""future_data_used"": False,",validate_demand_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\demand_features.py,1850,FUTURE_OR_FORWARD,"""forward_lookup_used"": False,",validate_demand_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\demand_features.py,2392,FUTURE_OR_FORWARD,"""future_data_used"":",validate_demand_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\demand_features.py,2404,FUTURE_OR_FORWARD,"""forward_lookup_used"":",validate_demand_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,51,FUTURE_OR_FORWARD,future_data_used       == False,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,54,FUTURE_OR_FORWARD,forward_lookup_used    == False,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,128,ROLLING,from app.ml.features.rolling_features import (,,False,True,False,False,False,TEMPORAL_OPERATION
+features\feature_pipeline.py,787,ROLLING,config.rolling_config,transform,False,False,False,False,False,TEMPORAL_OPERATION
+features\feature_pipeline.py,1141,FUTURE_OR_FORWARD,"""future_data_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1150,FUTURE_OR_FORWARD,"""forward_lookup_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1217,FUTURE_OR_FORWARD,"""future_data_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1218,FUTURE_OR_FORWARD,"metadata[""future_data_used""],",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1223,FUTURE_OR_FORWARD,"""forward_lookup_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1224,FUTURE_OR_FORWARD,"metadata[""forward_lookup_used""],",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1472,ROLLING,result.rolling_result,transform_birmingham,False,False,False,False,False,TEMPORAL_OPERATION
+features\feature_pipeline.py,1681,FUTURE_OR_FORWARD,"""future_data_used"",",_validate_family_result,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1684,FUTURE_OR_FORWARD,"""forward_lookup_used"",",_validate_family_result,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1721,FUTURE_OR_FORWARD,"""future_data_used"",",_validate_pipeline_leakage,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,1724,FUTURE_OR_FORWARD,"""forward_lookup_used"",",_validate_pipeline_leakage,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\feature_pipeline.py,2063,FUTURE_OR_FORWARD,"""future_data_used"": False,",validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2066,FUTURE_OR_FORWARD,"""forward_lookup_used"": False,",validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2277,FUTURE_OR_FORWARD,future_data_used = bool(,validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2279,FUTURE_OR_FORWARD,"""future_data_used"",",validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2298,FUTURE_OR_FORWARD,forward_lookup_used = bool(,validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2300,FUTURE_OR_FORWARD,"""forward_lookup_used"",",validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2312,FUTURE_OR_FORWARD,if future_data_used:,validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2333,FUTURE_OR_FORWARD,if forward_lookup_used:,validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2336,FUTURE_OR_FORWARD,"""Pipeline metadata indicates forward """,validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2398,FUTURE_OR_FORWARD,"""future_data_used"":",validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2399,FUTURE_OR_FORWARD,"future_data_used,",validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2407,FUTURE_OR_FORWARD,"""forward_lookup_used"":",validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\feature_pipeline.py,2408,FUTURE_OR_FORWARD,"forward_lookup_used,",validate_feature_pipeline,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\lag_features.py,5,FUTURE_OR_FORWARD,Historical lag feature generation for parking occupancy forecasting.,,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\lag_features.py,381,FUTURE_OR_FORWARD,No forward filling is performed.,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\lag_features.py,1000,FUTURE_OR_FORWARD,"""future_data_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\lag_features.py,1009,FUTURE_OR_FORWARD,"""forward_lookup_used"":",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\lag_features.py,1227,DIFF,deltas = timestamps.diff(),_count_irregular_intervals,False,False,False,False,False,TEMPORAL_OPERATION
+features\lag_features.py,1546,FUTURE_OR_FORWARD,"""future_data_used"":",validate_lag_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\lag_features.py,1555,FUTURE_OR_FORWARD,"""forward_lookup_used"":",validate_lag_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\occupancy_features.py,938,FUTURE_OR_FORWARD,"""future_data_used"": False,",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\occupancy_features.py,967,FUTURE_OR_FORWARD,"""future_data_used"": False,",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\rolling_features.py,904,FUTURE_OR_FORWARD,"""future_data_used"": False,",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\rolling_features.py,919,FUTURE_OR_FORWARD,"""future_data_used"": False,",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\rolling_features.py,1174,FUTURE_OR_FORWARD,# In our forecasting pipeline the current occupancy is,_build_window_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\rolling_features.py,1193,ROLLING,"#     grouped[""__value""].rolling(on=""__timestamp"")",_build_window_features,False,True,False,False,False,TEMPORAL_OPERATION
+features\rolling_features.py,1195,ROLLING,# because pandas treats that as SeriesGroupBy.rolling(),_build_window_features,False,True,False,False,False,TEMPORAL_OPERATION
+features\rolling_features.py,1200,ROLLING,"#     grouped.rolling(on=""__timestamp"")",_build_window_features,False,True,False,False,False,TEMPORAL_OPERATION
+features\rolling_features.py,1203,ROLLING,rolling_object = grouped.rolling(,_build_window_features,False,True,False,False,False,TEMPORAL_OPERATION
+features\rolling_features.py,1489,ROLLING,pandas can return a MultiIndex after groupby().rolling().,_restore_grouped_result,False,False,False,False,False,TEMPORAL_OPERATION
+features\rolling_features.py,1848,FUTURE_OR_FORWARD,"""future_data_used"": False,",validate_rolling_features,False,True,True,False,False,FEATURE_FUTURE_OPERATION
+features\temporal_features.py,584,FUTURE_OR_FORWARD,"""future_data_used"": False,",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+features\temporal_features.py,601,FUTURE_OR_FORWARD,"""future_data_used"": False,",transform,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+ml_models\baseline_model.py,5,FUTURE_OR_FORWARD,Generic baseline models for SmartPark AI forecasting.,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+ml_models\baseline_model.py,9,FUTURE_OR_FORWARD,"This module provides simple, deterministic forecasting baselines that",,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+ml_models\baseline_model.py,670,FUTURE_OR_FORWARD,forecasting.,,False,False,True,False,False,FUTURE_OPERATION_REVIEW
+ml_models\baseline_model.py,876,SHIFT,predictions = combined.shift(,predict,False,False,False,False,False,TEMPORAL_OPERATION

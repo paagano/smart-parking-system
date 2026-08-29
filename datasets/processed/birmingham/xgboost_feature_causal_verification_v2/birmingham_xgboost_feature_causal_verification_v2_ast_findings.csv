@@ -1,0 +1,34 @@
+source_file,line_number,function_name,operation,expression,shift_value,negative_shift,centered_rolling,target_context,feature_context
+data\dataset_builder.py,1084,_build_horizon_targets,SHIFT,"occupancy.shift(
+                -steps
+            )",,False,False,True,False
+data\dataset_builder.py,1090,_build_horizon_targets,SHIFT,"observation_present
+            .shift(
+                -steps
+            )",,False,False,True,False
+data\dataset_builder.py,1099,_build_horizon_targets,SHIFT,"sequence_break
+            .shift(
+                -steps
+            )",,False,False,True,False
+data\dataset_builder.py,1108,_build_horizon_targets,SHIFT,"operational_gap
+            .shift(
+                -steps
+            )",,False,False,True,False
+data\dataset_builder.py,1117,_build_horizon_targets,SHIFT,"data_gap
+            .shift(
+                -steps
+            )",,False,False,True,False
+data\temporal.py,618,_build_interval_frame,SHIFT,timestamps.shift(1),1,False,False,False,False
+data\temporal_normalizer.py,1408,_assign_gap_status,SHIFT,timestamps.shift(1),1,False,False,False,False
+data\temporal_normalizer.py,1738,_assign_sequence_boundaries,SHIFT,current_status.shift(1),1,False,False,False,False
+data\temporal_normalizer.py,1412,_assign_gap_status,SHIFT,"result[
+                OBSERVATION_PRESENT_COLUMN
+            ]
+            .shift(1)",1,False,False,False,True
+features\rolling_features.py,1203,_build_window_features,ROLLING,"grouped.rolling(
+            on=""__timestamp"",
+            **rolling_kwargs,
+        )",,False,False,False,True
+ml_models\baseline_model.py,876,predict,SHIFT,"combined.shift(
+            self.lag
+        )",,False,False,False,False

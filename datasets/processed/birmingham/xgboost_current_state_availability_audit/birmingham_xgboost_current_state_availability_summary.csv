@@ -1,0 +1,5 @@
+family,prediction_time_status,feature_count
+current_state,REQUIRES_PRODUCTION_AVAILABILITY_CONFIRMATION,33
+historical_lag,SAFE_IF_GENERATED_CAUSALLY,201
+other,REQUIRES_DOCUMENTATION,6
+temporal_calendar,SAFE,56
