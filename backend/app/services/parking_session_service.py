@@ -95,7 +95,6 @@ class ParkingSessionService:
     Future support:
 
     • Vehicle Ownership
-    • Loyalty
     • ANPR
     """
 
@@ -337,6 +336,38 @@ class ParkingSessionService:
 
         return parking_session
 
+    async def get_quote(
+        self,
+        session_id: int,
+    ):
+        """
+        Calculate a live pricing quote for an active parking session.
+
+        This is a read-only pricing operation. It does not update the
+        parking session, persist calculated_amount, create a payment,
+        or complete the session.
+
+        The current server time is used as the provisional exit time so
+        the existing PricingService/Pricing Engine can calculate what
+        the customer would owe if the session ended now.
+        """
+
+        parking_session = await self.get_by_id(
+            session_id
+        )
+
+        if parking_session.status != SessionStatus.ACTIVE:
+            raise BadRequestException(
+                "Parking session is not active."
+            )
+
+        return await self.pricing_service.quote(
+            vehicle_type=parking_session.vehicle_type,
+            billing_type=parking_session.billing_type,
+            entry_time=parking_session.entry_time,
+            exit_time=utc_now(),
+        )
+
     async def get_by_session_number(
         self,
         session_number: str,
@@ -390,12 +421,22 @@ class ParkingSessionService:
 
     async def list_active(
         self,
+        customer_id: int | None = None,
     ) -> list[ParkingSession]:
         """
-        Return all active parking sessions.
+        Return active parking sessions.
+
+        When customer_id is supplied, only sessions belonging
+        to that customer are returned.
+
+        The Driver Portal supplies the authenticated customer's
+        ID. Other operational workflows may continue to call
+        this method without a customer filter where appropriate.
         """
 
-        return await self.repository.get_active_sessions()
+        return await self.repository.get_active_sessions(
+            customer_id=customer_id
+        )
 
     async def list_completed(
         self,
@@ -608,8 +649,6 @@ class ParkingSessionService:
             vehicle_type=reservation.vehicle_type,
             status=SessionStatus.ACTIVE,
             session_source=SessionSource.RESERVATION,
-            # Reservation arrivals use QR Code by default.
-            # Future versions may support RFID / ANPR.
             entry_method=EntryMethod.QR_CODE,
             entry_time=utc_now(),
             expected_exit_time=reservation.reserved_until,
@@ -872,9 +911,6 @@ class ParkingSessionService:
 
         #
         # Defensive release.
-        #
-        # If the bay somehow wasn't released,
-        # ensure it is available again.
         #
 
         await self.parking_bay_repository.release_bay(

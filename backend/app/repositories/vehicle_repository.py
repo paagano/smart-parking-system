@@ -234,3 +234,22 @@ class VehicleRepository(
         )
 
         return result.scalar_one_or_none() is not None
+
+    # ======================================================
+    # Delete Vehicle
+    # ======================================================
+
+    async def delete(
+        self,
+        vehicle: Vehicle,
+    ) -> None:
+        """
+        Delete a vehicle from persistence.
+
+        Transaction management remains the responsibility
+        of the Service layer.
+        """
+
+        await self.db.delete(
+            vehicle,
+        )

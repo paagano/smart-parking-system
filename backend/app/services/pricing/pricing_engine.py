@@ -32,6 +32,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal
 
+from app.models.enums import (
+    BillingType,
+)
+
 from app.services.pricing.calculators import (
     get_calculator,
 )
@@ -45,10 +49,11 @@ from app.services.pricing.pricing_result import (
     PricingResult,
 )
 from app.services.pricing.pricing_utils import (
+    calculate_billable_hours,
     calculate_billable_minutes,
     calculate_duration_minutes,
-    apply_maximum_daily_charge,
     apply_minimum_charge,
+    round_money,
 )
 
 from app.services.pricing.pricing_exceptions import (
@@ -128,6 +133,29 @@ class PricingEngine:
         context = self._apply_maximum_daily_charge(context)
 
         return self._build_result(context)
+
+    def calculate_current(
+        self,
+        request: PricingRequest,
+    ) -> PricingResult:
+        """
+        Calculate parking charges using the current UTC time as the
+        exit time.
+
+        This is intended for active parking sessions where the stored
+        exit time is not yet available. The existing calculate() method
+        remains unchanged for normal/completed pricing requests.
+        """
+
+        current_time = datetime.now(timezone.utc)
+
+        current_request = request.model_copy(
+            update={
+                "exit_time": current_time,
+            }
+        )
+
+        return self.calculate(current_request)
 
     # ==========================================================
     # Context
@@ -295,8 +323,30 @@ class PricingEngine:
         """
         Apply the configured maximum daily charge.
 
-        If no maximum charge exists, the current total
-        amount is retained.
+        For HOURLY billing, the maximum daily charge is a cap
+        applied independently to each rolling 24-hour parking
+        period.
+
+        Example
+        -------
+
+        If:
+
+            hourly_rate = KSh 100
+            maximum_daily_charge = KSh 1,000
+
+        then each rolling 24-hour period can contribute a
+        maximum of KSh 1,000.
+
+        Any remaining partial 24-hour period is calculated
+        using the normal hourly rate and is itself capped at
+        the configured maximum daily charge.
+
+        The rolling 24-hour periods are based on the billable
+        duration of the session.
+
+        DAILY and FLAT billing strategies are not changed by
+        this logic.
         """
 
         maximum_daily_charge = (
@@ -306,9 +356,90 @@ class PricingEngine:
         if maximum_daily_charge is None:
             return context
 
-        total_amount = apply_maximum_daily_charge(
-            amount=context.total_amount,
-            maximum_daily_charge=maximum_daily_charge,
+        # ------------------------------------------------------
+        # Maximum daily charge is specifically applied to
+        # HOURLY billing.
+        #
+        # DAILY billing already calculates charges based on
+        # billable days in DailyCalculator.
+        #
+        # FLAT billing is not affected by a daily cap.
+        # ------------------------------------------------------
+
+        if context.billing_type != BillingType.HOURLY:
+            return context
+
+        billable_minutes = context.billable_minutes
+
+        if billable_minutes <= 0:
+            return context.model_copy(
+                update={
+                    "total_amount": Decimal("0.00"),
+                }
+            )
+
+        # ------------------------------------------------------
+        # One rolling parking day = 24 hours = 1,440 minutes.
+        # ------------------------------------------------------
+
+        minutes_per_day = 24 * 60
+
+        complete_days = (
+            billable_minutes // minutes_per_day
+        )
+
+        remaining_minutes = (
+            billable_minutes % minutes_per_day
+        )
+
+        daily_cap = round_money(
+            maximum_daily_charge
+        )
+
+        # ------------------------------------------------------
+        # Every complete rolling 24-hour period contributes
+        # at most the configured maximum daily charge.
+        # ------------------------------------------------------
+
+        total_amount = (
+            Decimal(complete_days)
+            * daily_cap
+        )
+
+        # ------------------------------------------------------
+        # Calculate the remaining partial rolling 24-hour
+        # period using the normal hourly rate.
+        # ------------------------------------------------------
+
+        if remaining_minutes > 0:
+
+            hourly_rate = context.tariff.hourly_rate
+
+            if hourly_rate is None:
+                raise ValueError(
+                    "Hourly tariff must define an hourly_rate."
+                )
+
+            remaining_hours = calculate_billable_hours(
+                remaining_minutes
+            )
+
+            remaining_amount = round_money(
+                hourly_rate
+                * Decimal(remaining_hours)
+            )
+
+            # The partial rolling 24-hour period cannot exceed
+            # the configured maximum daily charge.
+            remaining_amount = min(
+                remaining_amount,
+                daily_cap,
+            )
+
+            total_amount += remaining_amount
+
+        total_amount = round_money(
+            total_amount
         )
 
         return context.model_copy(
@@ -363,5 +494,3 @@ class PricingEngine:
         return (
             f"{self.__class__.__name__}()"
         )
-
-    

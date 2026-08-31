@@ -184,6 +184,36 @@ function formatDateTime(value: string): string {
   });
 }
 
+function formatReservationDuration(totalMinutes: number): string {
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+    return "";
+  }
+
+  const minutes = Math.round(totalMinutes);
+  const days = Math.floor(minutes / (24 * 60));
+  const remainingAfterDays = minutes % (24 * 60);
+  const hours = Math.floor(remainingAfterDays / 60);
+  const remainingMinutes = remainingAfterDays % 60;
+
+  const parts: string[] = [];
+
+  if (days > 0) {
+    parts.push(`${days} ${days === 1 ? "day" : "days"}`);
+  }
+
+  if (hours > 0) {
+    parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  }
+
+  if (remainingMinutes > 0) {
+    parts.push(
+      `${remainingMinutes} ${remainingMinutes === 1 ? "minute" : "minutes"}`,
+    );
+  }
+
+  return parts.join(" ");
+}
+
 function toLocalDateTimeInputValue(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -238,6 +268,40 @@ function calculateDistanceKm(
 function formatDistance(distanceKm: number): string {
   if (distanceKm < 1) return `${Math.round(distanceKm * 1000)} m away`;
   return `${distanceKm.toFixed(1)} km away`;
+}
+
+function getApiErrorMessage(error: any): string {
+  const detail = error?.response?.data?.detail;
+
+  if (typeof detail === "string") {
+    return detail;
+  }
+
+  if (Array.isArray(detail) && detail.length > 0) {
+    return detail
+      .map((item: any) => {
+        const location = Array.isArray(item?.loc)
+          ? item.loc.filter(
+              (part: unknown) =>
+                part !== "body" && part !== "query" && part !== "path",
+            )
+          : [];
+
+        const field = location.length
+          ? String(location[location.length - 1])
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (char) => char.toUpperCase())
+          : "Reservation details";
+
+        const message =
+          typeof item?.msg === "string" ? item.msg : "Please check this value.";
+
+        return `${field}: ${message}`;
+      })
+      .join(" ");
+  }
+
+  return "The reservation could not be created. Please review your selections and try again.";
 }
 
 function normalizeKenyanPhone(value: string): string {
@@ -371,6 +435,7 @@ export default function CreateReservation() {
   const [submittingReservation, setSubmittingReservation] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [payLaterToastVisible, setPayLaterToastVisible] = useState(false);
 
   // Keep the M-PESA field aligned with the authenticated customer's
   // registered phone number when the account is loaded/restored.
@@ -627,6 +692,22 @@ export default function CreateReservation() {
     return null;
   }, [reservedFrom, reservedUntil]);
 
+  const reservationDuration = useMemo(() => {
+    if (periodValidation || !reservedFrom || !reservedUntil) {
+      return null;
+    }
+
+    const from = new Date(reservedFrom);
+    const until = new Date(reservedUntil);
+    const totalMinutes = (until.getTime() - from.getTime()) / (1000 * 60);
+
+    if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+      return null;
+    }
+
+    return formatReservationDuration(totalMinutes);
+  }, [reservedFrom, reservedUntil, periodValidation]);
+
   // ========================================================
   // Existing active reservations for selected bay
   // ========================================================
@@ -821,23 +902,31 @@ export default function CreateReservation() {
     setError(null);
 
     try {
+      const reservationPayload =
+        vehicleMode === "REGISTERED"
+          ? {
+              // Registered vehicle: send ONLY the vehicle ID.
+              // The backend derives the registration/type from the registered vehicle.
+              parking_bay_id: parkingBayId,
+              vehicle_id: registeredVehicle!.id,
+              reserved_from: localInputToIso(reservedFrom),
+              reserved_until: localInputToIso(reservedUntil),
+              notes: notes.trim() || null,
+            }
+          : {
+              // Borrowed / unregistered vehicle: do NOT send vehicle_id.
+              // The backend requires the registration and vehicle type instead.
+              parking_bay_id: parkingBayId,
+              vehicle_registration: borrowedRegistration.trim().toUpperCase(),
+              vehicle_type: borrowedVehicleType,
+              reserved_from: localInputToIso(reservedFrom),
+              reserved_until: localInputToIso(reservedUntil),
+              notes: notes.trim() || null,
+            };
+
       const response = await api.post<ReservationResponse>(
         "/parking-reservations",
-        {
-          parking_bay_id: parkingBayId,
-          vehicle_id: registeredVehicle?.id ?? null,
-          vehicle_registration:
-            vehicleMode === "BORROWED"
-              ? borrowedRegistration.trim().toUpperCase()
-              : registeredVehicle?.registration_number,
-          vehicle_type:
-            vehicleMode === "BORROWED"
-              ? borrowedVehicleType
-              : registeredVehicle?.vehicle_type,
-          reserved_from: localInputToIso(reservedFrom),
-          reserved_until: localInputToIso(reservedUntil),
-          notes: notes.trim() || null,
-        },
+        reservationPayload,
       );
 
       setCreatedReservation(response.data);
@@ -849,13 +938,7 @@ export default function CreateReservation() {
         err,
       );
 
-      const detail = err?.response?.data?.detail;
-
-      setError(
-        typeof detail === "string"
-          ? detail
-          : "The reservation could not be created. Please review your selections and try again.",
-      );
+      setError(getApiErrorMessage(err));
     } finally {
       setSubmittingReservation(false);
     }
@@ -1059,6 +1142,27 @@ export default function CreateReservation() {
     payment !== null && ["FAILED", "CANCELLED"].includes(paymentStatus);
 
   // ========================================================
+  // Pay Later
+  // ========================================================
+
+  const handlePayLater = () => {
+    setError(null);
+    setPayLaterToastVisible(true);
+
+    // Automatically continue after 10 seconds if the user does not
+    // acknowledge the notification.
+    window.setTimeout(() => {
+      setPayLaterToastVisible(false);
+      navigate("/reservations");
+    }, 10000);
+  };
+
+  const handlePayLaterAcknowledged = () => {
+    setPayLaterToastVisible(false);
+    navigate("/reservations");
+  };
+
+  // ========================================================
   // Render
   // ========================================================
 
@@ -1137,6 +1241,34 @@ export default function CreateReservation() {
         </div>
       )}
 
+      {payLaterToastVisible && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+        >
+          <div className="flex max-w-md items-start gap-3 rounded-2xl border border-amber-200 bg-white px-5 py-4 text-slate-800 shadow-2xl ring-1 ring-black/5">
+            <ShieldCheck className="mt-0.5 shrink-0 text-amber-600" size={22} />
+
+            <div className="min-w-0 flex-1">
+              <p className="font-extrabold">Reservation not yet confirmed</p>
+              <p className="mt-1 text-sm leading-5 text-slate-600">
+                Your reservation is awaiting payment. It will only be confirmed
+                after successful payment.
+              </p>
+
+              <button
+                type="button"
+                onClick={handlePayLaterAcknowledged}
+                className="mt-4 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ====================================================
           Step Content
       ==================================================== */}
@@ -1149,7 +1281,7 @@ export default function CreateReservation() {
 
           {step === 1 && (
             <StepContainer
-              title="Choose a parking facility"
+              title="Choose a Parking Facility"
               description="Select where you would like to park."
             >
               <div className="mb-5">
@@ -1333,6 +1465,29 @@ export default function CreateReservation() {
                   />
                 </Field>
               </div>
+
+              {reservationDuration && (
+                <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100">
+                      <Clock3 size={19} />
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[.14em] text-emerald-700">
+                        Duration
+                      </p>
+                      <p className="mt-0.5 text-base font-extrabold text-slate-900">
+                        {reservationDuration}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="hidden text-right text-xs font-semibold text-emerald-700 sm:block">
+                    Based on your selected reservation times
+                  </p>
+                </div>
+              )}
 
               {periodValidation && (
                 <InlineWarning>{periodValidation}</InlineWarning>
@@ -2089,6 +2244,16 @@ export default function CreateReservation() {
                         )}
                       </>
                     )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handlePayLater}
+                    disabled={processingPayment || payLaterToastVisible}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Clock3 size={17} />
+                    Pay Later
                   </button>
                 </>
               )}

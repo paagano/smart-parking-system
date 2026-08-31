@@ -267,7 +267,7 @@ class ReceiptService:
         The underlying token value is never modified in storage.
         """
 
-        return verification_token.strip().replace("-", "")
+        return verification_token.strip()
 
     @staticmethod
     def _utc_now() -> datetime:
@@ -1837,10 +1837,45 @@ class ReceiptService:
             )
         )
 
+        # The database contains the canonical token exactly as generated.
+        #
+        # The PDF may display the token with additional hyphens inserted
+        # purely for human readability. A token_urlsafe() token may also
+        # legitimately contain its own hyphens.
+        #
+        # Therefore:
+        #   1. First compare the exact token.
+        #   2. Then compare both values with formatting hyphens removed.
+        #
+        # This allows the human-readable PDF representation to verify
+        # without modifying the canonical token stored in the database.
+
+        canonical_token = (
+            receipt.verification_token.strip()
+        )
+
+        supplied_token = (
+            normalized_token.strip()
+        )
+
+        canonical_without_hyphens = (
+            canonical_token.replace("-", "")
+        )
+
+        supplied_without_hyphens = (
+            supplied_token.replace("-", "")
+        )
+
         valid = (
-            secrets.compare_digest(
-                receipt.verification_token,
-                normalized_token,
+            (
+                secrets.compare_digest(
+                    canonical_token,
+                    supplied_token,
+                )
+                or secrets.compare_digest(
+                    canonical_without_hyphens,
+                    supplied_without_hyphens,
+                )
             )
             and receipt.status
             == ReceiptStatus.AVAILABLE

@@ -164,6 +164,7 @@ def get_payment_service(
     repository: PaymentRepositoryDep,
     reservation_repository: ParkingReservationRepositoryDep,
     session_repository: ParkingSessionRepositoryDep,
+    pricing_service: PricingServiceDep,
     wallet_service: WalletServiceDep,
     notification_service: NotificationServiceDep,
     receipt_service: ReceiptServiceDep,
@@ -174,6 +175,10 @@ def get_payment_service(
     NotificationService is injected so the Payment Service
     can create notifications for relevant payment lifecycle
     events.
+
+    PricingService is injected so the Payment Service can
+    calculate/validate the current parking amount before
+    processing a session payment.
     """
 
     return PaymentService(
@@ -181,10 +186,12 @@ def get_payment_service(
         repository=repository,
         reservation_repository=reservation_repository,
         session_repository=session_repository,
+        pricing_service=pricing_service,
         wallet_service=wallet_service,
         notification_service=notification_service,
         receipt_service=receipt_service,
     )
+
 
 # ==========================================================
 # Receipt Service

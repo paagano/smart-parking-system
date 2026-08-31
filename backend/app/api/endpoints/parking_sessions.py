@@ -12,19 +12,27 @@ from fastapi import (
     status,
 )
 
+from app.api.dependencies.auth import (
+    get_current_active_user,
+)
+
 from app.api.dependencies.services import (
     get_parking_session_service,
 )
+
 from app.schemas.parking_session import (
     ParkingSessionCheckout,
     ParkingSessionCreate,
     ParkingSessionListResponse,
+    ParkingSessionQuoteResponse,
     ParkingSessionResponse,
     ParkingSessionUpdate,
 )
+
 from app.services.parking_session_service import (
     ParkingSessionService,
 )
+
 
 router = APIRouter(
     prefix="/parking-sessions",
@@ -62,6 +70,7 @@ async def check_in_vehicle(
 # Vehicle Check-Out
 # ==========================================================
 
+
 @router.post(
     "/check-out",
     response_model=ParkingSessionResponse,
@@ -89,21 +98,31 @@ async def check_out_vehicle(
 # Read Operations
 # ==========================================================
 
+
 @router.get(
     "",
     response_model=ParkingSessionListResponse,
     summary="List Active Parking Sessions",
 )
 async def list_active_sessions(
+    current_user=Depends(
+        get_current_active_user,
+    ),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
 ):
     """
-    List all active parking sessions.
+    List active parking sessions belonging only to
+    the currently authenticated customer.
+
+    The customer ID is obtained from the authenticated
+    user rather than being supplied by the client.
     """
 
-    items = await service.list_active()
+    items = await service.list_active(
+        customer_id=current_user.id,
+    )
 
     return ParkingSessionListResponse(
         total=len(items),
@@ -203,6 +222,35 @@ async def get_by_session_number(
 
     return await service.get_by_session_number(
         session_number
+    )
+
+
+# ==========================================================
+# Current Parking Session Quote
+# ==========================================================
+
+
+@router.get(
+    "/{session_id}/quote",
+    response_model=ParkingSessionQuoteResponse,
+    summary="Get Current Parking Session Quote",
+)
+async def get_parking_session_quote(
+    session_id: int,
+    service: ParkingSessionService = Depends(
+        get_parking_session_service,
+    ),
+):
+    """
+    Calculate the current pricing quote for an active
+    parking session.
+
+    This is a read-only pricing operation. It does not
+    complete the session or persist the calculated amount.
+    """
+
+    return await service.get_quote(
+        session_id
     )
 
 

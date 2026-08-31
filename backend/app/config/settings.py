@@ -91,7 +91,7 @@ class Settings(BaseSettings):
     # Storage (Dual Storage - use 'local' for development, 'supabase' for production)
     # ===============================================================================
 
-    STORAGE_BACKEND: str = "local"
+    STORAGE_BACKEND: str = "supabase"
     LOCAL_STORAGE_PATH: str = "storage"
 
     SUPABASE_URL: str = ""

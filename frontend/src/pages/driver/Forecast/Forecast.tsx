@@ -1067,12 +1067,12 @@ export default function Forecast() {
     }
 
     /*
-    * IMPORTANT:
-    *
-    * We deliberately use window.location instead of
-    * react-router-dom so this page does not require the
-    * react-router-dom package.
-    */
+     * IMPORTANT:
+     *
+     * We deliberately use window.location instead of
+     * react-router-dom so this page does not require the
+     * react-router-dom package.
+     */
 
     window.location.assign("/reservations/create");
   };
@@ -1258,8 +1258,8 @@ export default function Forecast() {
         title="Forecast location"
         sub="Search and choose the parking facility for the AI prediction"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          <div className="relative min-w-0 flex-1">
             <label
               htmlFor="forecast-facility-search"
               className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400"
@@ -1496,41 +1496,42 @@ export default function Forecast() {
           </div>
 
           {/* ==================================================
-              Generate Forecast
+              Forecast Actions
           ================================================== */}
 
-          <button
-            type="button"
-            onClick={() => void generateForecast()}
-            disabled={selectedFacilityId === "" || generating}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 text-sm font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {generating ? (
-              <>
-                <RefreshCw size={17} className="animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles size={17} />
-                Generate Forecast
-              </>
-            )}
-          </button>
+          <div className="flex shrink-0 items-center gap-3 lg:pt-[1.75rem]">
+            <button
+              type="button"
+              onClick={() => void generateForecast()}
+              disabled={selectedFacilityId === "" || generating}
+              className="inline-flex min-h-12 min-w-[196px] items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 text-sm font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {generating ? (
+                <>
+                  <RefreshCw size={17} className="animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles size={17} />
+                  Generate Forecast
+                </>
+              )}
+            </button>
 
-          {/* ==================================================
+            <button
+              type="button"
+              onClick={() => void handleRefresh()}
+              disabled={refreshing || generating}
+              className="inline-flex min-h-12 min-w-[120px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw
+                size={17}
+                className={refreshing ? "animate-spin" : ""}
+              />
               Refresh
-          ================================================== */}
-
-          <button
-            type="button"
-            onClick={() => void handleRefresh()}
-            disabled={refreshing || generating}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <RefreshCw size={17} className={refreshing ? "animate-spin" : ""} />
-            Refresh
-          </button>
+            </button>
+          </div>
         </div>
       </Card>
 
@@ -1940,8 +1941,8 @@ export default function Forecast() {
 
       {forecast && selectedFacility && (
         <Card
-          title="Take action"
-          sub={`Continue with ${selectedFacility.name} without leaving the forecast screen`}
+          title="Take Action"
+          sub={`Reserve a parking space at ${selectedFacility.name}`}
         >
           <div className="rounded-3xl bg-slate-50 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

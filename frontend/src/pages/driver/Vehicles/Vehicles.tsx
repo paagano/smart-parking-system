@@ -12,6 +12,7 @@ import {
   Star,
   ToggleLeft,
   ToggleRight,
+  Trash2,
   XCircle,
 } from "lucide-react";
 
@@ -484,6 +485,71 @@ export default function Vehicles() {
 
       setError(
         extractErrorMessage(err) || "Unable to deactivate this vehicle.",
+      );
+    } finally {
+      setProcessingVehicleId(null);
+    }
+  };
+
+  // ========================================================
+  // Delete Vehicle
+  // ========================================================
+
+  /**
+   * Remove a vehicle from the customer's vehicle profile.
+   *
+   * This is deliberately different from deactivation:
+   *
+   * - Deactivate = the customer still owns the vehicle, but it is
+   *   temporarily unavailable for new reservations (for example,
+   *   because it is broken down or under repair).
+   * - Delete = the customer no longer owns the vehicle, for example
+   *   because it has been sold or ownership has been transferred.
+   *
+   * The backend is responsible for referential-integrity rules for
+   * historical reservations and parking sessions.
+   *
+   * Expected backend endpoint:
+   *   DELETE /vehicles/{vehicle_id}
+   */
+  const deleteVehicle = async (vehicle: Vehicle) => {
+    if (!user?.id) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete vehicle ${vehicle.registration_number} from your profile?\n\n` +
+        `Use Delete only if you no longer own this vehicle, for example because ` +
+        `you sold it or permanently transferred ownership.\n\n` +
+        `If the vehicle is temporarily unavailable, such as being broken down ` +
+        `or under repair, use Deactivate instead.\n\n` +
+        `This action cannot be undone from the vehicle management screen.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setProcessingVehicleId(vehicle.id);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await api.delete(`/vehicles/${vehicle.id}`);
+
+      setVehicles((current) =>
+        current.filter((item) => item.id !== vehicle.id),
+      );
+
+      setSuccessMessage(
+        `${vehicle.registration_number} has been removed from your vehicle profile.`,
+      );
+    } catch (err) {
+      console.error("[SmartPark Vehicles] Failed to delete vehicle:", err);
+
+      setError(
+        extractErrorMessage(err) ||
+          "Unable to remove this vehicle from your profile. The vehicle may still be referenced by an active parking transaction or reservation.",
       );
     } finally {
       setProcessingVehicleId(null);
@@ -1110,6 +1176,25 @@ export default function Vehicles() {
                         Activate
                       </button>
                     )}
+
+                    {/* ----------------------------------------
+                          DELETE VEHICLE
+                        ---------------------------------------- */}
+
+                    <button
+                      type="button"
+                      onClick={() => void deleteVehicle(vehicle)}
+                      disabled={isProcessing}
+                      title="Remove this vehicle because you no longer own it"
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:border-red-400 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isProcessing ? (
+                        <RefreshCw size={15} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={15} />
+                      )}
+                      Delete Vehicle
+                    </button>
                   </div>
 
                   {/* ========================================
@@ -1141,13 +1226,15 @@ export default function Vehicles() {
 
               <div>
                 <p className="text-sm font-extrabold text-slate-800">
-                  Vehicle management
+                  Vehicle Management
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-600">
                   Your default vehicle is automatically preferred when creating
-                  a new parking reservation. Inactive vehicles remain in your
-                  history but are not available for new reservations.
+                  a new parking reservation. Deactivate a vehicle when you still
+                  own it but it is temporarily unavailable, such as when it is
+                  under repair. Use Delete Vehicle only when you no longer own
+                  it.
                 </p>
               </div>
             </div>

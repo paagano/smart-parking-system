@@ -71,6 +71,7 @@ from app.services.receipt_service import ReceiptService
 from app.services.payment_providers.factory import PaymentProviderFactory
 from app.services.wallet_service import WalletService
 from app.services.loyalty_service import LoyaltyService
+from app.services.pricing_service import PricingService
 
 
 # ==========================================================
@@ -104,6 +105,7 @@ class PaymentService:
         repository: PaymentRepository,
         reservation_repository: ParkingReservationRepository,
         session_repository: ParkingSessionRepository,
+        pricing_service: PricingService,
         wallet_service: WalletService,
         notification_service: NotificationService,
         receipt_service: ReceiptService,
@@ -112,6 +114,7 @@ class PaymentService:
         self.repository = repository
         self.reservation_repository = reservation_repository
         self.session_repository = session_repository
+        self.pricing_service = pricing_service
         #
         # Wallet integration.
         #
@@ -732,15 +735,32 @@ class PaymentService:
             raise ValueError("Parking session has already been paid.")
 
         #
-        # Only completed sessions may be paid.
-        #
-        if parking_session.status != SessionStatus.COMPLETED:
-            raise ValueError("Only COMPLETED parking sessions can be paid.")
+        # Active parking sessions may be paid out before physical exit.
+        # Successful payment will transition the session to COMPLETED;
+        # the IoT exit scanner remains responsible for confirming the
+        # vehicle has physically left the premises.
 
         #
-        # Validate payment amount.
+        # Recalculate the parking charge at the moment payment is requested.
+        # For an active session, use the current time so the payable amount
+        # reflects the latest elapsed parking duration. For a completed
+        # session, retain the recorded exit time as the pricing endpoint
+        # should use the actual completed parking duration.
         #
-        expected_amount = parking_session.calculated_amount.quantize(
+        pricing_exit_time = (
+            parking_session.exit_time
+            if parking_session.exit_time is not None
+            else datetime.now(timezone.utc)
+        )
+
+        pricing_result = await self.pricing_service.calculate_for_session(
+            vehicle_type=parking_session.vehicle_type,
+            billing_type=parking_session.billing_type,
+            entry_time=parking_session.entry_time,
+            exit_time=pricing_exit_time,
+        )
+
+        expected_amount = pricing_result.total_amount.quantize(
             Decimal("0.01"),
         )
         received_amount = payment.total_amount.quantize(Decimal("0.01"))
@@ -753,6 +773,21 @@ class PaymentService:
         )
 
         try:
+            #
+            # Stamp the authoritative pricing calculation used for this
+            # payment request onto the parking session.
+            #
+            # This is intentionally done after amount validation and inside
+            # the existing transaction boundary. It ensures that the
+            # calculated amount and duration used to determine the payable
+            # amount are persisted without changing the existing payment
+            # workflow.
+            #
+            parking_session.calculated_amount = expected_amount
+            parking_session.duration_minutes = pricing_result.duration_minutes
+
+            await self.session_repository.save(parking_session)
+
             #
             # Create payment transaction.
             #
@@ -1397,6 +1432,7 @@ class PaymentService:
         if parking_session is None:
             raise ValueError("Parking session not found.")
 
+        parking_session.status = SessionStatus.COMPLETED
         parking_session.payment_status = SessionPaymentStatus.PAID
         parking_session.paid_amount = payment.total_amount
         parking_session.last_payment_transaction = payment

@@ -107,6 +107,7 @@ async def get_my_vehicles(
         total=len(vehicles),
     )
 
+
 # ==========================================================
 # Get Vehicle By Registration Number
 # ==========================================================
@@ -194,7 +195,6 @@ async def get_vehicle(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
-
 
 
 # ==========================================================
@@ -375,6 +375,59 @@ async def deactivate_vehicle(
         )
 
         return vehicle
+
+    except ValueError as exc:
+        message = str(exc)
+
+        if "not found" in message.lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=message,
+            ) from exc
+
+        if "not authorized" in message.lower():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=message,
+            ) from exc
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message,
+        ) from exc
+
+
+# ==========================================================
+# Delete Vehicle
+# ==========================================================
+
+@router.delete(
+    "/{vehicle_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_vehicle(
+    vehicle_id: int,
+    current_user: Annotated[
+        User,
+        Depends(get_current_active_user),
+    ],
+    service: VehicleServiceDep,
+) -> None:
+    """
+    Permanently delete an authenticated customer's vehicle.
+
+    Use this when the customer no longer owns the vehicle,
+    for example when the vehicle has been sold or transferred.
+
+    This is different from deactivation, which keeps the
+    vehicle record for historical purposes.
+    """
+
+    try:
+        await service.delete_vehicle(
+            vehicle_id=vehicle_id,
+            customer_id=current_user.id,
+        )
 
     except ValueError as exc:
         message = str(exc)

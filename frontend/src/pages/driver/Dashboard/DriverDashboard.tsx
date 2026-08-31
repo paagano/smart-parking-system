@@ -539,7 +539,7 @@ export default function DriverDashboard() {
           )}
         </Card>
 
-        <Card title="AI prediction" sub="Production forecasting service">
+        <Card title="AI Prediction" sub="Production forecasting service">
           <div className="rounded-2xl bg-emerald-50 p-6">
             <BrainCircuit className="text-emerald-600" size={28} />
 

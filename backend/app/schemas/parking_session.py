@@ -86,11 +86,11 @@ class ParkingSessionBase(BaseModel):
     )
 
     billing_type: BillingType = Field(
-    ...,
-    description=(
-        "Billing strategy used to calculate parking charges. "
-        "Supported values: HOURLY, DAILY, FLAT."
-    ),
+        ...,
+        description=(
+            "Billing strategy used to calculate parking charges. "
+            "Supported values: HOURLY, DAILY, FLAT."
+        ),
     )
 
     session_source: SessionSource
@@ -185,6 +185,7 @@ class ParkingSessionCreate(ParkingSessionBase):
     """Schema used when creating a parking session."""
 
     pass
+
 
 # ==========================================================
 # Update
@@ -284,6 +285,44 @@ class ParkingSessionResponse(BaseModel):
 
 
 # ==========================================================
+# Quote Response
+# ==========================================================
+class ParkingSessionQuoteResponse(BaseModel):
+    """
+    Live pricing quote for an active parking session.
+
+    This is a read-only calculation and is not persisted
+    to the parking session.
+    """
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+    tariff_id: int
+
+    tariff_name: str
+
+    billing_type: BillingType
+
+    duration_minutes: int
+
+    billable_minutes: int
+
+    grace_period_applied: bool
+
+    base_amount: Decimal
+
+    discount_amount: Decimal = Decimal("0.00")
+
+    tax_amount: Decimal = Decimal("0.00")
+
+    total_amount: Decimal
+
+    calculated_at: datetime
+
+
+# ==========================================================
 # List Response
 # ==========================================================
 class ParkingSessionListResponse(BaseModel):
@@ -297,6 +336,10 @@ class ParkingSessionListResponse(BaseModel):
 
     total: int
 
+
+# ==========================================================
+# Checkout
+# ==========================================================
 class ParkingSessionCheckout(BaseModel):
     """
     Vehicle checkout request.

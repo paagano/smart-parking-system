@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   AlertCircle,
@@ -27,6 +22,8 @@ import {
 
 import { useAuth } from "../../../auth/AuthContext";
 import { api } from "../../../api";
+import { useLocation } from "react-router";
+import SessionPayment from "./SessionPayment";
 
 // ==========================================================
 // Types
@@ -108,154 +105,85 @@ const PAYMENT_STATUSES = [
   "REVERSED",
 ];
 
-const PAYMENT_METHODS = [
-  "ALL",
-  "WALLET",
-  "MPESA",
-  "CARD",
-  "BANK",
-  "CASH",
-];
+const PAYMENT_METHODS = ["ALL", "WALLET", "MPESA", "CARD", "BANK", "CASH"];
 
 // ==========================================================
 // Helpers
 // ==========================================================
 
 function money(
-  amount:
-    | number
-    | string
-    | null
-    | undefined,
+  amount: number | string | null | undefined,
   currency = "KES",
 ): string {
-  const value = Number(
-    amount ?? 0,
-  );
+  const value = Number(amount ?? 0);
 
   if (!Number.isFinite(value)) {
     return `${currency} 0.00`;
   }
 
   try {
-    return new Intl.NumberFormat(
-      "en-KE",
-      {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      },
-    ).format(value);
+    return new Intl.NumberFormat("en-KE", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
   } catch {
     return `${currency} ${value.toFixed(2)}`;
   }
 }
 
-function dateTime(
-  value:
-    | string
-    | null
-    | undefined,
-): string {
+function dateTime(value: string | null | undefined): string {
   if (!value) {
     return "—";
   }
 
   const date = new Date(value);
 
-  if (
-    Number.isNaN(
-      date.getTime(),
-    )
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return "—";
   }
 
-  return new Intl.DateTimeFormat(
-    "en-KE",
-    {
-      dateStyle: "medium",
-      timeStyle: "short",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-KE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
 
-function displayText(
-  value:
-    | string
-    | null
-    | undefined,
-): string {
+function displayText(value: string | null | undefined): string {
   if (!value) {
     return "—";
   }
 
   return String(value)
     .replace(/_/g, " ")
-    .replace(
-      /\b\w/g,
-      (letter) =>
-        letter.toUpperCase(),
-    );
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function statusLabel(
-  value:
-    | string
-    | null
-    | undefined,
-): string {
-  return displayText(
-    value ?? "UNKNOWN",
-  );
+function statusLabel(value: string | null | undefined): string {
+  return displayText(value ?? "UNKNOWN");
 }
 
-function extractError(
-  error: any,
-): string {
-  const detail =
-    error?.response?.data
-      ?.detail;
+function extractError(error: any): string {
+  const detail = error?.response?.data?.detail;
 
-  if (
-    typeof detail ===
-    "string"
-  ) {
+  if (typeof detail === "string") {
     return detail;
   }
 
-  if (
-    Array.isArray(detail)
-  ) {
-    return detail
-      .map(
-        (item: any) =>
-          item?.msg ??
-          String(item),
-      )
-      .join(", ");
+  if (Array.isArray(detail)) {
+    return detail.map((item: any) => item?.msg ?? String(item)).join(", ");
   }
 
-  if (
-    typeof error?.response
-      ?.data?.message ===
-    "string"
-  ) {
-    return error.response.data
-      .message;
+  if (typeof error?.response?.data?.message === "string") {
+    return error.response.data.message;
   }
 
-  if (
-    typeof error?.message ===
-    "string"
-  ) {
+  if (typeof error?.message === "string") {
     return error.message;
   }
 
-  switch (
-    error?.response?.status
-  ) {
+  switch (error?.response?.status) {
     case 401:
       return "Your session has expired. Please sign in again.";
 
@@ -273,109 +201,56 @@ function extractError(
   }
 }
 
-function isSuccessful(
-  payment: Payment,
-): boolean {
+function isSuccessful(payment: Payment): boolean {
+  return String(payment.status ?? "").toUpperCase() === "SUCCESSFUL";
+}
+
+function isRefund(payment: Payment): boolean {
+  const status = String(payment.status ?? "").toUpperCase();
+
+  const purpose = String(payment.payment_purpose ?? "").toUpperCase();
+
+  const type = String(payment.payment_type ?? "").toUpperCase();
+
   return (
-    String(
-      payment.status ??
-        "",
-    ).toUpperCase() ===
-    "SUCCESSFUL"
+    status.includes("REFUND") ||
+    purpose.includes("REFUND") ||
+    type.includes("REFUND")
   );
 }
 
-function isRefund(
-  payment: Payment,
-): boolean {
-  const status =
-    String(
-      payment.status ??
-        "",
-    ).toUpperCase();
-
-  const purpose =
-    String(
-      payment.payment_purpose ??
-        "",
-    ).toUpperCase();
-
-  const type =
-    String(
-      payment.payment_type ??
-        "",
-    ).toUpperCase();
-
-  return (
-    status.includes(
-      "REFUND",
-    ) ||
-    purpose.includes(
-      "REFUND",
-    ) ||
-    type.includes(
-      "REFUND",
-    )
-  );
-}
-
-function paymentIsCredit(
-  payment: Payment,
-): boolean {
+function paymentIsCredit(payment: Payment): boolean {
   if (isRefund(payment)) {
     return true;
   }
 
-  const purpose =
-    String(
-      payment.payment_purpose ??
-        "",
-    ).toUpperCase();
+  const purpose = String(payment.payment_purpose ?? "").toUpperCase();
 
-  const type =
-    String(
-      payment.payment_type ??
-        "",
-    ).toUpperCase();
+  const type = String(payment.payment_type ?? "").toUpperCase();
 
   return (
-    purpose.includes(
-      "TOP_UP",
-    ) ||
-    purpose.includes(
-      "CREDIT",
-    ) ||
-    type.includes(
-      "TOP_UP",
-    )
+    purpose.includes("TOP_UP") ||
+    purpose.includes("CREDIT") ||
+    type.includes("TOP_UP")
   );
 }
 
-function paymentTitle(
-  payment: Payment,
-): string {
+function paymentTitle(payment: Payment): string {
   if (isRefund(payment)) {
     return "Payment Refund";
   }
 
-  const purpose =
-    payment.payment_purpose;
+  const purpose = payment.payment_purpose;
 
   if (purpose) {
-    return displayText(
-      purpose,
-    );
+    return displayText(purpose);
   }
 
-  if (
-    payment.parking_session_id
-  ) {
+  if (payment.parking_session_id) {
     return "Parking Session Payment";
   }
 
-  if (
-    payment.reservation_id
-  ) {
+  if (payment.reservation_id) {
     return "Reservation Payment";
   }
 
@@ -386,195 +261,117 @@ function paymentTitle(
 // Component
 // ==========================================================
 
-export default function Payments() {
-  const { user } =
-    useAuth();
+function PaymentsHistory() {
+  const { user } = useAuth();
 
   // ========================================================
   // Data State
   // ========================================================
 
-  const [payments, setPayments] =
-    useState<Payment[]>(
-      [],
-    );
+  const [payments, setPayments] = useState<Payment[]>([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [
-    refreshing,
-    setRefreshing,
-  ] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [error, setError] =
-    useState<string | null>(
-      null,
-    );
+  const [error, setError] = useState<string | null>(null);
 
-  const [
-    selectedPayment,
-    setSelectedPayment,
-  ] =
-    useState<Payment | null>(
-      null,
-    );
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
   // ========================================================
   // Search / Filter State
   // ========================================================
 
-  const [
-    searchTerm,
-    setSearchTerm,
-  ] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const [
-    statusFilter,
-    setStatusFilter,
-  ] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
-  const [
-    methodFilter,
-    setMethodFilter,
-  ] = useState("ALL");
+  const [methodFilter, setMethodFilter] = useState("ALL");
 
-  const [
-    currentPage,
-    setCurrentPage,
-  ] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // ========================================================
   // Date Filter
   // ========================================================
 
-  const [
-    dateFrom,
-    setDateFrom,
-  ] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
 
-  const [
-    dateTo,
-    setDateTo,
-  ] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   // ========================================================
   // Receipt Search
   // ========================================================
 
-  const [
-    receiptSearch,
-    setReceiptSearch,
-  ] = useState("");
+  const [receiptSearch, setReceiptSearch] = useState("");
 
-  const [
-    receiptLoading,
-    setReceiptLoading,
-  ] = useState(false);
+  const [receiptLoading, setReceiptLoading] = useState(false);
 
-  const [
-    receiptError,
-    setReceiptError,
-  ] = useState<string | null>(
-    null,
-  );
+  const [receiptError, setReceiptError] = useState<string | null>(null);
 
   // ========================================================
   // Load Payments
   // ========================================================
 
-  const loadPayments =
-    useCallback(
-      async (
-        manualRefresh = false,
-      ) => {
-        if (!user?.id) {
-          setPayments([]);
-          setLoading(false);
-          return;
-        }
+  const loadPayments = useCallback(
+    async (manualRefresh = false) => {
+      if (!user?.id) {
+        setPayments([]);
+        setLoading(false);
+        return;
+      }
 
-        if (manualRefresh) {
-          setRefreshing(true);
+      if (manualRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      setError(null);
+
+      try {
+        /*
+         * The backend exposes:
+         *
+         * GET /payments/customer/{customer_id}
+         *
+         * with limit and offset.
+         *
+         * We deliberately request a sufficiently large
+         * customer history and perform presentation-level
+         * filtering in this page.
+         */
+        const response = await api.get<Payment[]>(
+          `/payments/customer/${user.id}`,
+          {
+            params: {
+              limit: 500,
+              offset: 0,
+            },
+          },
+        );
+
+        const data = response.data;
+
+        if (Array.isArray(data)) {
+          setPayments(data);
+        } else if (Array.isArray((data as any)?.items)) {
+          setPayments((data as any).items);
+        } else if (Array.isArray((data as any)?.payments)) {
+          setPayments((data as any).payments);
         } else {
-          setLoading(true);
+          setPayments([]);
         }
+      } catch (err) {
+        console.error("[SmartPark Payments] Failed to load payments:", err);
 
-        setError(null);
-
-        try {
-          /*
-           * The backend exposes:
-           *
-           * GET /payments/customer/{customer_id}
-           *
-           * with limit and offset.
-           *
-           * We deliberately request a sufficiently large
-           * customer history and perform presentation-level
-           * filtering in this page.
-           */
-          const response =
-            await api.get<
-              Payment[]
-            >(
-              `/payments/customer/${user.id}`,
-              {
-                params: {
-                  limit: 500,
-                  offset: 0,
-                },
-              },
-            );
-
-          const data =
-            response.data;
-
-          if (
-            Array.isArray(data)
-          ) {
-            setPayments(data);
-          } else if (
-            Array.isArray(
-              (data as any)
-                ?.items,
-            )
-          ) {
-            setPayments(
-              (data as any)
-                .items,
-            );
-          } else if (
-            Array.isArray(
-              (data as any)
-                ?.payments,
-            )
-          ) {
-            setPayments(
-              (data as any)
-                .payments,
-            );
-          } else {
-            setPayments([]);
-          }
-        } catch (err) {
-          console.error(
-            "[SmartPark Payments] Failed to load payments:",
-            err,
-          );
-
-          setError(
-            extractError(
-              err,
-            ),
-          );
-        } finally {
-          setLoading(false);
-          setRefreshing(false);
-        }
-      },
-      [user?.id],
-    );
+        setError(extractError(err));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user?.id],
+  );
 
   // ========================================================
   // Initial Load
@@ -588,364 +385,207 @@ export default function Payments() {
   // Filter Payments
   // ========================================================
 
-  const filteredPayments =
-    useMemo(() => {
-      const search =
-        searchTerm
-          .trim()
-          .toLowerCase();
+  const filteredPayments = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
 
-      return payments
-        .filter((payment) => {
-          if (
-            statusFilter !==
-              "ALL" &&
-            String(
-              payment.status ??
-                "",
-            ).toUpperCase() !==
-              statusFilter
-          ) {
+    return payments
+      .filter((payment) => {
+        if (
+          statusFilter !== "ALL" &&
+          String(payment.status ?? "").toUpperCase() !== statusFilter
+        ) {
+          return false;
+        }
+
+        if (
+          methodFilter !== "ALL" &&
+          String(payment.payment_method ?? "").toUpperCase() !== methodFilter
+        ) {
+          return false;
+        }
+
+        if (search) {
+          const searchable = [
+            payment.transaction_number,
+            payment.receipt_number,
+            payment.provider_transaction_id,
+            payment.provider_receipt_number,
+            payment.payment_method,
+            payment.payment_provider,
+            payment.payment_purpose,
+            payment.payment_type,
+            payment.parking_session_id
+              ? String(payment.parking_session_id)
+              : "",
+            payment.reservation_id ? String(payment.reservation_id) : "",
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+          if (!searchable.includes(search)) {
             return false;
           }
+        }
 
-          if (
-            methodFilter !==
-              "ALL" &&
-            String(
-              payment.payment_method ??
-                "",
-            ).toUpperCase() !==
-              methodFilter
-          ) {
+        const timestamp = payment.paid_at ?? payment.created_at;
+
+        if (dateFrom && timestamp) {
+          const start = new Date(`${dateFrom}T00:00:00`);
+
+          const paymentDate = new Date(timestamp);
+
+          if (paymentDate < start) {
             return false;
           }
+        }
 
-          if (search) {
-            const searchable =
-              [
-                payment.transaction_number,
-                payment.receipt_number,
-                payment.provider_transaction_id,
-                payment.provider_receipt_number,
-                payment.payment_method,
-                payment.payment_provider,
-                payment.payment_purpose,
-                payment.payment_type,
-                payment.parking_session_id
-                  ? String(
-                      payment.parking_session_id,
-                    )
-                  : "",
-                payment.reservation_id
-                  ? String(
-                      payment.reservation_id,
-                    )
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
+        if (dateTo && timestamp) {
+          const end = new Date(`${dateTo}T23:59:59.999`);
 
-            if (
-              !searchable.includes(
-                search,
-              )
-            ) {
-              return false;
-            }
+          const paymentDate = new Date(timestamp);
+
+          if (paymentDate > end) {
+            return false;
           }
+        }
 
-          const timestamp =
-            payment.paid_at ??
-            payment.created_at;
+        return true;
+      })
+      .sort((a, b) => {
+        const first = new Date(a.paid_at ?? a.created_at ?? "").getTime();
 
-          if (
-            dateFrom &&
-            timestamp
-          ) {
-            const start =
-              new Date(
-                `${dateFrom}T00:00:00`,
-              );
+        const second = new Date(b.paid_at ?? b.created_at ?? "").getTime();
 
-            const paymentDate =
-              new Date(
-                timestamp,
-              );
-
-            if (
-              paymentDate <
-              start
-            ) {
-              return false;
-            }
-          }
-
-          if (
-            dateTo &&
-            timestamp
-          ) {
-            const end =
-              new Date(
-                `${dateTo}T23:59:59.999`,
-              );
-
-            const paymentDate =
-              new Date(
-                timestamp,
-              );
-
-            if (
-              paymentDate >
-              end
-            ) {
-              return false;
-            }
-          }
-
-          return true;
-        })
-        .sort(
-          (a, b) => {
-            const first =
-              new Date(
-                a.paid_at ??
-                  a.created_at ??
-                  "",
-              ).getTime();
-
-            const second =
-              new Date(
-                b.paid_at ??
-                  b.created_at ??
-                  "",
-              ).getTime();
-
-            return (
-              second - first
-            );
-          },
-        );
-    }, [
-      payments,
-      searchTerm,
-      statusFilter,
-      methodFilter,
-      dateFrom,
-      dateTo,
-    ]);
+        return second - first;
+      });
+  }, [payments, searchTerm, statusFilter, methodFilter, dateFrom, dateTo]);
 
   // ========================================================
   // Pagination
   // ========================================================
 
-  const totalPages =
-    Math.max(
-      1,
-      Math.ceil(
-        filteredPayments.length /
-          PAGE_SIZE,
-      ),
-    );
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredPayments.length / PAGE_SIZE),
+  );
 
-  const safePage =
-    Math.min(
-      currentPage,
-      totalPages,
-    );
+  const safePage = Math.min(currentPage, totalPages);
 
-  const paginatedPayments =
-    filteredPayments.slice(
-      (safePage - 1) *
-        PAGE_SIZE,
-      safePage *
-        PAGE_SIZE,
-    );
+  const paginatedPayments = filteredPayments.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
 
   // ========================================================
   // Statistics
   // ========================================================
 
-  const statistics =
-    useMemo<PaymentStats>(() => {
-      const successful =
-        payments.filter(
-          isSuccessful,
-        );
+  const statistics = useMemo<PaymentStats>(() => {
+    const successful = payments.filter(isSuccessful);
 
-      const pending =
-        payments.filter(
-          (payment) => {
-            const status =
-              String(
-                payment.status ??
-                  "",
-              ).toUpperCase();
+    const pending = payments.filter((payment) => {
+      const status = String(payment.status ?? "").toUpperCase();
 
-            return [
-              "PENDING",
-              "PROCESSING",
-            ].includes(status);
-          },
-        );
+      return ["PENDING", "PROCESSING"].includes(status);
+    });
 
-      const failed =
-        payments.filter(
-          (payment) => {
-            const status =
-              String(
-                payment.status ??
-                  "",
-              ).toUpperCase();
+    const failed = payments.filter((payment) => {
+      const status = String(payment.status ?? "").toUpperCase();
 
-            return [
-              "FAILED",
-              "CANCELLED",
-            ].includes(status);
-          },
-        );
+      return ["FAILED", "CANCELLED"].includes(status);
+    });
 
-      const refunded =
-        payments.filter(
-          isRefund,
-        );
+    const refunded = payments.filter(isRefund);
 
-      const totalAmount =
-        successful.reduce(
-          (
-            total,
-            payment,
-          ) =>
-            total +
-            Number(
-              payment.total_amount ??
-                0,
-            ),
-          0,
-        );
+    const totalAmount = successful.reduce(
+      (total, payment) => total + Number(payment.total_amount ?? 0),
+      0,
+    );
 
-      return {
-        total:
-          payments.length,
-        successful:
-          successful.length,
-        pending:
-          pending.length,
-        failed:
-          failed.length,
-        refunded:
-          refunded.length,
-        totalAmount,
-      };
-    }, [payments]);
+    return {
+      total: payments.length,
+      successful: successful.length,
+      pending: pending.length,
+      failed: failed.length,
+      refunded: refunded.length,
+      totalAmount,
+    };
+  }, [payments]);
 
   // ========================================================
   // Reset Filters
   // ========================================================
 
-  const resetFilters =
-    () => {
-      setSearchTerm("");
-      setStatusFilter("ALL");
-      setMethodFilter("ALL");
-      setDateFrom("");
-      setDateTo("");
-      setCurrentPage(1);
-    };
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("ALL");
+    setMethodFilter("ALL");
+    setDateFrom("");
+    setDateTo("");
+    setCurrentPage(1);
+  };
 
   // ========================================================
   // Receipt Lookup
   // ========================================================
 
-  const searchReceipt =
-    async () => {
-      const receipt =
-        receiptSearch.trim();
+  const searchReceipt = async () => {
+    const receipt = receiptSearch.trim();
 
-      if (!receipt) {
-        setReceiptError(
-          "Enter a receipt number.",
-        );
-        return;
-      }
+    if (!receipt) {
+      setReceiptError("Enter a receipt number.");
+      return;
+    }
 
-      setReceiptLoading(
-        true,
+    setReceiptLoading(true);
+    setReceiptError(null);
+
+    try {
+      const response = await api.get<Payment>(
+        `/payments/receipt/${encodeURIComponent(receipt)}`,
       );
-      setReceiptError(null);
 
-      try {
-        const response =
-          await api.get<Payment>(
-            `/payments/receipt/${encodeURIComponent(
-              receipt,
-            )}`,
-          );
-
-        setSelectedPayment(
-          response.data,
-        );
-      } catch (err) {
-        setReceiptError(
-          extractError(
-            err,
-          ),
-        );
-      } finally {
-        setReceiptLoading(
-          false,
-        );
-      }
-    };
+      setSelectedPayment(response.data);
+    } catch (err) {
+      setReceiptError(extractError(err));
+    } finally {
+      setReceiptLoading(false);
+    }
+  };
 
   // ========================================================
   // Payment Lookup
   // ========================================================
 
-  const lookupTransaction =
-    async () => {
-      const transaction =
-        searchTerm.trim();
+  const lookupTransaction = async () => {
+    const transaction = searchTerm.trim();
 
-      if (!transaction) {
-        return;
-      }
+    if (!transaction) {
+      return;
+    }
 
-      /*
-       * Only attempt direct transaction lookup when
-       * the search resembles a SmartPark payment number.
-       *
-       * Example:
-       * PAY-20260802-143255-A3F9C2
-       */
-      if (
-        !transaction
-          .toUpperCase()
-          .startsWith("PAY-")
-      ) {
-        return;
-      }
+    /*
+     * Only attempt direct transaction lookup when
+     * the search resembles a SmartPark payment number.
+     *
+     * Example:
+     * PAY-20260802-143255-A3F9C2
+     */
+    if (!transaction.toUpperCase().startsWith("PAY-")) {
+      return;
+    }
 
-      try {
-        const response =
-          await api.get<Payment>(
-            `/payments/transaction/${encodeURIComponent(
-              transaction,
-            )}`,
-          );
+    try {
+      const response = await api.get<Payment>(
+        `/payments/transaction/${encodeURIComponent(transaction)}`,
+      );
 
-        setSelectedPayment(
-          response.data,
-        );
-      } catch (err) {
-        setError(
-          extractError(
-            err,
-          ),
-        );
-      }
-    };
+      setSelectedPayment(response.data);
+    } catch (err) {
+      setError(extractError(err));
+    }
+  };
 
   // ========================================================
   // Loading
@@ -956,10 +596,7 @@ export default function Payments() {
       <div className="mx-auto flex min-h-[500px] w-full max-w-6xl items-center justify-center">
         <div className="text-center">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
-            <Loader2
-              size={30}
-              className="animate-spin"
-            />
+            <Loader2 size={30} className="animate-spin" />
           </div>
 
           <h2 className="mt-5 text-lg font-black text-slate-900">
@@ -988,9 +625,7 @@ export default function Payments() {
         <div>
           <div className="flex items-center gap-3">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
-              <CreditCard
-                size={25}
-              />
+              <CreditCard size={25} />
             </div>
 
             <div>
@@ -1007,25 +642,11 @@ export default function Payments() {
 
         <button
           type="button"
-          onClick={() =>
-            void loadPayments(
-              true,
-            )
-          }
-          disabled={
-            refreshing
-          }
+          onClick={() => void loadPayments(true)}
+          disabled={refreshing}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <RefreshCw
-            size={16}
-            className={
-              refreshing
-                ? "animate-spin"
-                : ""
-            }
-          />
-
+          <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
@@ -1037,31 +658,22 @@ export default function Payments() {
       {error && (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4">
           <div className="flex items-start gap-3">
-            <AlertCircle
-              size={20}
-              className="mt-0.5 shrink-0 text-rose-600"
-            />
+            <AlertCircle size={20} className="mt-0.5 shrink-0 text-rose-600" />
 
             <div className="flex-1">
               <p className="text-sm font-extrabold text-rose-900">
                 Payment information unavailable
               </p>
 
-              <p className="mt-1 text-sm text-rose-800">
-                {error}
-              </p>
+              <p className="mt-1 text-sm text-rose-800">{error}</p>
             </div>
 
             <button
               type="button"
-              onClick={() =>
-                setError(null)
-              }
+              onClick={() => setError(null)}
               className="text-rose-500 hover:text-rose-700"
             >
-              <X
-                size={18}
-              />
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -1073,57 +685,33 @@ export default function Payments() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <PaymentStatCard
-          icon={
-            <History
-              size={20}
-            />
-          }
+          icon={<History size={20} />}
           label="Total Payments"
-          value={String(
-            statistics.total,
-          )}
+          value={String(statistics.total)}
           description="All recorded transactions"
           tone="slate"
         />
 
         <PaymentStatCard
-          icon={
-            <CheckCircle2
-              size={20}
-            />
-          }
+          icon={<CheckCircle2 size={20} />}
           label="Successful"
-          value={String(
-            statistics.successful,
-          )}
+          value={String(statistics.successful)}
           description="Successfully completed"
           tone="green"
         />
 
         <PaymentStatCard
-          icon={
-            <Clock3
-              size={20}
-            />
-          }
+          icon={<Clock3 size={20} />}
           label="Pending"
-          value={String(
-            statistics.pending,
-          )}
+          value={String(statistics.pending)}
           description="Awaiting completion"
           tone="amber"
         />
 
         <PaymentStatCard
-          icon={
-            <CreditCard
-              size={20}
-            />
-          }
+          icon={<CreditCard size={20} />}
           label="Amount Paid"
-          value={money(
-            statistics.totalAmount,
-          )}
+          value={money(statistics.totalAmount)}
           description="Successful payments"
           tone="blue"
         />
@@ -1137,10 +725,7 @@ export default function Payments() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-2">
-              <FileText
-                size={17}
-                className="text-emerald-600"
-              />
+              <FileText size={17} className="text-emerald-600" />
 
               <label className="text-sm font-extrabold text-slate-800">
                 Find a Payment / Receipt
@@ -1150,27 +735,13 @@ export default function Payments() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="text"
-                value={
-                  receiptSearch
-                }
-                onChange={(
-                  event,
-                ) => {
-                  setReceiptSearch(
-                    event.target
-                      .value,
-                  );
-                  setReceiptError(
-                    null,
-                  );
+                value={receiptSearch}
+                onChange={(event) => {
+                  setReceiptSearch(event.target.value);
+                  setReceiptError(null);
                 }}
-                onKeyDown={(
-                  event,
-                ) => {
-                  if (
-                    event.key ===
-                    "Enter"
-                  ) {
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
                     void searchReceipt();
                   }
                 }}
@@ -1180,25 +751,15 @@ export default function Payments() {
 
               <button
                 type="button"
-                onClick={() =>
-                  void searchReceipt()
-                }
-                disabled={
-                  receiptLoading
-                }
+                onClick={() => void searchReceipt()}
+                disabled={receiptLoading}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {receiptLoading ? (
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                  />
+                  <Loader2 size={16} className="animate-spin" />
                 ) : (
-                  <Search
-                    size={16}
-                  />
+                  <Search size={16} />
                 )}
-
                 Search
               </button>
             </div>
@@ -1233,27 +794,13 @@ export default function Payments() {
 
               <input
                 type="search"
-                value={
-                  searchTerm
-                }
-                onChange={(
-                  event,
-                ) => {
-                  setSearchTerm(
-                    event.target
-                      .value,
-                  );
-                  setCurrentPage(
-                    1,
-                  );
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
                 }}
-                onKeyDown={(
-                  event,
-                ) => {
-                  if (
-                    event.key ===
-                    "Enter"
-                  ) {
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
                     void lookupTransaction();
                   }
                 }}
@@ -1267,44 +814,24 @@ export default function Payments() {
 
           <FilterSelect
             label="Status"
-            value={
-              statusFilter
-            }
-            onChange={(
-              value,
-            ) => {
-              setStatusFilter(
-                value,
-              );
-              setCurrentPage(
-                1,
-              );
+            value={statusFilter}
+            onChange={(value) => {
+              setStatusFilter(value);
+              setCurrentPage(1);
             }}
-            options={
-              PAYMENT_STATUSES
-            }
+            options={PAYMENT_STATUSES}
           />
 
           {/* Method */}
 
           <FilterSelect
             label="Method"
-            value={
-              methodFilter
-            }
-            onChange={(
-              value,
-            ) => {
-              setMethodFilter(
-                value,
-              );
-              setCurrentPage(
-                1,
-              );
+            value={methodFilter}
+            onChange={(value) => {
+              setMethodFilter(value);
+              setCurrentPage(1);
             }}
-            options={
-              PAYMENT_METHODS
-            }
+            options={PAYMENT_METHODS}
           />
 
           {/* From */}
@@ -1316,19 +843,10 @@ export default function Payments() {
 
             <input
               type="date"
-              value={
-                dateFrom
-              }
-              onChange={(
-                event,
-              ) => {
-                setDateFrom(
-                  event.target
-                    .value,
-                );
-                setCurrentPage(
-                  1,
-                );
+              value={dateFrom}
+              onChange={(event) => {
+                setDateFrom(event.target.value);
+                setCurrentPage(1);
               }}
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
             />
@@ -1343,19 +861,10 @@ export default function Payments() {
 
             <input
               type="date"
-              value={
-                dateTo
-              }
-              onChange={(
-                event,
-              ) => {
-                setDateTo(
-                  event.target
-                    .value,
-                );
-                setCurrentPage(
-                  1,
-                );
+              value={dateTo}
+              onChange={(event) => {
+                setDateTo(event.target.value);
+                setCurrentPage(1);
               }}
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
             />
@@ -1365,9 +874,7 @@ export default function Payments() {
 
           <button
             type="button"
-            onClick={
-              resetFilters
-            }
+            onClick={resetFilters}
             className="self-end rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-50"
           >
             Reset
@@ -1378,22 +885,15 @@ export default function Payments() {
           <p className="text-xs font-semibold text-slate-400">
             Showing{" "}
             <span className="font-black text-slate-700">
-              {
-                filteredPayments.length
-              }
+              {filteredPayments.length}
             </span>{" "}
             matching payment
-            {filteredPayments.length ===
-            1
-              ? ""
-              : "s"}
+            {filteredPayments.length === 1 ? "" : "s"}
           </p>
 
           {(searchTerm ||
-            statusFilter !==
-              "ALL" ||
-            methodFilter !==
-              "ALL" ||
+            statusFilter !== "ALL" ||
+            methodFilter !== "ALL" ||
             dateFrom ||
             dateTo) && (
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700">
@@ -1420,18 +920,14 @@ export default function Payments() {
           </div>
 
           <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-extrabold text-slate-600">
-            {filteredPayments.length}{" "}
-            records
+            {filteredPayments.length} records
           </span>
         </div>
 
-        {paginatedPayments.length ===
-        0 ? (
+        {paginatedPayments.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-slate-100 text-slate-400">
-              <CreditCard
-                size={27}
-              />
+              <CreditCard size={27} />
             </div>
 
             <h3 className="mt-4 text-sm font-black text-slate-900">
@@ -1439,15 +935,13 @@ export default function Payments() {
             </h3>
 
             <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-500">
-              There are no payment transactions matching your
-              current search and filter criteria.
+              There are no payment transactions matching your current search and
+              filter criteria.
             </p>
 
             <button
               type="button"
-              onClick={
-                resetFilters
-              }
+              onClick={resetFilters}
               className="mt-5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50"
             >
               Clear Filters
@@ -1488,29 +982,14 @@ export default function Payments() {
                 </thead>
 
                 <tbody className="divide-y divide-slate-100">
-                  {paginatedPayments.map(
-                    (
-                      payment,
-                    ) => (
-                      <PaymentTableRow
-                        key={
-                          payment.id
-                        }
-                        payment={
-                          payment
-                        }
-                        currency={
-                          payment.currency ??
-                          "KES"
-                        }
-                        onView={() =>
-                          setSelectedPayment(
-                            payment,
-                          )
-                        }
-                      />
-                    ),
-                  )}
+                  {paginatedPayments.map((payment) => (
+                    <PaymentTableRow
+                      key={payment.id}
+                      payment={payment}
+                      currency={payment.currency ?? "KES"}
+                      onView={() => setSelectedPayment(payment)}
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -1518,95 +997,48 @@ export default function Payments() {
             {/* Mobile */}
 
             <div className="divide-y divide-slate-100 md:hidden">
-              {paginatedPayments.map(
-                (
-                  payment,
-                ) => (
-                  <PaymentMobileCard
-                    key={
-                      payment.id
-                    }
-                    payment={
-                      payment
-                    }
-                    currency={
-                      payment.currency ??
-                      "KES"
-                    }
-                    onView={() =>
-                      setSelectedPayment(
-                        payment,
-                      )
-                    }
-                  />
-                ),
-              )}
+              {paginatedPayments.map((payment) => (
+                <PaymentMobileCard
+                  key={payment.id}
+                  payment={payment}
+                  currency={payment.currency ?? "KES"}
+                  onView={() => setSelectedPayment(payment)}
+                />
+              ))}
             </div>
           </>
         )}
 
         {/* Pagination */}
 
-        {filteredPayments.length >
-          PAGE_SIZE && (
+        {filteredPayments.length > PAGE_SIZE && (
           <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
             <p className="text-xs font-semibold text-slate-500">
-              Page{" "}
-              <span className="font-black text-slate-800">
-                {safePage}
-              </span>{" "}
-              of{" "}
-              <span className="font-black text-slate-800">
-                {totalPages}
-              </span>
+              Page <span className="font-black text-slate-800">{safePage}</span>{" "}
+              of <span className="font-black text-slate-800">{totalPages}</span>
             </p>
 
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                disabled={
-                  safePage <= 1
-                }
-                onClick={() =>
-                  setCurrentPage(
-                    (page) =>
-                      Math.max(
-                        1,
-                        page -
-                          1,
-                      ),
-                  )
-                }
+                disabled={safePage <= 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Previous page"
               >
-                <ChevronLeft
-                  size={17}
-                />
+                <ChevronLeft size={17} />
               </button>
 
               <button
                 type="button"
-                disabled={
-                  safePage >=
-                  totalPages
-                }
+                disabled={safePage >= totalPages}
                 onClick={() =>
-                  setCurrentPage(
-                    (page) =>
-                      Math.min(
-                        totalPages,
-                        page +
-                          1,
-                      ),
-                  )
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
                 }
                 className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Next page"
               >
-                <ChevronRight
-                  size={17}
-                />
+                <ChevronRight size={17} />
               </button>
             </div>
           </div>
@@ -1619,14 +1051,8 @@ export default function Payments() {
 
       {selectedPayment && (
         <PaymentDetailsModal
-          payment={
-            selectedPayment
-          }
-          onClose={() =>
-            setSelectedPayment(
-              null,
-            )
-          }
+          payment={selectedPayment}
+          onClose={() => setSelectedPayment(null)}
         />
       )}
     </div>
@@ -1646,16 +1072,9 @@ function PaymentTableRow({
   currency: string;
   onView: () => void;
 }) {
-  const credit =
-    paymentIsCredit(
-      payment,
-    );
+  const credit = paymentIsCredit(payment);
 
-  const amount =
-    Number(
-      payment.total_amount ??
-        0,
-    );
+  const amount = Number(payment.total_amount ?? 0);
 
   return (
     <tr className="group transition hover:bg-slate-50/80">
@@ -1668,35 +1087,21 @@ function PaymentTableRow({
                 : "bg-blue-50 text-blue-600"
             }`}
           >
-            {credit ? (
-              <ArrowDownLeft
-                size={18}
-              />
-            ) : (
-              <ArrowUpRight
-                size={18}
-              />
-            )}
+            {credit ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
           </div>
 
           <div className="min-w-0">
             <p className="max-w-[230px] truncate text-sm font-extrabold text-slate-900">
-              {paymentTitle(
-                payment,
-              )}
+              {paymentTitle(payment)}
             </p>
 
             <p className="mt-0.5 truncate font-mono text-[10px] font-bold text-slate-400">
-              {payment.transaction_number ??
-                `Payment #${payment.id}`}
+              {payment.transaction_number ?? `Payment #${payment.id}`}
             </p>
 
             {payment.receipt_number && (
               <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-400">
-                Receipt:{" "}
-                {
-                  payment.receipt_number
-                }
+                Receipt: {payment.receipt_number}
               </p>
             )}
           </div>
@@ -1705,49 +1110,33 @@ function PaymentTableRow({
 
       <td className="px-4 py-4">
         <div className="text-xs font-extrabold text-slate-700">
-          {displayText(
-            payment.payment_method,
-          )}
+          {displayText(payment.payment_method)}
         </div>
 
         <div className="mt-0.5 text-[10px] font-semibold text-slate-400">
-          {displayText(
-            payment.payment_provider,
-          )}
+          {displayText(payment.payment_provider)}
         </div>
       </td>
 
       <td className="px-4 py-4">
         <p className="text-xs font-bold text-slate-700">
-          {dateTime(
-            payment.paid_at ??
-              payment.created_at,
-          )}
+          {dateTime(payment.paid_at ?? payment.created_at)}
         </p>
       </td>
 
       <td className="px-4 py-4 text-right">
         <p
           className={`text-sm font-black ${
-            credit
-              ? "text-emerald-600"
-              : "text-slate-900"
+            credit ? "text-emerald-600" : "text-slate-900"
           }`}
         >
           {credit ? "+" : ""}
-          {money(
-            amount,
-            currency,
-          )}
+          {money(amount, currency)}
         </p>
       </td>
 
       <td className="px-4 py-4">
-        <PaymentStatusBadge
-          status={
-            payment.status
-          }
-        />
+        <PaymentStatusBadge status={payment.status} />
       </td>
 
       <td className="px-6 py-4 text-right">
@@ -1776,10 +1165,7 @@ function PaymentMobileCard({
   currency: string;
   onView: () => void;
 }) {
-  const credit =
-    paymentIsCredit(
-      payment,
-    );
+  const credit = paymentIsCredit(payment);
 
   return (
     <button
@@ -1795,67 +1181,40 @@ function PaymentMobileCard({
               : "bg-blue-50 text-blue-600"
           }`}
         >
-          {credit ? (
-            <ArrowDownLeft
-              size={19}
-            />
-          ) : (
-            <ArrowUpRight
-              size={19}
-            />
-          )}
+          {credit ? <ArrowDownLeft size={19} /> : <ArrowUpRight size={19} />}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-extrabold text-slate-900">
-                {paymentTitle(
-                  payment,
-                )}
+                {paymentTitle(payment)}
               </p>
 
               <p className="mt-1 truncate font-mono text-[10px] font-bold text-slate-400">
-                {payment.transaction_number ??
-                  `Payment #${payment.id}`}
+                {payment.transaction_number ?? `Payment #${payment.id}`}
               </p>
             </div>
 
             <p
               className={`shrink-0 text-sm font-black ${
-                credit
-                  ? "text-emerald-600"
-                  : "text-slate-900"
+                credit ? "text-emerald-600" : "text-slate-900"
               }`}
             >
-              {credit
-                ? "+"
-                : ""}
-              {money(
-                payment.total_amount,
-                currency,
-              )}
+              {credit ? "+" : ""}
+              {money(payment.total_amount, currency)}
             </p>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <PaymentStatusBadge
-              status={
-                payment.status
-              }
-            />
+            <PaymentStatusBadge status={payment.status} />
 
             <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">
-              {displayText(
-                payment.payment_method,
-              )}
+              {displayText(payment.payment_method)}
             </span>
 
             <span className="text-[10px] font-semibold text-slate-400">
-              {dateTime(
-                payment.paid_at ??
-                  payment.created_at,
-              )}
+              {dateTime(payment.paid_at ?? payment.created_at)}
             </span>
           </div>
         </div>
@@ -1868,87 +1227,37 @@ function PaymentMobileCard({
 // Payment Status Badge
 // ==========================================================
 
-function PaymentStatusBadge({
-  status,
-}: {
-  status:
-    | string
-    | null
-    | undefined;
-}) {
-  const normalized =
-    String(
-      status ??
-        "UNKNOWN",
-    ).toUpperCase();
+function PaymentStatusBadge({ status }: { status: string | null | undefined }) {
+  const normalized = String(status ?? "UNKNOWN").toUpperCase();
 
-  let classes =
-    "bg-slate-100 text-slate-600";
+  let classes = "bg-slate-100 text-slate-600";
 
-  let Icon =
-    AlertCircle;
+  let Icon = AlertCircle;
 
-  if (
-    [
-      "SUCCESSFUL",
-      "COMPLETED",
-    ].includes(normalized)
-  ) {
-    classes =
-      "bg-emerald-50 text-emerald-700";
-    Icon =
-      CheckCircle2;
-  } else if (
-    [
-      "PENDING",
-      "PROCESSING",
-    ].includes(normalized)
-  ) {
-    classes =
-      "bg-amber-50 text-amber-700";
-    Icon =
-      Clock3;
-  } else if (
-    [
-      "FAILED",
-      "CANCELLED",
-    ].includes(normalized)
-  ) {
-    classes =
-      "bg-rose-50 text-rose-700";
-    Icon =
-      XCircle;
-  } else if (
-    [
-      "REFUNDED",
-      "PARTIALLY_REFUNDED",
-    ].includes(normalized)
-  ) {
-    classes =
-      "bg-violet-50 text-violet-700";
-    Icon =
-      ArrowDownLeft;
-  } else if (
-    normalized ===
-    "REVERSED"
-  ) {
-    classes =
-      "bg-orange-50 text-orange-700";
-    Icon =
-      ArrowDownLeft;
+  if (["SUCCESSFUL", "COMPLETED"].includes(normalized)) {
+    classes = "bg-emerald-50 text-emerald-700";
+    Icon = CheckCircle2;
+  } else if (["PENDING", "PROCESSING"].includes(normalized)) {
+    classes = "bg-amber-50 text-amber-700";
+    Icon = Clock3;
+  } else if (["FAILED", "CANCELLED"].includes(normalized)) {
+    classes = "bg-rose-50 text-rose-700";
+    Icon = XCircle;
+  } else if (["REFUNDED", "PARTIALLY_REFUNDED"].includes(normalized)) {
+    classes = "bg-violet-50 text-violet-700";
+    Icon = ArrowDownLeft;
+  } else if (normalized === "REVERSED") {
+    classes = "bg-orange-50 text-orange-700";
+    Icon = ArrowDownLeft;
   }
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${classes}`}
     >
-      <Icon
-        size={12}
-      />
+      <Icon size={12} />
 
-      {statusLabel(
-        status,
-      )}
+      {statusLabel(status)}
     </span>
   );
 }
@@ -1968,21 +1277,13 @@ function PaymentStatCard({
   label: string;
   value: string;
   description: string;
-  tone:
-    | "slate"
-    | "green"
-    | "amber"
-    | "blue";
+  tone: "slate" | "green" | "amber" | "blue";
 }) {
   const classes = {
-    slate:
-      "bg-slate-100 text-slate-600",
-    green:
-      "bg-emerald-50 text-emerald-600",
-    amber:
-      "bg-amber-50 text-amber-600",
-    blue:
-      "bg-blue-50 text-blue-600",
+    slate: "bg-slate-100 text-slate-600",
+    green: "bg-emerald-50 text-emerald-600",
+    amber: "bg-amber-50 text-amber-600",
+    blue: "bg-blue-50 text-blue-600",
   };
 
   return (
@@ -2001,9 +1302,7 @@ function PaymentStatCard({
         {value}
       </p>
 
-      <p className="mt-1 text-xs text-slate-500">
-        {description}
-      </p>
+      <p className="mt-1 text-xs text-slate-500">{description}</p>
     </div>
   );
 }
@@ -2020,9 +1319,7 @@ function FilterSelect({
 }: {
   label: string;
   value: string;
-  onChange: (
-    value: string,
-  ) => void;
+  onChange: (value: string) => void;
   options: string[];
 }) {
   return (
@@ -2033,35 +1330,14 @@ function FilterSelect({
 
       <select
         value={value}
-        onChange={(
-          event,
-        ) =>
-          onChange(
-            event.target
-              .value,
-          )
-        }
+        onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
       >
-        {options.map(
-          (option) => (
-            <option
-              key={
-                option
-              }
-              value={
-                option
-              }
-            >
-              {option ===
-              "ALL"
-                ? "All"
-                : displayText(
-                    option,
-                  )}
-            </option>
-          ),
-        )}
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option === "ALL" ? "All" : displayText(option)}
+          </option>
+        ))}
       </select>
     </div>
   );
@@ -2078,14 +1354,9 @@ function PaymentDetailsModal({
   payment: Payment;
   onClose: () => void;
 }) {
-  const currency =
-    payment.currency ??
-    "KES";
+  const currency = payment.currency ?? "KES";
 
-  const credit =
-    paymentIsCredit(
-      payment,
-    );
+  const credit = paymentIsCredit(payment);
 
   return (
     <div
@@ -2117,9 +1388,7 @@ function PaymentDetailsModal({
             className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
             aria-label="Close payment details"
           >
-            <X
-              size={18}
-            />
+            <X size={18} />
           </button>
         </div>
 
@@ -2127,41 +1396,26 @@ function PaymentDetailsModal({
 
         <div
           className={`mx-6 mt-6 rounded-2xl p-6 ${
-            credit
-              ? "bg-emerald-50"
-              : "bg-slate-50"
+            credit ? "bg-emerald-50" : "bg-slate-50"
           }`}
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500">
-                {paymentTitle(
-                  payment,
-                )}
+                {paymentTitle(payment)}
               </p>
 
               <p
                 className={`mt-1 text-3xl font-black ${
-                  credit
-                    ? "text-emerald-600"
-                    : "text-slate-900"
+                  credit ? "text-emerald-600" : "text-slate-900"
                 }`}
               >
-                {credit
-                  ? "+"
-                  : ""}
-                {money(
-                  payment.total_amount,
-                  currency,
-                )}
+                {credit ? "+" : ""}
+                {money(payment.total_amount, currency)}
               </p>
             </div>
 
-            <PaymentStatusBadge
-              status={
-                payment.status
-              }
-            />
+            <PaymentStatusBadge status={payment.status} />
           </div>
         </div>
 
@@ -2171,116 +1425,79 @@ function PaymentDetailsModal({
           <DetailsSection title="Transaction">
             <DetailItem
               label="Transaction Number"
-              value={
-                payment.transaction_number
-              }
+              value={payment.transaction_number}
               mono
             />
 
             <DetailItem
               label="Payment ID"
-              value={
-                payment.id
-                  ? String(
-                      payment.id,
-                    )
-                  : null
-              }
+              value={payment.id ? String(payment.id) : null}
             />
 
             <DetailItem
               label="Payment Purpose"
-              value={displayText(
-                payment.payment_purpose,
-              )}
+              value={displayText(payment.payment_purpose)}
             />
 
             <DetailItem
               label="Payment Type"
-              value={displayText(
-                payment.payment_type,
-              )}
+              value={displayText(payment.payment_type)}
             />
 
             <DetailItem
               label="Date / Time"
-              value={dateTime(
-                payment.paid_at ??
-                  payment.created_at,
-              )}
+              value={dateTime(payment.paid_at ?? payment.created_at)}
             />
           </DetailsSection>
 
           <DetailsSection title="Payment Method">
             <DetailItem
               label="Method"
-              value={displayText(
-                payment.payment_method,
-              )}
+              value={displayText(payment.payment_method)}
             />
 
             <DetailItem
               label="Provider"
-              value={displayText(
-                payment.payment_provider,
-              )}
+              value={displayText(payment.payment_provider)}
             />
 
             <DetailItem
               label="Provider Transaction"
-              value={
-                payment.provider_transaction_id
-              }
+              value={payment.provider_transaction_id}
               mono
             />
 
             <DetailItem
               label="Provider Receipt"
-              value={
-                payment.provider_receipt_number
-              }
+              value={payment.provider_receipt_number}
               mono
             />
 
             <DetailItem
               label="Provider Message"
-              value={
-                payment.provider_status_message
-              }
+              value={payment.provider_status_message}
             />
           </DetailsSection>
 
           <DetailsSection title="Amount Breakdown">
             <DetailItem
               label="Subtotal"
-              value={money(
-                payment.subtotal_amount,
-                currency,
-              )}
+              value={money(payment.subtotal_amount, currency)}
             />
 
             <DetailItem
               label="Discount"
-              value={money(
-                payment.discount_amount,
-                currency,
-              )}
+              value={money(payment.discount_amount, currency)}
             />
 
             <DetailItem
               label="Tax"
-              value={money(
-                payment.tax_amount,
-                currency,
-              )}
+              value={money(payment.tax_amount, currency)}
             />
 
             <DetailItem
               label="Total"
-              value={money(
-                payment.total_amount,
-                currency,
-              )}
+              value={money(payment.total_amount, currency)}
               emphasis
             />
           </DetailsSection>
@@ -2290,9 +1507,7 @@ function PaymentDetailsModal({
               label="Parking Session"
               value={
                 payment.parking_session_id
-                  ? String(
-                      payment.parking_session_id,
-                    )
+                  ? String(payment.parking_session_id)
                   : null
               }
             />
@@ -2300,19 +1515,13 @@ function PaymentDetailsModal({
             <DetailItem
               label="Reservation"
               value={
-                payment.reservation_id
-                  ? String(
-                      payment.reservation_id,
-                    )
-                  : null
+                payment.reservation_id ? String(payment.reservation_id) : null
               }
             />
 
             <DetailItem
               label="Receipt Number"
-              value={
-                payment.receipt_number
-              }
+              value={payment.receipt_number}
               mono
             />
 
@@ -2320,9 +1529,7 @@ function PaymentDetailsModal({
               label="Parent Transaction"
               value={
                 payment.parent_transaction_id
-                  ? String(
-                      payment.parent_transaction_id,
-                    )
+                  ? String(payment.parent_transaction_id)
                   : null
               }
             />
@@ -2332,26 +1539,11 @@ function PaymentDetailsModal({
             payment.payer_phone ||
             payment.payer_email) && (
             <DetailsSection title="Payer Information">
-              <DetailItem
-                label="Name"
-                value={
-                  payment.payer_name
-                }
-              />
+              <DetailItem label="Name" value={payment.payer_name} />
 
-              <DetailItem
-                label="Phone"
-                value={
-                  payment.payer_phone
-                }
-              />
+              <DetailItem label="Phone" value={payment.payer_phone} />
 
-              <DetailItem
-                label="Email"
-                value={
-                  payment.payer_email
-                }
-              />
+              <DetailItem label="Email" value={payment.payer_email} />
             </DetailsSection>
           )}
 
@@ -2397,9 +1589,7 @@ function DetailsSection({
 }) {
   return (
     <section>
-      <h3 className="mb-3 text-sm font-black text-slate-900">
-        {title}
-      </h3>
+      <h3 className="mb-3 text-sm font-black text-slate-900">{title}</h3>
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 divide-y divide-slate-100">
         {children}
@@ -2419,34 +1609,36 @@ function DetailItem({
   emphasis = false,
 }: {
   label: string;
-  value:
-    | string
-    | null
-    | undefined;
+  value: string | null | undefined;
   mono?: boolean;
   emphasis?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-      <span className="text-xs font-semibold text-slate-500">
-        {label}
-      </span>
+      <span className="text-xs font-semibold text-slate-500">{label}</span>
 
       <span
         className={`break-all text-sm sm:text-right ${
           emphasis
             ? "font-black text-slate-900"
             : "font-extrabold text-slate-700"
-        } ${
-          mono
-            ? "font-mono text-xs"
-            : ""
-        }`}
+        } ${mono ? "font-mono text-xs" : ""}`}
       >
-        {value ??
-          "—"}
+        {value ?? "—"}
       </span>
     </div>
   );
 }
 
+export default function Payments() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const isCheckout =
+    params.get("checkout") === "1" && Boolean(params.get("sessionId"));
+
+  if (isCheckout) {
+    return <SessionPayment />;
+  }
+
+  return <PaymentsHistory />;
+}

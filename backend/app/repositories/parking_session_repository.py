@@ -173,19 +173,36 @@ class ParkingSessionRepository(BaseRepository[ParkingSession]):
 
     async def get_active_sessions(
         self,
+        customer_id: int | None = None,
     ) -> list[ParkingSession]:
         """
-        Return all active parking sessions.
+        Return active parking sessions.
+
+        When customer_id is supplied, only active sessions
+        belonging to that customer are returned.
+
+        When customer_id is None, the existing unfiltered
+        behaviour is retained for internal/operational callers.
         """
 
-        result = await self.db.execute(
+        statement = (
             select(ParkingSession)
             .where(
                 ParkingSession.status == SessionStatus.ACTIVE
             )
-            .order_by(
-                ParkingSession.entry_time.asc()
+        )
+
+        if customer_id is not None:
+            statement = statement.where(
+                ParkingSession.customer_id == customer_id
             )
+
+        statement = statement.order_by(
+            ParkingSession.entry_time.desc()
+        )
+
+        result = await self.db.execute(
+            statement
         )
 
         return list(result.scalars().all())

@@ -1733,7 +1733,7 @@ export default function Reservations() {
                     id="reservation-payment-title"
                     className="mt-1 text-xl font-extrabold text-slate-900"
                   >
-                    Confirm & Pay
+                    Pay to Confirm your reservation
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     {paymentReservation.reservation_number} •{" "}

@@ -581,13 +581,13 @@ export default function AddVehicle() {
           INFORMATION
       ==================================================== */}
 
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+      {/* <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
         <div className="flex items-start gap-3">
           <Info size={19} className="mt-0.5 shrink-0 text-blue-600" />
 
           <div>
             <p className="text-sm font-extrabold text-blue-900">
-              Vehicle registration
+              Vehicle Registration
             </p>
 
             <p className="mt-1 text-xs leading-5 text-blue-800">
@@ -596,7 +596,7 @@ export default function AddVehicle() {
             </p>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* ====================================================
           FORM
@@ -968,7 +968,7 @@ export default function AddVehicle() {
             </div>
 
             <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
-              If this is your first vehicle, the backend automatically makes it
+              If this is your first vehicle, SmartPark AI will automatically make it
               your default vehicle.
             </div>
           </div>

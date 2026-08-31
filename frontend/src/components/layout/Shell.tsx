@@ -19,6 +19,7 @@ import {
   Menu,
   ParkingCircle,
   Search,
+  Timer,
   Wallet,
   Users,
   X,
@@ -37,17 +38,13 @@ export default function Shell({
 }) {
   const [open, setOpen] = useState(false);
 
-  const [reservationsOpen, setReservationsOpen] =
-    useState(false);
+  const [reservationsOpen, setReservationsOpen] = useState(false);
 
-  const [vehiclesOpen, setVehiclesOpen] =
-    useState(false);
+  const [vehiclesOpen, setVehiclesOpen] = useState(false);
 
-  const [paymentsOpen, setPaymentsOpen] =
-    useState(false);
+  const [paymentsOpen, setPaymentsOpen] = useState(false);
 
-  const [unreadCount, setUnreadCount] =
-    useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,91 +58,37 @@ export default function Shell({
   const items =
     role === "driver"
       ? [
-          [
-            "Dashboard",
-            "/dashboard",
-            LayoutDashboard,
-          ],
-          [
-            "Find Parking",
-            "/parking",
-            Search,
-          ],
-          [
-            "Reservations",
-            "/reservations",
-            ParkingCircle,
-          ],
-          [
-            "Vehicles",
-            "/vehicles",
-            CarFront,
-          ],
-          [
-            "Payments & Wallet",
-            "/payments",
-            CreditCard,
-          ],
-          [
-            "Receipts",
-            "/receipts",
-            History,
-          ],
-          [
-            "Loyalty Programme",
-            "/loyalty",
-            Gift,
-          ],
-          [
-            "AI Prediction",
-            "/forecast",
-            BrainCircuit,
-          ],
+          ["Dashboard", "/dashboard", LayoutDashboard],
+
+          ["Find Parking", "/parking", Search],
+
+          ["Reservations", "/reservations", ParkingCircle],
+
+          ["Vehicles", "/vehicles", CarFront],
+
+          ["Payments & Wallet", "/payments", CreditCard],
+
+          ["Receipts", "/receipts", History],
+
+          ["Loyalty Programme", "/loyalty", Gift],
+
+          // Parking Sessions MUST appear before AI Prediction
+          ["Parking Sessions", "/sessions", Timer],
+
+          ["AI Prediction", "/forecast", BrainCircuit],
         ]
       : role === "operator"
         ? [
-            [
-              "Dashboard",
-              "/operator",
-              LayoutDashboard,
-            ],
-            [
-              "Facilities",
-              "/operator/facilities",
-              Building2,
-            ],
-            [
-              "Reservations",
-              "/reservations",
-              ParkingCircle,
-            ],
-            [
-              "AI Forecasting",
-              "/forecast",
-              BrainCircuit,
-            ],
+            ["Dashboard", "/operator", LayoutDashboard],
+            ["Facilities", "/operator/facilities", Building2],
+            ["Reservations", "/reservations", ParkingCircle],
+            ["AI Forecasting", "/forecast", BrainCircuit],
           ]
         : [
-            [
-              "Dashboard",
-              "/admin",
-              LayoutDashboard,
-            ],
-            [
-              "Users",
-              "/admin",
-              Users,
-            ],
-            [
-              "Facilities",
-              "/operator/facilities",
-              Building2,
-            ],
-            [
-              "AI Monitoring",
-              "/forecast",
-              BrainCircuit,
-            ],
+            ["Dashboard", "/admin", LayoutDashboard],
+            ["Users", "/admin", Users],
+            ["Facilities", "/operator/facilities", Building2],
+            ["AI Monitoring", "/forecast", BrainCircuit],
           ];
 
   // ======================================================
@@ -166,64 +109,53 @@ export default function Shell({
   // User Display
   // ======================================================
 
-  const firstName =
-    user?.first_name ?? "User";
+  const firstName = user?.first_name ?? "User";
 
-  const lastName =
-    user?.last_name ?? "";
+  const lastName = user?.last_name ?? "";
 
-  const fullName =
-    `${firstName} ${lastName}`.trim();
+  const fullName = `${firstName} ${lastName}`.trim();
 
-  const initials =
-    `${firstName.charAt(0)}${lastName.charAt(0)}`
-      .toUpperCase();
+  const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
   // ======================================================
   // Navigation State
   // ======================================================
 
   const isReservationsSection =
-    role === "driver" &&
-    location.pathname.startsWith(
-      "/reservations",
-    );
+    role === "driver" && location.pathname.startsWith("/reservations");
 
   const isVehiclesSection =
-    role === "driver" &&
-    location.pathname.startsWith(
-      "/vehicles",
-    );
+    role === "driver" && location.pathname.startsWith("/vehicles");
 
   const isPaymentsSection =
     role === "driver" &&
     (location.pathname === "/payments" ||
-      location.pathname.startsWith(
-        "/payments/",
-      ));
+      location.pathname.startsWith("/payments/"));
 
   const isReceiptsSection =
     role === "driver" &&
     (location.pathname === "/receipts" ||
-      location.pathname.startsWith(
-        "/receipts/",
-      ));
+      location.pathname.startsWith("/receipts/"));
 
   const isNotificationsSection =
     role === "driver" &&
-    (location.pathname ===
-      "/notifications" ||
-      location.pathname.startsWith(
-        "/notifications/",
-      ));
+    (location.pathname === "/notifications" ||
+      location.pathname.startsWith("/notifications/"));
+
+  // ======================================================
+  // Parking Sessions Section
+  // ======================================================
+
+  const isSessionsSection =
+    role === "driver" &&
+    (location.pathname === "/sessions" ||
+      location.pathname.startsWith("/sessions/"));
 
   // ======================================================
   // Extract Notification Count
   // ======================================================
 
-  const extractUnreadCount = (
-    responseData: unknown,
-  ): number => {
+  const extractUnreadCount = (responseData: unknown): number => {
     /*
      * The API may return any of these common
      * structures:
@@ -238,112 +170,62 @@ export default function Shell({
      * 8. 5
      */
 
-    if (
-      typeof responseData ===
-      "number"
-    ) {
+    if (typeof responseData === "number") {
       return responseData;
     }
 
-    if (
-      typeof responseData ===
-      "string"
-    ) {
-      const parsed =
-        Number(responseData);
+    if (typeof responseData === "string") {
+      const parsed = Number(responseData);
 
-      return Number.isFinite(parsed)
-        ? parsed
-        : 0;
+      return Number.isFinite(parsed) ? parsed : 0;
     }
 
-    if (
-      !responseData ||
-      typeof responseData !==
-        "object"
-    ) {
+    if (!responseData || typeof responseData !== "object") {
       return 0;
     }
 
-    const data =
-      responseData as Record<
-        string,
-        unknown
-      >;
+    const data = responseData as Record<string, unknown>;
 
     // Direct response
-    if (
-      typeof data.count ===
-      "number"
-    ) {
+
+    if (typeof data.count === "number") {
       return data.count;
     }
 
-    if (
-      typeof data.unread_count ===
-      "number"
-    ) {
+    if (typeof data.unread_count === "number") {
       return data.unread_count;
     }
 
-    if (
-      typeof data.unreadCount ===
-      "number"
-    ) {
+    if (typeof data.unreadCount === "number") {
       return data.unreadCount;
     }
 
     // Nested data response
-    if (
-      data.data !== null &&
-      typeof data.data ===
-        "object"
-    ) {
-      const nested =
-        data.data as Record<
-          string,
-          unknown
-        >;
 
-      if (
-        typeof nested.count ===
-        "number"
-      ) {
+    if (data.data !== null && typeof data.data === "object") {
+      const nested = data.data as Record<string, unknown>;
+
+      if (typeof nested.count === "number") {
         return nested.count;
       }
 
-      if (
-        typeof nested.unread_count ===
-        "number"
-      ) {
+      if (typeof nested.unread_count === "number") {
         return nested.unread_count;
       }
 
-      if (
-        typeof nested.unreadCount ===
-        "number"
-      ) {
+      if (typeof nested.unreadCount === "number") {
         return nested.unreadCount;
       }
     }
 
-    if (
-      typeof data.data ===
-      "number"
-    ) {
+    if (typeof data.data === "number") {
       return data.data;
     }
 
-    if (
-      typeof data.data ===
-      "string"
-    ) {
-      const parsed =
-        Number(data.data);
+    if (typeof data.data === "string") {
+      const parsed = Number(data.data);
 
-      return Number.isFinite(parsed)
-        ? parsed
-        : 0;
+      return Number.isFinite(parsed) ? parsed : 0;
     }
 
     return 0;
@@ -353,59 +235,29 @@ export default function Shell({
   // Load Unread Notification Count
   // ======================================================
 
-  const loadUnreadNotificationCount =
-    useCallback(async () => {
-      if (role !== "driver") {
+  const loadUnreadNotificationCount = useCallback(async () => {
+    if (role !== "driver") {
+      setUnreadCount(0);
+      return;
+    }
+
+    try {
+      const response = await api.get("/notifications/unread/count");
+
+      const count = extractUnreadCount(response?.data);
+
+      if (!Number.isFinite(count) || count <= 0) {
         setUnreadCount(0);
         return;
       }
 
-      try {
-        const response =
-          await api.get(
-            "/notifications/unread/count",
-          );
+      setUnreadCount(Math.floor(count));
+    } catch (error) {
+      console.error("[Shell] Failed to load unread notification count:", error);
 
-        const count =
-          extractUnreadCount(
-            response?.data,
-          );
-
-        /*
-         * Never allow a negative, NaN,
-         * decimal, or invalid value into
-         * the badge.
-         */
-        if (
-          !Number.isFinite(count) ||
-          count <= 0
-        ) {
-          setUnreadCount(0);
-          return;
-        }
-
-        setUnreadCount(
-          Math.floor(count),
-        );
-      } catch (error) {
-        console.error(
-          "[Shell] Failed to load unread notification count:",
-          error,
-        );
-
-        /*
-         * Keep the previous value when
-         * polling temporarily fails.
-         *
-         * This prevents the badge from
-         * disappearing just because one
-         * network request failed.
-         */
-        setUnreadCount(
-          (current) => current,
-        );
-      }
-    }, [role]);
+      setUnreadCount((current) => current);
+    }
+  }, [role]);
 
   // ======================================================
   // Initial / Navigation Refresh
@@ -413,10 +265,7 @@ export default function Shell({
 
   useEffect(() => {
     void loadUnreadNotificationCount();
-  }, [
-    loadUnreadNotificationCount,
-    location.pathname,
-  ]);
+  }, [loadUnreadNotificationCount, location.pathname]);
 
   // ======================================================
   // Poll Notification Count
@@ -427,30 +276,23 @@ export default function Shell({
       return;
     }
 
-    const interval =
-      window.setInterval(() => {
-        void loadUnreadNotificationCount();
-      }, 30_000);
+    const interval = window.setInterval(() => {
+      void loadUnreadNotificationCount();
+    }, 30_000);
 
     return () => {
-      window.clearInterval(
-        interval,
-      );
+      window.clearInterval(interval);
     };
-  }, [
-    role,
-    loadUnreadNotificationCount,
-  ]);
+  }, [role, loadUnreadNotificationCount]);
 
   // ======================================================
   // Notification Bell
   // ======================================================
 
-  const handleNotificationClick =
-    () => {
-      navigate("/notifications");
-      setOpen(false);
-    };
+  const handleNotificationClick = () => {
+    navigate("/notifications");
+    setOpen(false);
+  };
 
   // ======================================================
   // Render
@@ -473,11 +315,7 @@ export default function Shell({
           text-white
           transition-transform
           lg:translate-x-0
-          ${
-            open
-              ? "translate-x-0"
-              : "-translate-x-full"
-          }
+          ${open ? "translate-x-0" : "-translate-x-full"}
         `}
       >
         {/* ==================================================
@@ -496,24 +334,16 @@ export default function Shell({
             className="flex items-center gap-3 text-xl font-extrabold"
           >
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-400 text-[#071a2d]">
-              <ParkingCircle
-                size={23}
-              />
+              <ParkingCircle size={23} />
             </span>
-
             SmartPark
-
-            <span className="text-emerald-400">
-              AI
-            </span>
+            <span className="text-emerald-400">AI</span>
           </Link>
 
           <button
             type="button"
             className="lg:hidden"
-            onClick={() =>
-              setOpen(false)
-            }
+            onClick={() => setOpen(false)}
           >
             <X />
           </button>
@@ -530,13 +360,9 @@ export default function Shell({
             </small>
 
             <div className="mt-2 flex justify-between font-bold">
-              <span className="capitalize">
-                {role}
-              </span>
+              <span className="capitalize">{role}</span>
 
-              <ChevronDown
-                size={16}
-              />
+              <ChevronDown size={16} />
             </div>
           </div>
         </div>
@@ -546,39 +372,24 @@ export default function Shell({
         ================================================== */}
 
         <nav className="space-y-1 px-4">
-          {items.map(
-            ([title, path, Icon]) => {
-              const IconComponent =
-                Icon as React.ElementType;
+          {items.map(([title, path, Icon]) => {
+            const IconComponent = Icon as React.ElementType;
 
-              const titleText =
-                title as string;
+            const titleText = title as string;
 
-              const pathText =
-                path as string;
+            const pathText = path as string;
 
-              // ==================================================
-              // Reservations
-              // ==================================================
+            // ==================================================
+            // Reservations
+            // ==================================================
 
-              if (
-                role === "driver" &&
-                titleText ===
-                  "Reservations"
-              ) {
-                return (
-                  <div
-                    key={pathText}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setReservationsOpen(
-                          (current) =>
-                            !current,
-                        )
-                      }
-                      className={`
+            if (role === "driver" && titleText === "Reservations") {
+              return (
+                <div key={pathText}>
+                  <button
+                    type="button"
+                    onClick={() => setReservationsOpen((current) => !current)}
+                    className={`
                         flex
                         w-full
                         items-center
@@ -595,169 +406,127 @@ export default function Shell({
                             : "text-slate-300 hover:bg-white/10"
                         }
                       `}
-                    >
-                      <IconComponent
-                        size={18}
-                      />
-
-                      <span className="flex-1 text-left">
-                        Reservations
-                      </span>
-
-                      <ChevronDown
-                        size={16}
-                        className={`transition-transform ${
-                          reservationsOpen
-                            ? "rotate-180"
-                            : ""
-                        }`}
-                      />
-                    </button>
-
-                    {reservationsOpen && (
-                      <div className="ml-5 mt-1 space-y-1 border-l border-white/10 pl-3">
-                        <Link
-                          to="/reservations"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
-                            flex items-center gap-2
-                            rounded-lg px-3 py-2.5
-                            text-sm font-medium transition
-                            ${
-                              location.pathname ===
-                              "/reservations"
-                                ? "bg-white/10 text-emerald-300"
-                                : "text-slate-300 hover:bg-white/5 hover:text-white"
-                            }
-                          `}
-                        >
-                          <ParkingCircle
-                            size={15}
-                          />
-                          My Reservations
-                        </Link>
-
-                        <Link
-                          to="/reservations/create"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
-                            flex items-center gap-2
-                            rounded-lg px-3 py-2.5
-                            text-sm font-medium transition
-                            ${
-                              location.pathname ===
-                              "/reservations/create"
-                                ? "bg-white/10 text-emerald-300"
-                                : "text-slate-300 hover:bg-white/5 hover:text-white"
-                            }
-                          `}
-                        >
-                          <CalendarPlus
-                            size={15}
-                          />
-                          Create Reservation
-                        </Link>
-
-                        <Link
-                          to="/reservations/upcoming"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
-                            flex items-center gap-2
-                            rounded-lg px-3 py-2.5
-                            text-sm font-medium transition
-                            ${
-                              location.pathname ===
-                              "/reservations/upcoming"
-                                ? "bg-white/10 text-emerald-300"
-                                : "text-slate-300 hover:bg-white/5 hover:text-white"
-                            }
-                          `}
-                        >
-                          <CalendarPlus
-                            size={15}
-                          />
-                          Upcoming
-                        </Link>
-
-                        <Link
-                          to="/reservations/active"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
-                            flex items-center gap-2
-                            rounded-lg px-3 py-2.5
-                            text-sm font-medium transition
-                            ${
-                              location.pathname ===
-                              "/reservations/active"
-                                ? "bg-white/10 text-emerald-300"
-                                : "text-slate-300 hover:bg-white/5 hover:text-white"
-                            }
-                          `}
-                        >
-                          <ParkingCircle
-                            size={15}
-                          />
-                          Active
-                        </Link>
-
-                        <Link
-                          to="/reservations/history"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
-                            flex items-center gap-2
-                            rounded-lg px-3 py-2.5
-                            text-sm font-medium transition
-                            ${
-                              location.pathname ===
-                              "/reservations/history"
-                                ? "bg-white/10 text-emerald-300"
-                                : "text-slate-300 hover:bg-white/5 hover:text-white"
-                            }
-                          `}
-                        >
-                          <History
-                            size={15}
-                          />
-                          History
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              // ==================================================
-              // Vehicles
-              // ==================================================
-
-              if (
-                role === "driver" &&
-                titleText ===
-                  "Vehicles"
-              ) {
-                return (
-                  <div
-                    key={pathText}
                   >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setVehiclesOpen(
-                          (current) =>
-                            !current,
-                        )
-                      }
-                      className={`
+                    <IconComponent size={18} />
+
+                    <span className="flex-1 text-left">Reservations</span>
+
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${
+                        reservationsOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {reservationsOpen && (
+                    <div className="ml-5 mt-1 space-y-1 border-l border-white/10 pl-3">
+                      <Link
+                        to="/reservations"
+                        onClick={() => setOpen(false)}
+                        className={`
+                            flex items-center gap-2
+                            rounded-lg px-3 py-2.5
+                            text-sm font-medium transition
+                            ${
+                              location.pathname === "/reservations"
+                                ? "bg-white/10 text-emerald-300"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }
+                          `}
+                      >
+                        <ParkingCircle size={15} />
+                        My Reservations
+                      </Link>
+
+                      <Link
+                        to="/reservations/create"
+                        onClick={() => setOpen(false)}
+                        className={`
+                            flex items-center gap-2
+                            rounded-lg px-3 py-2.5
+                            text-sm font-medium transition
+                            ${
+                              location.pathname === "/reservations/create"
+                                ? "bg-white/10 text-emerald-300"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }
+                          `}
+                      >
+                        <CalendarPlus size={15} />
+                        Create Reservation
+                      </Link>
+
+                      <Link
+                        to="/reservations/upcoming"
+                        onClick={() => setOpen(false)}
+                        className={`
+                            flex items-center gap-2
+                            rounded-lg px-3 py-2.5
+                            text-sm font-medium transition
+                            ${
+                              location.pathname === "/reservations/upcoming"
+                                ? "bg-white/10 text-emerald-300"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }
+                          `}
+                      >
+                        <CalendarPlus size={15} />
+                        Upcoming
+                      </Link>
+
+                      <Link
+                        to="/reservations/active"
+                        onClick={() => setOpen(false)}
+                        className={`
+                            flex items-center gap-2
+                            rounded-lg px-3 py-2.5
+                            text-sm font-medium transition
+                            ${
+                              location.pathname === "/reservations/active"
+                                ? "bg-white/10 text-emerald-300"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }
+                          `}
+                      >
+                        <ParkingCircle size={15} />
+                        Active
+                      </Link>
+
+                      <Link
+                        to="/reservations/history"
+                        onClick={() => setOpen(false)}
+                        className={`
+                            flex items-center gap-2
+                            rounded-lg px-3 py-2.5
+                            text-sm font-medium transition
+                            ${
+                              location.pathname === "/reservations/history"
+                                ? "bg-white/10 text-emerald-300"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }
+                          `}
+                      >
+                        <History size={15} />
+                        History
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // ==================================================
+            // Vehicles
+            // ==================================================
+
+            if (role === "driver" && titleText === "Vehicles") {
+              return (
+                <div key={pathText}>
+                  <button
+                    type="button"
+                    onClick={() => setVehiclesOpen((current) => !current)}
+                    className={`
                         flex w-full items-center gap-3
                         rounded-xl px-4 py-3 text-sm
                         font-semibold transition
@@ -767,100 +536,73 @@ export default function Shell({
                             : "text-slate-300 hover:bg-white/10"
                         }
                       `}
-                    >
-                      <IconComponent
-                        size={18}
-                      />
-
-                      <span className="flex-1 text-left">
-                        Vehicles
-                      </span>
-
-                      <ChevronDown
-                        size={16}
-                        className={`transition-transform ${
-                          vehiclesOpen
-                            ? "rotate-180"
-                            : ""
-                        }`}
-                      />
-                    </button>
-
-                    {vehiclesOpen && (
-                      <div className="ml-5 mt-1 space-y-1 border-l border-white/10 pl-3">
-                        <Link
-                          to="/vehicles"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
-                            flex items-center gap-2
-                            rounded-lg px-3 py-2.5
-                            text-sm font-medium transition
-                            ${
-                              location.pathname ===
-                              "/vehicles"
-                                ? "bg-white/10 text-emerald-300"
-                                : "text-slate-300 hover:bg-white/5 hover:text-white"
-                            }
-                          `}
-                        >
-                          <CarFront
-                            size={15}
-                          />
-                          My Vehicles
-                        </Link>
-
-                        <Link
-                          to="/vehicles/create"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
-                            flex items-center gap-2
-                            rounded-lg px-3 py-2.5
-                            text-sm font-medium transition
-                            ${
-                              location.pathname ===
-                              "/vehicles/create"
-                                ? "bg-white/10 text-emerald-300"
-                                : "text-slate-300 hover:bg-white/5 hover:text-white"
-                            }
-                          `}
-                        >
-                          <CalendarPlus
-                            size={15}
-                          />
-                          Add Vehicle
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              // ==================================================
-              // Payments & Wallet
-              // ==================================================
-
-              if (
-                role === "driver" &&
-                titleText ===
-                  "Payments & Wallet"
-              ) {
-                return (
-                  <div
-                    key={pathText}
                   >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPaymentsOpen(
-                          (current) =>
-                            !current,
-                        )
-                      }
-                      className={`
+                    <IconComponent size={18} />
+
+                    <span className="flex-1 text-left">Vehicles</span>
+
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${
+                        vehiclesOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {vehiclesOpen && (
+                    <div className="ml-5 mt-1 space-y-1 border-l border-white/10 pl-3">
+                      <Link
+                        to="/vehicles"
+                        onClick={() => setOpen(false)}
+                        className={`
+                            flex items-center gap-2
+                            rounded-lg px-3 py-2.5
+                            text-sm font-medium transition
+                            ${
+                              location.pathname === "/vehicles"
+                                ? "bg-white/10 text-emerald-300"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }
+                          `}
+                      >
+                        <CarFront size={15} />
+                        My Vehicles
+                      </Link>
+
+                      <Link
+                        to="/vehicles/create"
+                        onClick={() => setOpen(false)}
+                        className={`
+                            flex items-center gap-2
+                            rounded-lg px-3 py-2.5
+                            text-sm font-medium transition
+                            ${
+                              location.pathname === "/vehicles/create"
+                                ? "bg-white/10 text-emerald-300"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }
+                          `}
+                      >
+                        <CalendarPlus size={15} />
+                        Add Vehicle
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // ==================================================
+            // Payments & Wallet
+            // ==================================================
+
+            if (role === "driver" && titleText === "Payments & Wallet") {
+              return (
+                <div key={pathText}>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentsOpen((current) => !current)}
+                    className={`
                         flex w-full items-center gap-3
                         rounded-xl px-4 py-3 text-sm
                         font-semibold transition
@@ -870,94 +612,72 @@ export default function Shell({
                             : "text-slate-300 hover:bg-white/10"
                         }
                       `}
-                    >
-                      <IconComponent
-                        size={18}
-                      />
+                  >
+                    <IconComponent size={18} />
 
-                      <span className="flex-1 text-left">
-                        Payments & Wallet
-                      </span>
+                    <span className="flex-1 text-left">Payments & Wallet</span>
 
-                      <ChevronDown
-                        size={16}
-                        className={`transition-transform ${
-                          paymentsOpen
-                            ? "rotate-180"
-                            : ""
-                        }`}
-                      />
-                    </button>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${
+                        paymentsOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
-                    {paymentsOpen && (
-                      <div className="ml-5 mt-1 space-y-1 border-l border-white/10 pl-3">
-                        <Link
-                          to="/payments"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
+                  {paymentsOpen && (
+                    <div className="ml-5 mt-1 space-y-1 border-l border-white/10 pl-3">
+                      <Link
+                        to="/payments"
+                        onClick={() => setOpen(false)}
+                        className={`
                             flex items-center gap-2
                             rounded-lg px-3 py-2.5
                             text-sm font-medium transition
                             ${
-                              location.pathname ===
-                              "/payments"
+                              location.pathname === "/payments"
                                 ? "bg-white/10 text-emerald-300"
                                 : "text-slate-300 hover:bg-white/5 hover:text-white"
                             }
                           `}
-                        >
-                          <CreditCard
-                            size={15}
-                          />
-                          Payment History
-                        </Link>
+                      >
+                        <CreditCard size={15} />
+                        Payment History
+                      </Link>
 
-                        <Link
-                          to="/payments/wallet"
-                          onClick={() =>
-                            setOpen(false)
-                          }
-                          className={`
+                      <Link
+                        to="/payments/wallet"
+                        onClick={() => setOpen(false)}
+                        className={`
                             flex items-center gap-2
                             rounded-lg px-3 py-2.5
                             text-sm font-medium transition
                             ${
-                              location.pathname ===
-                              "/payments/wallet"
+                              location.pathname === "/payments/wallet"
                                 ? "bg-white/10 text-emerald-300"
                                 : "text-slate-300 hover:bg-white/5 hover:text-white"
                             }
                           `}
-                        >
-                          <Wallet
-                            size={15}
-                          />
-                          My Wallet
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+                      >
+                        <Wallet size={15} />
+                        My Wallet
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            }
 
-              // ==================================================
-              // Receipts
-              // ==================================================
+            // ==================================================
+            // Receipts
+            // ==================================================
 
-              if (
-                role === "driver" &&
-                titleText ===
-                  "Receipts"
-              ) {
-                return (
-                  <Link
-                    key={pathText}
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className={`
+            if (role === "driver" && titleText === "Receipts") {
+              return (
+                <Link
+                  key={pathText}
+                  onClick={() => setOpen(false)}
+                  className={`
                       flex items-center gap-3
                       rounded-xl px-4 py-3
                       text-sm font-semibold transition
@@ -967,49 +687,69 @@ export default function Shell({
                           : "text-slate-300 hover:bg-white/10"
                       }
                     `}
-                    to={pathText}
-                  >
-                    <IconComponent
-                      size={18}
-                    />
-
-                    {titleText}
-                  </Link>
-                );
-              }
-
-              // ==================================================
-              // Standard Navigation
-              // ==================================================
-
-              return (
-                <Link
-                  key={pathText}
-                  onClick={() =>
-                    setOpen(false)
-                  }
-                  className={`
-                    flex items-center gap-3
-                    rounded-xl px-4 py-3
-                    text-sm font-semibold
-                    ${
-                      location.pathname ===
-                      pathText
-                        ? "bg-emerald-400 text-[#071a2d]"
-                        : "text-slate-300 hover:bg-white/10"
-                    }
-                  `}
                   to={pathText}
                 >
-                  <IconComponent
-                    size={18}
-                  />
+                  <IconComponent size={18} />
 
                   {titleText}
                 </Link>
               );
-            },
-          )}
+            }
+
+            // ==================================================
+            // Parking Sessions
+            // ==================================================
+
+            if (role === "driver" && titleText === "Parking Sessions") {
+              return (
+                <Link
+                  key={pathText}
+                  onClick={() => setOpen(false)}
+                  className={`
+                      flex items-center gap-3
+                      rounded-xl px-4 py-3
+                      text-sm font-semibold transition
+                      ${
+                        isSessionsSection
+                          ? "bg-emerald-400 text-[#071a2d]"
+                          : "text-slate-300 hover:bg-white/10"
+                      }
+                    `}
+                  to={pathText}
+                >
+                  <IconComponent size={18} />
+
+                  {titleText}
+                </Link>
+              );
+            }
+
+            // ==================================================
+            // Standard Navigation
+            // ==================================================
+
+            return (
+              <Link
+                key={pathText}
+                onClick={() => setOpen(false)}
+                className={`
+                    flex items-center gap-3
+                    rounded-xl px-4 py-3
+                    text-sm font-semibold
+                    ${
+                      location.pathname === pathText
+                        ? "bg-emerald-400 text-[#071a2d]"
+                        : "text-slate-300 hover:bg-white/10"
+                    }
+                  `}
+                to={pathText}
+              >
+                <IconComponent size={18} />
+
+                {titleText}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* ==================================================
@@ -1054,9 +794,7 @@ export default function Shell({
             <button
               type="button"
               className="p-2 lg:hidden"
-              onClick={() =>
-                setOpen(true)
-              }
+              onClick={() => setOpen(true)}
             >
               <Menu />
             </button>
@@ -1066,9 +804,7 @@ export default function Shell({
                 SmartPark AI
               </small>
 
-              <div className="font-bold capitalize">
-                {role} Portal
-              </div>
+              <div className="font-bold capitalize">{role} Portal</div>
             </div>
           </div>
 
@@ -1079,9 +815,7 @@ export default function Shell({
 
             <button
               type="button"
-              onClick={
-                handleNotificationClick
-              }
+              onClick={handleNotificationClick}
               aria-label={
                 unreadCount > 0
                   ? `${unreadCount} unread notifications`
@@ -1090,9 +824,7 @@ export default function Shell({
               title={
                 unreadCount > 0
                   ? `${unreadCount} unread notification${
-                      unreadCount === 1
-                        ? ""
-                        : "s"
+                      unreadCount === 1 ? "" : "s"
                     }`
                   : "Notifications"
               }
@@ -1109,19 +841,7 @@ export default function Shell({
                 }
               `}
             >
-              {unreadCount > 0 ? (
-                <BellRing
-                  size={18}
-                />
-              ) : (
-                <Bell
-                  size={18}
-                />
-              )}
-
-              {/* ==================================================
-                  UNREAD COUNT BADGE
-              ================================================== */}
+              {unreadCount > 0 ? <BellRing size={18} /> : <Bell size={18} />}
 
               {unreadCount > 0 && (
                 <span
@@ -1146,9 +866,7 @@ export default function Shell({
                     ring-white
                   "
                 >
-                  {unreadCount > 9
-                    ? "9+"
-                    : unreadCount}
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </button>
@@ -1163,9 +881,7 @@ export default function Shell({
               </span>
 
               <div>
-                <b className="text-sm">
-                  {fullName}
-                </b>
+                <b className="text-sm">{fullName}</b>
 
                 <small className="block capitalize text-slate-500">
                   {role} portal
@@ -1179,11 +895,8 @@ export default function Shell({
             PAGE CONTENT
         ================================================== */}
 
-        <main className="p-4 sm:p-8">
-          {children}
-        </main>
+        <main className="p-4 sm:p-8">{children}</main>
       </div>
     </div>
   );
 }
-

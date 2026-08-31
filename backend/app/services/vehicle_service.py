@@ -9,6 +9,7 @@ The service layer is responsible for:
 - Default vehicle management
 - Vehicle activation/deactivation
 - Updating vehicle details
+- Vehicle deletion
 
 Persistence and database access are delegated to
 VehicleRepository.
@@ -214,7 +215,7 @@ class VehicleService:
     ) -> Vehicle:
         """
         Retrieve a vehicle using its registration number.
-        
+
         Registration numbers are matched case-insensitively
         and without whitespace.
 
@@ -326,7 +327,7 @@ class VehicleService:
             )
 
         #
-        # Persist.
+        # Preserve existing behaviour.
         #
         vehicle.is_default = True
 
@@ -499,6 +500,56 @@ class VehicleService:
         )
 
         return vehicle
+
+    # ======================================================
+    # Delete Vehicle
+    # ======================================================
+
+    async def delete_vehicle(
+        self,
+        *,
+        vehicle_id: int,
+        customer_id: int,
+    ) -> None:
+        """
+        Permanently delete a vehicle from the customer's
+        vehicle profile.
+
+        Delete is intended for vehicles that the customer
+        no longer owns, for example a vehicle that has been
+        sold or transferred.
+
+        This is deliberately different from deactivate_vehicle(),
+        which retains the vehicle for historical records.
+
+        Ownership is verified before deletion.
+        """
+
+        vehicle = await self.get_vehicle(
+            vehicle_id,
+        )
+
+        #
+        # Ownership check.
+        #
+        if vehicle.customer_id != customer_id:
+            raise ValueError(
+                "You are not authorized to delete this vehicle."
+            )
+
+        #
+        # Delete the vehicle.
+        #
+        # The repository is responsible for persistence.
+        # Database relationships/constraints remain the
+        # authority for determining whether the record can
+        # safely be removed.
+        #
+        await self.repository.delete(
+            vehicle,
+        )
+
+        await self.repository.commit()
 
     # ======================================================
     # Internal Helper

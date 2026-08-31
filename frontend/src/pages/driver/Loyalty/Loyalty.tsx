@@ -608,7 +608,7 @@ export default function Loyalty() {
 
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Your Loyalty Tier
+                    Your Current Loyalty Tier
                   </p>
 
                   <h2 className="text-xl font-extrabold text-slate-900">

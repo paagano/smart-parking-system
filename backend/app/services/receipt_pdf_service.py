@@ -1166,7 +1166,7 @@ class ReceiptPDFService:
 
         verification_url = (
             f"{base_url}"
-            f"/receipts/verify/"
+            f"/receipts/public/verify/"
             f"{receipt.receipt_number}"
             f"?verification_token="
             f"{receipt.verification_token}"

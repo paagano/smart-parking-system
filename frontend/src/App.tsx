@@ -36,6 +36,9 @@ import Loyalty from "./pages/driver/Loyalty/Loyalty";
 
 import Notifications from "./pages/driver/Notifications/Notifications";
 
+import ParkingSessions from "./pages/driver/Sessions/ParkingSessions";
+import SessionDetails from "./pages/driver/Sessions/SessionDetails";
+
 // ==========================================================
 // OPERATOR
 // ==========================================================
@@ -54,6 +57,10 @@ import AdminDashboard from "./pages/admin/Dashboard/AdminDashboard";
 // ==========================================================
 
 import Settings from "./pages/shared/Settings";
+
+// ==========================================================
+// APPLICATION
+// ==========================================================
 
 export default function App() {
   return (
@@ -79,6 +86,10 @@ export default function App() {
     </Routes>
   );
 }
+
+// ==========================================================
+// AUTHENTICATED APPLICATION
+// ==========================================================
 
 function AuthenticatedApplication() {
   const { user } = useAuth();
@@ -161,11 +172,42 @@ function AuthenticatedApplication() {
         />
 
         {/* ==================================================
-            DRIVER — PAYMENTS
+            DRIVER — PAYMENT HISTORY
+        ==================================================
+        
+            This is the normal payment-history page.
+            Do NOT use this route for parking-session checkout.
         ================================================== */}
 
         <Route
           path="/payments"
+          element={
+            <RoleRoute allowedRoles={["driver"]}>
+              <Payments />
+            </RoleRoute>
+          }
+        />
+
+        {/* ==================================================
+            DRIVER — PARKING SESSION CHECKOUT
+        ==================================================
+        
+            Dedicated checkout route.
+
+            Expected URL:
+
+            /payments/checkout
+              ?sessionId=28
+              &amount=500
+              &currency=KES
+              &checkout=1
+
+            The actual checkout UI should be handled by the
+            Payments component based on these query parameters.
+        ================================================== */}
+
+        <Route
+          path="/payments/checkout"
           element={
             <RoleRoute allowedRoles={["driver"]}>
               <Payments />
@@ -299,6 +341,32 @@ function AuthenticatedApplication() {
           element={
             <RoleRoute allowedRoles={["driver"]}>
               <EditVehicle />
+            </RoleRoute>
+          }
+        />
+
+        {/* ==================================================
+            DRIVER — PARKING SESSIONS
+        ================================================== */}
+
+        <Route
+          path="/sessions"
+          element={
+            <RoleRoute allowedRoles={["driver"]}>
+              <ParkingSessions />
+            </RoleRoute>
+          }
+        />
+
+        {/* ==================================================
+            DRIVER — SESSION DETAILS
+        ================================================== */}
+
+        <Route
+          path="/sessions/:sessionId"
+          element={
+            <RoleRoute allowedRoles={["driver"]}>
+              <SessionDetails />
             </RoleRoute>
           }
         />
