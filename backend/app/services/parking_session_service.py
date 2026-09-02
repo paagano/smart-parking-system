@@ -713,59 +713,85 @@ class ParkingSessionService:
         checkout_data: ParkingSessionCheckout,
     ) -> ParkingSession:
         """
-        Complete an active parking session.
+        Record the physical exit of a vehicle whose parking
+        session has already been completed through successful payment.
 
         Workflow
         --------
-        Active Session
+        Completed / Paid Session
                 ↓
-        Calculate Parking Fee
+        Record Physical Exit Time
                 ↓
-        Complete Session
+        Record Exit Method
                 ↓
         Release Parking Bay
         """
 
-        parking_session = await self.repository.get_active_by_registration(
+        # ------------------------------------------------------
+        # Validate Registration
+        # ------------------------------------------------------
+
+        registration = self._validate_registration(
             checkout_data.vehicle_registration
         )
 
-        if parking_session is None:
-            raise NotFoundException(
-                "No active parking session found for this vehicle."
-            )
+        # ------------------------------------------------------
+        # Retrieve the completed session awaiting physical exit.
+        #
+        # Payment changes the session to COMPLETED.
+        # Physical checkout must NOT look for an ACTIVE session.
+        # The exit timestamp is recorded only here.
+        # ------------------------------------------------------
 
-        if parking_session.status != SessionStatus.ACTIVE:
-            raise BadRequestException(
-                "Parking session is not active."
+        sessions = await self.repository.get_by_registration(
+            registration
+        )
+
+        pending_exit_sessions = [
+            session
+            for session in sessions
+            if session.status == SessionStatus.COMPLETED
+            and session.exit_time is None
+        ]
+
+        if not pending_exit_sessions:
+            raise NotFoundException(
+                "No completed parking session awaiting vehicle exit was found for this vehicle."
             )
 
         # ------------------------------------------------------
-        # Determine exit time
+        # There should normally be only one completed session
+        # awaiting physical exit for a vehicle.
+        #
+        # If more than one exists, do not guess which facility
+        # the vehicle is exiting from.
+        # ------------------------------------------------------
+
+        if len(pending_exit_sessions) > 1:
+            raise BadRequestException(
+                "Multiple completed parking sessions are awaiting vehicle exit for this vehicle. "
+                "The exit facility must be identified before checkout can proceed."
+            )
+
+        parking_session = pending_exit_sessions[0]
+
+        # ------------------------------------------------------
+        # Determine physical exit time.
         # ------------------------------------------------------
 
         exit_time = utc_now()
 
         # ------------------------------------------------------
-        # Calculate parking fee
-        # ------------------------------------------------------
-
-        pricing = await self.pricing_service.calculate_for_session(
-            vehicle_type=parking_session.vehicle_type,
-            billing_type=parking_session.billing_type,
-            entry_time=parking_session.entry_time,
-            exit_time=exit_time,
-        )
-
-        # ------------------------------------------------------
-        # Update session
+        # Record physical vehicle exit.
+        #
+        # IMPORTANT:
+        # - Do NOT recalculate the parking fee here.
+        # - Do NOT change the session status.
+        # - The session was already completed when payment succeeded.
         # ------------------------------------------------------
 
         parking_session.exit_time = exit_time
         parking_session.exit_method = checkout_data.exit_method
-        parking_session.status = SessionStatus.COMPLETED
-        parking_session.duration_minutes = pricing.duration_minutes
-        parking_session.calculated_amount = pricing.total_amount
 
         parking_session.notes = (
             checkout_data.notes
@@ -777,7 +803,7 @@ class ParkingSessionService:
         )
 
         # ------------------------------------------------------
-        # Release parking bay
+        # Release parking bay only after physical exit.
         # ------------------------------------------------------
 
         parking_bay = await self.parking_bay_repository.release_bay(
@@ -806,17 +832,18 @@ class ParkingSessionService:
         await self._create_session_notification(
             parking_session=parking_session,
             notification_type=NotificationType.SESSION_CHECKED_OUT,
-            title="Parking Session Completed",
+            title="Vehicle Exited",
             message=(
-                f"Your parking session "
-                f"{parking_session.session_number} "
-                f"has been completed. "
-                f"Parking amount: "
-                f"KES {parking_session.calculated_amount}."
+                f"Your vehicle "
+                f"{parking_session.vehicle_registration} "
+                f"has exited the parking facility. "
+                f"Session: "
+                f"{parking_session.session_number}."
             ),
         )
 
         return parking_session
+
 
     # ==========================================================
     # Update

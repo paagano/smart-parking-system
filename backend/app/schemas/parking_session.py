@@ -22,6 +22,7 @@ from app.models.enums import (
     EntryMethod,
     ExitMethod,
     PaymentStatus,
+    SessionPaymentStatus,
     SessionSource,
     SessionStatus,
     VehicleType,
@@ -273,7 +274,7 @@ class ParkingSessionResponse(BaseModel):
 
     paid_amount: Decimal
 
-    payment_status: PaymentStatus
+    payment_status: SessionPaymentStatus
 
     created_by: Optional[int] = None
 

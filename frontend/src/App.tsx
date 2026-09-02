@@ -39,6 +39,8 @@ import Notifications from "./pages/driver/Notifications/Notifications";
 import ParkingSessions from "./pages/driver/Sessions/ParkingSessions";
 import SessionDetails from "./pages/driver/Sessions/SessionDetails";
 
+import Profile from "./pages/driver/Profile/Profile";
+
 // ==========================================================
 // OPERATOR
 // ==========================================================
@@ -380,6 +382,19 @@ function AuthenticatedApplication() {
           element={
             <RoleRoute allowedRoles={["driver", "operator", "admin"]}>
               <Forecast />
+            </RoleRoute>
+          }
+        />
+
+        {/* ==================================================
+            DRIVER - PROFILE
+        ================================================== */}
+
+        <Route
+          path="/profile"
+          element={
+            <RoleRoute allowedRoles={["driver"]}>
+              <Profile />
             </RoleRoute>
           }
         />

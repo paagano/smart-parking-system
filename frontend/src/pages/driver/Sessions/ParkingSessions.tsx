@@ -244,6 +244,38 @@ function humanize(value: string | null | undefined): string {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function extractSessions(payload: any): ParkingSession[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.items)) {
+    return payload.items;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  if (Array.isArray(payload?.results)) {
+    return payload.results;
+  }
+
+  return [];
+}
+
+function unwrapPayload<T = any>(payload: any): T {
+  if (
+    payload?.data &&
+    typeof payload.data === "object" &&
+    !Array.isArray(payload.data)
+  ) {
+    return payload.data;
+  }
+
+  return payload as T;
+}
+
 function extractQuoteAmount(quote: BackendQuote): number | null {
   /*
    * Accept the common names used by the
@@ -543,7 +575,7 @@ function ActiveSessionCard({
             <div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.15em] text-emerald-300">
                 <CreditCardIcon />
-                Current Parking Amount
+                Current Outstanding Bill
               </div>
 
               <div className="mt-2 text-3xl font-black tracking-tight text-white">
@@ -622,9 +654,8 @@ function ActiveSessionCard({
               <div className="text-sm font-bold">Parking session is active</div>
 
               <p className="mt-1 text-xs leading-5 text-slate-400">
-                The displayed duration updates while you remain parked. The
-                parking amount is obtained from the backend pricing engine and
-                is not calculated by the frontend.
+                The displayed duration and outstanding bill updates periodically
+                while you remain parked.
               </p>
             </div>
           </div>
@@ -694,11 +725,78 @@ function SessionRow({
 }) {
   const status = normalizeStatus(session.status);
 
-  const amount = getStoredAmount(session);
+  const storedAmount = getStoredAmount(session);
 
   const paidAmount = getPaidAmount(session);
 
   const duration = getDuration(session);
+
+  // ----------------------------------------------------------
+  // Current amount for this specific active session
+  // ----------------------------------------------------------
+  const [rowAmount, setRowAmount] = useState<number | null>(storedAmount);
+  const [rowCurrency, setRowCurrency] = useState("KES");
+  const [rowQuoteLoading, setRowQuoteLoading] = useState(false);
+
+  const loadRowQuote = useCallback(async () => {
+    if (!isActive(session) || !session.id) {
+      setRowAmount(storedAmount);
+      return;
+    }
+
+    setRowQuoteLoading(true);
+
+    try {
+      const response = await api.get<
+        | BackendQuote
+        | { data?: BackendQuote; quote?: BackendQuote; result?: BackendQuote }
+      >(`/parking-sessions/${encodeURIComponent(session.id)}/quote`);
+
+      const responseBody = response.data;
+
+      const quote =
+        responseBody &&
+        typeof responseBody === "object" &&
+        ("data" in responseBody ||
+          "quote" in responseBody ||
+          "result" in responseBody)
+          ? ((responseBody.data ??
+              responseBody.quote ??
+              responseBody.result ??
+              responseBody) as BackendQuote)
+          : (responseBody as BackendQuote);
+
+      const amount = extractQuoteAmount(quote);
+
+      setRowAmount(amount);
+      setRowCurrency(quote.currency ?? "KES");
+    } catch (err) {
+      console.warn(
+        "[SmartPark Sessions] Current quote unavailable for session row:",
+        err,
+      );
+
+      // Preserve the existing session amount if the live quote is unavailable.
+      setRowAmount(storedAmount);
+      setRowCurrency("KES");
+    } finally {
+      setRowQuoteLoading(false);
+    }
+  }, [session, storedAmount]);
+
+  useEffect(() => {
+    void loadRowQuote();
+
+    if (!isActive(session)) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void loadRowQuote();
+    }, 60_000);
+
+    return () => window.clearInterval(interval);
+  }, [loadRowQuote, session]);
 
   return (
     <div className="border-b border-slate-100 px-5 py-5 last:border-0 sm:px-6">
@@ -777,7 +875,11 @@ function SessionRow({
               </div>
 
               <div className="mt-1 text-sm font-black text-slate-900">
-                {amount === null ? "—" : formatCurrency(amount)}
+                {rowQuoteLoading && rowAmount === null
+                  ? "Updating..."
+                  : rowAmount === null
+                    ? "—"
+                    : formatCurrency(rowAmount, rowCurrency)}
               </div>
 
               {paidAmount !== null && (
@@ -957,10 +1059,7 @@ export default function ParkingSessions() {
         const [activeResult, completedResult] = await Promise.allSettled([
           parkingSessionsApi.active(),
 
-          api.get<{
-            items: ParkingSession[];
-            total: number;
-          }>("/parking-sessions/completed"),
+          api.get<any>("/parking-sessions/completed"),
         ]);
 
         const failures: string[] = [];
@@ -985,18 +1084,93 @@ export default function ParkingSessions() {
         // --------------------------------------------------
 
         if (completedResult.status === "fulfilled") {
-          const sessions = completedResult.value.data?.items ?? [];
+          const payload = unwrapPayload(completedResult.value.data);
+          const sessions = extractSessions(payload);
 
           const driverSessions = user?.id
             ? sessions.filter(
                 (session) =>
                   session.customer_id === null ||
                   session.customer_id === undefined ||
-                  session.customer_id === user.id,
+                  String(session.customer_id) === String(user.id),
               )
             : sessions;
 
           setCompletedSessions(driverSessions);
+        } else if (user?.id) {
+          /*
+           * Fallback for the current backend response-model mismatch:
+           * /parking-sessions/completed can fail after a paid checkout
+           * because completed sessions carry payment_status = PAID while
+           * ParkingSessionListResponse currently rejects that enum value.
+           *
+           * Customer payment history still exposes parking_session_id,
+           * so use it to retrieve the customer's completed sessions.
+           * This keeps the dashboard functional without changing the
+           * payment/session business logic.
+           */
+          try {
+            const paymentResponse = await api.get<any>(
+              `/payments/customer/${encodeURIComponent(user.id)}?limit=100&offset=0`,
+            );
+
+            const paymentPayload = paymentResponse.data;
+            const payments = Array.isArray(paymentPayload)
+              ? paymentPayload
+              : Array.isArray(paymentPayload?.items)
+                ? paymentPayload.items
+                : Array.isArray(paymentPayload?.data)
+                  ? paymentPayload.data
+                  : [];
+
+            const sessionIds = Array.from(
+              new Set(
+                payments
+                  .map((payment: any) => payment?.parking_session_id)
+                  .filter(
+                    (sessionId: any) =>
+                      sessionId !== null &&
+                      sessionId !== undefined &&
+                      String(sessionId).trim() !== "",
+                  )
+                  .map((sessionId: any) => String(sessionId)),
+              ),
+            );
+
+            const sessionResults = await Promise.allSettled(
+              sessionIds.map((sessionId) =>
+                api.get<any>(
+                  `/parking-sessions/${encodeURIComponent(sessionId)}`,
+                ),
+              ),
+            );
+
+            const recoveredSessions = sessionResults
+              .filter(
+                (result): result is PromiseFulfilledResult<{ data: any }> =>
+                  result.status === "fulfilled",
+              )
+              .map((result) => {
+                const payload = unwrapPayload<any>(result.value.data);
+                return payload;
+              })
+              .filter(
+                (session: any) =>
+                  session &&
+                  normalizeStatus(session.status) === "COMPLETED" &&
+                  (session.customer_id === null ||
+                    session.customer_id === undefined ||
+                    String(session.customer_id) === String(user.id)),
+              );
+
+            setCompletedSessions(recoveredSessions);
+          } catch (fallbackError) {
+            console.warn(
+              "[SmartPark Sessions] Completed-session fallback failed:",
+              fallbackError,
+            );
+            failures.push("completed sessions");
+          }
         } else {
           failures.push("completed sessions");
         }
@@ -1508,7 +1682,7 @@ export default function ParkingSessions() {
           <AlertCircle size={19} className="mt-0.5 shrink-0" />
 
           <div className="min-w-0 flex-1">
-            <div className="font-bold">Session service message</div>
+            <div className="font-bold">Session Service Message</div>
 
             <div className="mt-1 text-sm">{error}</div>
           </div>
@@ -1669,6 +1843,61 @@ export default function ParkingSessions() {
         ) : (
           <div>
             {otherActiveSessions.map((session) => (
+              <SessionRow
+                key={session.id}
+                session={session}
+                onView={() => handleViewSession(session)}
+              />
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* ====================================================
+          SESSION HISTORY
+      ==================================================== */}
+
+      <Card
+        title="Session History"
+        sub="Your parking sessions, filtered by the selection above."
+      >
+        {loading ? (
+          <div className="flex min-h-[220px] items-center justify-center">
+            <div className="text-center">
+              <RefreshCw
+                size={28}
+                className="mx-auto animate-spin text-emerald-600"
+              />
+              <p className="mt-3 text-sm font-semibold text-slate-500">
+                Loading parking session history...
+              </p>
+            </div>
+          </div>
+        ) : filteredSessions.length === 0 ? (
+          <div className="flex min-h-[220px] flex-col items-center justify-center px-6 text-center">
+            <div className="grid h-16 w-16 place-items-center rounded-3xl bg-slate-100 text-slate-400">
+              <ParkingCircle size={30} />
+            </div>
+
+            <h3 className="mt-5 text-lg font-black text-slate-800">
+              {filter === "COMPLETED"
+                ? "No completed parking sessions"
+                : filter === "ACTIVE"
+                  ? "No active parking sessions"
+                  : "No parking sessions found"}
+            </h3>
+
+            <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+              {filter === "COMPLETED"
+                ? "Completed sessions will appear here after successful checkout."
+                : filter === "ACTIVE"
+                  ? "Currently active parking sessions will appear here."
+                  : "Your parking session history will appear here."}
+            </p>
+          </div>
+        ) : (
+          <div>
+            {filteredSessions.map((session) => (
               <SessionRow
                 key={session.id}
                 session={session}

@@ -392,7 +392,7 @@ export default function Parking() {
           </div>
 
           <h1 className="mt-2 text-3xl font-black tracking-tight">
-            Find parking near you
+            Find Parking Near You
           </h1>
 
           <p className="mt-2 max-w-2xl text-slate-500">
@@ -766,7 +766,7 @@ export default function Parking() {
 
                   <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-4">
                     <a
-                      href={`/reservations?facilityId=${encodeURIComponent(
+                      href={`/reservations/create?facilityId=${encodeURIComponent(
                         String(facility.id),
                       )}&facilityName=${encodeURIComponent(facility.name)}`}
                       className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700"

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type React from "react";
 
 import { Link, useLocation, useNavigate } from "react-router";
@@ -20,6 +20,9 @@ import {
   ParkingCircle,
   Search,
   Timer,
+  User,
+  Settings,
+  LogOut,
   Wallet,
   Users,
   X,
@@ -46,10 +49,35 @@ export default function Shell({
 
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
   const location = useLocation();
   const navigate = useNavigate();
 
   const { user, logout } = useAuth();
+
+  // ======================================================
+  // Close User Menu When Clicking Outside
+  // ======================================================
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
 
   // ======================================================
   // Navigation
@@ -64,18 +92,18 @@ export default function Shell({
 
           ["Reservations", "/reservations", ParkingCircle],
 
-          ["Vehicles", "/vehicles", CarFront],
+          // Parking Sessions MUST appear before Payments & Wallet
+          ["Parking Sessions", "/sessions", Timer],
 
           ["Payments & Wallet", "/payments", CreditCard],
 
           ["Receipts", "/receipts", History],
 
-          ["Loyalty Programme", "/loyalty", Gift],
-
-          // Parking Sessions MUST appear before AI Prediction
-          ["Parking Sessions", "/sessions", Timer],
+          ["Vehicles", "/vehicles", CarFront],
 
           ["AI Prediction", "/forecast", BrainCircuit],
+
+          ["Loyalty Programme", "/loyalty", Gift],
         ]
       : role === "operator"
         ? [
@@ -872,21 +900,84 @@ export default function Shell({
             </button>
 
             {/* ==================================================
-                USER
+                USER MENU
             ================================================== */}
 
-            <div className="hidden items-center gap-3 sm:flex">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-900 font-bold text-white">
-                {initials}
-              </span>
+            <div ref={userMenuRef} className="relative hidden sm:block">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((current) => !current)}
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+                className="flex items-center gap-3 rounded-2xl px-2 py-1.5 text-left transition hover:bg-slate-50"
+              >
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-900 font-bold text-white">
+                  {initials}
+                </span>
 
-              <div>
-                <b className="text-sm">{fullName}</b>
+                <div className="min-w-0">
+                  <b className="block truncate text-sm">{fullName}</b>
 
-                <small className="block capitalize text-slate-500">
-                  {role} portal
-                </small>
-              </div>
+                  <small className="block capitalize text-slate-500">
+                    {role} portal
+                  </small>
+                </div>
+
+                <ChevronDown
+                  size={16}
+                  className={`shrink-0 text-slate-500 transition-transform ${
+                    userMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {userMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+10px)] z-50 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    <User size={17} className="text-slate-500" />
+                    Profile
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      navigate("/settings");
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    <Settings size={17} className="text-slate-500" />
+                    Settings
+                  </button>
+
+                  <div className="my-1 border-t border-slate-100" />
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      void handleLogout();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+                  >
+                    <LogOut size={17} />
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>

@@ -136,15 +136,28 @@ async def list_active_sessions(
     summary="List Completed Parking Sessions",
 )
 async def list_completed_sessions(
+    current_user=Depends(
+        get_current_active_user,
+    ),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
 ):
     """
-    List completed parking sessions.
+    List completed parking sessions belonging only to
+    the currently authenticated customer.
+
+    The customer ID is obtained from the authenticated
+    user rather than being supplied by the client.
     """
 
     items = await service.list_completed()
+
+    items = [
+        item
+        for item in items
+        if item.customer_id == current_user.id
+    ]
 
     return ParkingSessionListResponse(
         total=len(items),

@@ -1281,7 +1281,7 @@ export default function CreateReservation() {
 
           {step === 1 && (
             <StepContainer
-              title="Choose a Parking Facility"
+              title="Select a Parking Facility"
               description="Select where you would like to park."
             >
               <div className="mb-5">

@@ -10,6 +10,7 @@ import {
   Clock3,
   CreditCard,
   FileText,
+  LogOut,
   MapPin,
   ParkingCircle,
   RefreshCw,
@@ -17,7 +18,15 @@ import {
   X,
 } from "lucide-react";
 
-import { api } from "../../../api";
+import {
+  api,
+  parkingBaysApi,
+  parkingFacilitiesApi,
+  parkingZonesApi,
+  type ParkingBay,
+  type ParkingFacility,
+  type ParkingZone,
+} from "../../../api";
 import { Card } from "../../../components/common/Page";
 
 // ==========================================================
@@ -41,18 +50,26 @@ interface ParkingSession {
 
   status?: string | null;
 
-  facility_id?: number | null;
+  facility_id?: number | string | null;
+  parking_facility_id?: number | string | null;
   facility_name?: string | null;
 
-  parking_zone_id?: number | null;
+  parking_zone_id?: number | string | null;
+  zone_id?: number | string | null;
   parking_zone_name?: string | null;
 
-  parking_bay_id?: number | null;
+  parking_bay_id?: number | string | null;
   parking_bay_number?: string | null;
+  parking_bay_code?: string | null;
+  bay_number?: string | null;
+  bay_code?: string | null;
 
   vehicle_id?: number | null;
   vehicle_registration?: string | null;
   vehicle_type?: string | null;
+
+  entry_time?: string | null;
+  exit_time?: string | null;
 
   check_in_at?: string | null;
   checked_in_at?: string | null;
@@ -64,15 +81,20 @@ interface ParkingSession {
 
   duration_minutes?: number | null;
 
-  amount?: number | null;
-  total_amount?: number | null;
-  parking_fee?: number | null;
-  amount_paid?: number | null;
+  amount?: number | string | null;
+  total_amount?: number | string | null;
+  calculated_amount?: number | string | null;
+  current_amount?: number | string | null;
+  outstanding_amount?: number | string | null;
+  payable_amount?: number | string | null;
+  parking_fee?: number | string | null;
+  amount_paid?: number | string | null;
 
   currency?: string | null;
 
   payment_method?: string | null;
   payment_status?: string | null;
+  payment_completed_at?: string | null;
 
   reservation_id?: number | null;
   reservation_number?: string | null;
@@ -230,13 +252,21 @@ function normalizeStatus(status: string | null | undefined): SessionStatus {
 
 function getCheckInTime(session: ParkingSession): string | null {
   return (
-    session.check_in_at ?? session.checked_in_at ?? session.start_time ?? null
+    session.entry_time ??
+    session.check_in_at ??
+    session.checked_in_at ??
+    session.start_time ??
+    null
   );
 }
 
 function getCheckOutTime(session: ParkingSession): string | null {
   return (
-    session.check_out_at ?? session.checked_out_at ?? session.end_time ?? null
+    session.exit_time ??
+    session.check_out_at ??
+    session.checked_out_at ??
+    session.end_time ??
+    null
   );
 }
 
@@ -278,6 +308,64 @@ function getBayName(session: ParkingSession): string {
   );
 }
 
+function getBayDisplayName(session: ParkingSession): string {
+  const number =
+    session.parking_bay_number ??
+    session.bay_number ??
+    session.parking_bay?.bay_number ??
+    session.parking_bay?.name ??
+    null;
+
+  const code =
+    session.parking_bay_code ??
+    session.bay_code ??
+    session.parking_bay?.code ??
+    null;
+
+  return [number, code].filter(Boolean).join(" · ") || "—";
+}
+
+function getZoneDisplayName(session: ParkingSession): string {
+  const name =
+    session.parking_zone_name ??
+    session.zone_name ??
+    session.parking_zone?.name ??
+    null;
+
+  const code =
+    session.parking_zone_code ??
+    session.zone_code ??
+    session.parking_zone?.code ??
+    null;
+
+  return [name, code].filter(Boolean).join(" · ") || "—";
+}
+
+function extractQuoteAmount(value: any): number | null {
+  const candidates = [
+    value?.outstanding_amount,
+    value?.payable_amount,
+    value?.current_amount,
+    value?.total_amount,
+    value?.calculated_amount,
+    value?.amount,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate === null || candidate === undefined || candidate === "") {
+      continue;
+    }
+
+    const numeric = Number(candidate);
+
+    if (Number.isFinite(numeric)) {
+      return numeric;
+    }
+  }
+
+  return null;
+}
+
 function getVehicleRegistration(session: ParkingSession): string {
   return (
     session.vehicle_registration ??
@@ -298,10 +386,14 @@ function getVehicleType(session: ParkingSession): string {
 
 function getAmount(session: ParkingSession): number {
   const candidates = [
+    session.current_amount,
+    session.outstanding_amount,
+    session.payable_amount,
     session.total_amount,
+    session.calculated_amount,
     session.parking_fee,
-    session.amount_paid,
     session.amount,
+    session.amount_paid,
   ];
 
   for (const value of candidates) {
@@ -340,7 +432,6 @@ function getDurationMinutes(session: ParkingSession): number | null {
   }
 
   const end = getCheckOutTime(session);
-
   const endDate = end ? new Date(end) : new Date();
 
   if (Number.isNaN(endDate.getTime())) {
@@ -582,10 +673,237 @@ export default function SessionDetails() {
          * Some API response formats wrap
          * the actual object in `data`.
          */
-        const resolvedSession = payload?.data ?? payload;
+        const rawSession = payload?.data ?? payload;
 
-        if (!resolvedSession || typeof resolvedSession !== "object") {
+        if (!rawSession || typeof rawSession !== "object") {
           throw new Error("The backend returned an invalid parking session.");
+        }
+
+        /*
+         * Resolve the same parking hierarchy used by ParkingSessions:
+         *
+         *     Parking Session
+         *          ↓ parking_bay_id
+         *     Parking Bay
+         *          ↓ zone_id
+         *     Parking Zone
+         *          ↓ facility_id
+         *     Parking Facility
+         *
+         * IDs are normalised to strings because the API can serialise
+         * PostgreSQL integer IDs as either numbers or strings.
+         */
+        let resolvedSession = { ...rawSession } as ParkingSession;
+
+        try {
+          const [facilitiesResult, zonesResult, baysResult] =
+            await Promise.allSettled([
+              parkingFacilitiesApi.list(0, 100),
+              parkingZonesApi.list(0, 100),
+              parkingBaysApi.list(0, 100),
+            ]);
+
+          const facilities: ParkingFacility[] =
+            facilitiesResult.status === "fulfilled"
+              ? (facilitiesResult.value.items ?? [])
+              : [];
+
+          const zones: ParkingZone[] =
+            zonesResult.status === "fulfilled"
+              ? (zonesResult.value.items ?? [])
+              : [];
+
+          const bays: ParkingBay[] =
+            baysResult.status === "fulfilled"
+              ? (baysResult.value.items ?? [])
+              : [];
+
+          const raw = rawSession as ParkingSession & {
+            parking_zone_id?: number | string | null;
+            zone_id?: number | string | null;
+            parking_facility_id?: number | string | null;
+            facility_id?: number | string | null;
+          };
+
+          const bay =
+            raw.parking_bay_id !== null && raw.parking_bay_id !== undefined
+              ? bays.find(
+                  (item) => String(item.id) === String(raw.parking_bay_id),
+                )
+              : undefined;
+
+          const zoneId =
+            raw.parking_zone_id ?? raw.zone_id ?? bay?.zone_id ?? null;
+
+          const zone =
+            zoneId !== null && zoneId !== undefined
+              ? zones.find((item) => String(item.id) === String(zoneId))
+              : undefined;
+
+          const facilityId =
+            raw.parking_facility_id ??
+            raw.facility_id ??
+            zone?.facility_id ??
+            null;
+
+          const facility =
+            facilityId !== null && facilityId !== undefined
+              ? facilities.find(
+                  (item) => String(item.id) === String(facilityId),
+                )
+              : undefined;
+
+          if (facility) {
+            resolvedSession.facility_name =
+              resolvedSession.facility_name ?? facility.name;
+            resolvedSession.facility = {
+              ...(resolvedSession.facility ?? {}),
+              name: resolvedSession.facility?.name ?? facility.name,
+              address:
+                resolvedSession.facility?.address ??
+                facility.address ??
+                facility.city ??
+                null,
+            };
+          }
+
+          if (zone) {
+            resolvedSession.parking_zone_name =
+              resolvedSession.parking_zone_name ?? zone.name;
+            resolvedSession.parking_zone = {
+              ...(resolvedSession.parking_zone ?? {}),
+              name: resolvedSession.parking_zone?.name ?? zone.name,
+              code: resolvedSession.parking_zone?.code ?? zone.code,
+            };
+            resolvedSession.parking_zone_code =
+              resolvedSession.parking_zone_code ?? zone.code;
+          }
+
+          if (bay) {
+            resolvedSession.parking_bay_number =
+              resolvedSession.parking_bay_number ?? bay.bay_number;
+            resolvedSession.parking_bay_code =
+              resolvedSession.parking_bay_code ?? bay.code;
+            resolvedSession.parking_bay = {
+              ...(resolvedSession.parking_bay ?? {}),
+              bay_number:
+                resolvedSession.parking_bay?.bay_number ?? bay.bay_number,
+              name: resolvedSession.parking_bay?.name ?? bay.bay_number,
+              code: resolvedSession.parking_bay?.code ?? bay.code,
+              zone_id: resolvedSession.parking_bay?.zone_id ?? bay.zone_id,
+            };
+          }
+        } catch (metadataError) {
+          console.warn(
+            "[SmartPark Session Details] Unable to resolve parking metadata:",
+            metadataError,
+          );
+        }
+
+        /*
+         * Active-session amount must come from the same authoritative
+         * pricing-engine quote used by SessionPayment/ParkingSessions.
+         * This prevents the details page from displaying a stale/default
+         * stored amount such as Ksh 0.00.
+         */
+        if (normalizeStatus(resolvedSession.status) === "ACTIVE") {
+          try {
+            const quoteResponse = await api.get<any>(
+              `/parking-sessions/${encodeURIComponent(sessionId)}/quote`,
+            );
+
+            const quoteBody = quoteResponse.data;
+
+            const quote =
+              quoteBody &&
+              typeof quoteBody === "object" &&
+              ("data" in quoteBody ||
+                "quote" in quoteBody ||
+                "result" in quoteBody)
+                ? (quoteBody.data ??
+                  quoteBody.quote ??
+                  quoteBody.result ??
+                  quoteBody)
+                : quoteBody;
+
+            const quoteAmount = extractQuoteAmount(quote);
+
+            if (quoteAmount !== null) {
+              resolvedSession.current_amount = quoteAmount;
+            }
+
+            if (
+              quote?.duration_minutes !== null &&
+              quote?.duration_minutes !== undefined &&
+              Number.isFinite(Number(quote.duration_minutes))
+            ) {
+              resolvedSession.duration_minutes = Number(quote.duration_minutes);
+            }
+
+            if (quote?.currency) {
+              resolvedSession.currency = String(quote.currency);
+            }
+          } catch (quoteError) {
+            console.warn(
+              "[SmartPark Session Details] Current pricing-engine quote unavailable:",
+              quoteError,
+            );
+          }
+        }
+
+        /*
+         * Completed-session payment method comes from the payment transaction
+         * associated with the session. Active sessions intentionally keep the
+         * payment method unset and therefore display "—".
+         */
+        if (normalizeStatus(resolvedSession.status) === "COMPLETED") {
+          try {
+            const paymentsResponse = await api.get<any>(
+              `/payments/session/${encodeURIComponent(sessionId)}?limit=100&offset=0`,
+            );
+
+            const paymentsBody = paymentsResponse.data;
+
+            const payments = Array.isArray(paymentsBody)
+              ? paymentsBody
+              : Array.isArray(paymentsBody?.items)
+                ? paymentsBody.items
+                : Array.isArray(paymentsBody?.data)
+                  ? paymentsBody.data
+                  : Array.isArray(paymentsBody?.results)
+                    ? paymentsBody.results
+                    : [];
+
+            const successfulPayments = payments.filter(
+              (payment: any) =>
+                String(payment?.status ?? "").toUpperCase() === "SUCCESSFUL" &&
+                payment?.payment_method,
+            );
+
+            const payment =
+              successfulPayments.length > 0
+                ? [...successfulPayments].sort(
+                    (a: any, b: any) =>
+                      new Date(b?.paid_at ?? b?.created_at ?? 0).getTime() -
+                      new Date(a?.paid_at ?? a?.created_at ?? 0).getTime(),
+                  )[0]
+                : null;
+
+            if (payment?.payment_method) {
+              resolvedSession.payment_method = String(payment.payment_method);
+            }
+
+            if (payment?.paid_at ?? payment?.created_at) {
+              resolvedSession.payment_completed_at = String(
+                payment.paid_at ?? payment.created_at,
+              );
+            }
+          } catch (paymentError) {
+            console.warn(
+              "[SmartPark Session Details] Payment method unavailable:",
+              paymentError,
+            );
+          }
         }
 
         setSession(resolvedSession);
@@ -621,12 +939,9 @@ export default function SessionDetails() {
       return;
     }
 
-    const interval = window.setInterval(
-      () => {
-        void loadSession(true);
-      },
-      15 * 60 * 1000,
-    );
+    const interval = window.setInterval(() => {
+      void loadSession(true);
+    }, 60 * 1000);
 
     return () => {
       window.clearInterval(interval);
@@ -676,9 +991,9 @@ export default function SessionDetails() {
 
   const vehicleType = session ? getVehicleType(session) : "—";
 
-  const zoneName = session ? getZoneName(session) : "—";
+  const zoneName = session ? getZoneDisplayName(session) : "—";
 
-  const bayName = session ? getBayName(session) : "—";
+  const bayName = session ? getBayDisplayName(session) : "—";
 
   // ========================================================
   // Check Out / Payment
@@ -1029,16 +1344,28 @@ export default function SessionDetails() {
               />
 
               <TimelineItem
-                title="Parking session ended"
+                title="Payment successful / session completed"
+                value={formatDateTime(session.payment_completed_at)}
+                description={
+                  session.payment_completed_at
+                    ? `Payment was successfully completed and the parking session ended at ${formatTime(session.payment_completed_at)}.`
+                    : status === "ACTIVE"
+                      ? "Payment has not yet been completed."
+                      : "Payment completion time is not available."
+                }
+                icon={<CheckCircle2 size={14} />}
+                completed={Boolean(session.payment_completed_at)}
+              />
+
+              <TimelineItem
+                title="Vehicle exited"
                 value={formatDateTime(checkOutTime)}
                 description={
                   checkOutTime
-                    ? `Vehicle checked out at ${formatTime(checkOutTime)}.`
-                    : status === "ACTIVE"
-                      ? "Session is still active."
-                      : "Check-out time is not available."
+                    ? `Vehicle exited the premises at ${formatTime(checkOutTime)}.`
+                    : "Vehicle has not yet left the premises."
                 }
-                icon={<CheckCircle2 size={14} />}
+                icon={<LogOut size={14} />}
                 completed={Boolean(checkOutTime)}
                 last
               />

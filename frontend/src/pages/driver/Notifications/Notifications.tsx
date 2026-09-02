@@ -7,6 +7,7 @@ import {
   BellRing,
   Check,
   CheckCheck,
+  ChevronLeft,
   ChevronRight,
   Info,
   RefreshCw,
@@ -441,6 +442,14 @@ export default function Notifications() {
 
   const [filter, setFilter] = useState<FilterType>("ALL");
 
+  // ========================================================
+  // PAGINATION
+  // ========================================================
+
+  const NOTIFICATIONS_PER_PAGE = 10;
+
+  const [currentPage, setCurrentPage] = useState(1);
+
   const [selectedNotification, setSelectedNotification] =
     useState<NotificationItem | null>(null);
 
@@ -633,6 +642,26 @@ export default function Notifications() {
 
     return notifications;
   }, [filter, notifications]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredNotifications.length / NOTIFICATIONS_PER_PAGE),
+  );
+
+  const paginatedNotifications = useMemo(() => {
+    const startIndex = (currentPage - 1) * NOTIFICATIONS_PER_PAGE;
+
+    return filteredNotifications.slice(
+      startIndex,
+      startIndex + NOTIFICATIONS_PER_PAGE,
+    );
+  }, [currentPage, filteredNotifications]);
+
+  // Keep the current page valid when notifications are
+  // marked/deleted or when the filtered collection changes.
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(Math.max(page, 1), totalPages));
+  }, [totalPages]);
 
   // ========================================================
   // Mark notification as read
@@ -948,19 +977,28 @@ export default function Notifications() {
         <div className="flex flex-wrap gap-1">
           <FilterButton
             active={filter === "ALL"}
-            onClick={() => setFilter("ALL")}
+            onClick={() => {
+              setFilter("ALL");
+              setCurrentPage(1);
+            }}
             label={`All (${pageTotalCount})`}
           />
 
           <FilterButton
             active={filter === "UNREAD"}
-            onClick={() => setFilter("UNREAD")}
+            onClick={() => {
+              setFilter("UNREAD");
+              setCurrentPage(1);
+            }}
             label={`Unread (${pageUnreadCount})`}
           />
 
           <FilterButton
             active={filter === "READ"}
-            onClick={() => setFilter("READ")}
+            onClick={() => {
+              setFilter("READ");
+              setCurrentPage(1);
+            }}
             label={`Read (${pageReadCount})`}
           />
         </div>
@@ -1011,7 +1049,7 @@ export default function Notifications() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {filteredNotifications.map((notification) => {
+            {paginatedNotifications.map((notification) => {
               const read = isNotificationRead(notification);
 
               const tone = getTone(notification);
@@ -1132,6 +1170,59 @@ export default function Notifications() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {filteredNotifications.length > 0 && totalPages > 1 && (
+          <div className="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-500">
+              Showing{" "}
+              <span className="font-bold text-slate-700">
+                {(currentPage - 1) * NOTIFICATIONS_PER_PAGE + 1}
+              </span>{" "}
+              –{" "}
+              <span className="font-bold text-slate-700">
+                {Math.min(
+                  currentPage * NOTIFICATIONS_PER_PAGE,
+                  filteredNotifications.length,
+                )}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-slate-700">
+                {filteredNotifications.length}
+              </span>{" "}
+              notifications
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+
+              <span className="px-2 text-sm font-bold text-slate-600">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Next page"
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         )}
       </section>

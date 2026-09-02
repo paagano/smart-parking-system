@@ -16,7 +16,12 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../../../auth/AuthContext";
-import { api } from "../../../api";
+import {
+  api,
+  parkingBaysApi,
+  parkingFacilitiesApi,
+  parkingZonesApi,
+} from "../../../api";
 
 // ==========================================================
 // Types
@@ -41,10 +46,17 @@ interface BackendSession {
   paid_amount?: number | string | null;
   payment_status?: string | null;
   currency?: string | null;
-  parking_bay_id?: number | null;
-  parking_bay_number?: string | null;
-  bay_number?: string | null;
+  facility_id?: number | string | null;
+  parking_facility_id?: number | string | null;
   facility_name?: string | null;
+  parking_zone_id?: number | string | null;
+  zone_id?: number | string | null;
+  parking_zone_name?: string | null;
+  parking_bay_id?: number | string | null;
+  parking_bay_number?: string | null;
+  parking_bay_code?: string | null;
+  bay_number?: string | null;
+  bay_code?: string | null;
   facility?: {
     name?: string | null;
     address?: string | null;
@@ -71,6 +83,7 @@ interface CheckoutSession {
   currency: string;
   sessionNumber?: string | null;
   facility?: string | null;
+  zone?: string | null;
   vehicle?: string | null;
   bay?: string | null;
   entryTime?: string | null;
@@ -200,12 +213,23 @@ function readBackendAmount(
   return null;
 }
 
-function readPointsBalance(account: LoyaltyAccount | null): number {
-  if (!account) {
+function readPointsBalance(account: LoyaltyAccount | number | null): number {
+  if (account === null || account === undefined) {
     return 0;
   }
 
-  const numeric = Number(account.points_balance);
+  const candidate =
+    typeof account === "number"
+      ? account
+      : (account.points_balance ??
+        (account as any).balance ??
+        (account as any).points ??
+        (account as any).data?.points_balance ??
+        (account as any).data?.balance ??
+        (account as any).data?.points ??
+        (account as any).data);
+
+  const numeric = Number(candidate);
 
   if (!Number.isFinite(numeric)) {
     return 0;
@@ -296,6 +320,8 @@ export default function SessionPayment() {
 
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
 
+  const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
+
   const [loyaltyPointsInput, setLoyaltyPointsInput] = useState("0");
 
   // --------------------------------------------------------
@@ -338,13 +364,33 @@ export default function SessionPayment() {
 
     try {
       /*
-       * The SmartPark loyalty API exposes the authenticated
-       * customer's loyalty information. We intentionally
-       * keep this call isolated from parking-session pricing.
+       * The SmartPark loyalty balance endpoint resolves the
+       * authenticated customer's own spendable balance.
+       *
+       * Keep this call isolated from parking-session pricing.
        */
-      const response = await api.get<LoyaltyAccount>("/loyalty/account");
+      const response = await api.get<
+        | LoyaltyAccount
+        | number
+        | {
+            points_balance?: number | string | null;
+            balance?: number | string | null;
+            points?: number | string | null;
+            data?: any;
+          }
+      >("/loyalty/balance");
 
-      setLoyaltyAccount(response.data ?? null);
+      const payload: any = response.data;
+      const accountData =
+        payload?.data && typeof payload.data === "object"
+          ? payload.data
+          : payload;
+
+      setLoyaltyAccount(
+        typeof accountData === "number"
+          ? { points_balance: accountData }
+          : (accountData ?? null),
+      );
     } catch (err) {
       /*
        * Loyalty is an optional payment facility.
@@ -414,6 +460,94 @@ export default function SessionPayment() {
           quoteDuration = quoteResponse.data.duration_minutes ?? quoteDuration;
         }
 
+        let facilityName =
+          raw.facility_name ??
+          raw.facility?.name ??
+          raw.parking_facility?.name ??
+          null;
+
+        let zoneName = raw.parking_zone_name ?? null;
+
+        let zoneCode: string | null = null;
+
+        let bayNumber = raw.parking_bay_number ?? raw.bay_number ?? null;
+
+        let bayCode = raw.parking_bay_code ?? raw.bay_code ?? null;
+
+        /*
+         * The session endpoint may expose only database IDs.
+         * Resolve those IDs through the same human-readable
+         * metadata used by the Parking Sessions page.
+         *
+         * IDs are normalised to strings before comparison because
+         * the backend may serialise PostgreSQL IDs as numbers or strings.
+         */
+        if (!facilityName || !zoneName || !bayNumber || !bayCode) {
+          try {
+            const [facilitiesResponse, zonesResponse, baysResponse] =
+              await Promise.all([
+                parkingFacilitiesApi.list(0, 100),
+                parkingZonesApi.list(0, 100),
+                parkingBaysApi.list(0, 100),
+              ]);
+
+            const facilities = facilitiesResponse.items ?? [];
+            const zones = zonesResponse.items ?? [];
+            const bays = baysResponse.items ?? [];
+
+            const bay =
+              raw.parking_bay_id !== null && raw.parking_bay_id !== undefined
+                ? bays.find(
+                    (item) => String(item.id) === String(raw.parking_bay_id),
+                  )
+                : undefined;
+
+            const zoneId =
+              raw.parking_zone_id ?? raw.zone_id ?? bay?.zone_id ?? null;
+
+            const zone =
+              zoneId !== null && zoneId !== undefined
+                ? zones.find((item) => String(item.id) === String(zoneId))
+                : undefined;
+
+            const facilityId =
+              raw.facility_id ??
+              raw.parking_facility_id ??
+              zone?.facility_id ??
+              undefined;
+
+            const facility =
+              facilityId !== null && facilityId !== undefined
+                ? facilities.find(
+                    (item) => String(item.id) === String(facilityId),
+                  )
+                : undefined;
+
+            facilityName = facilityName ?? facility?.name ?? null;
+
+            zoneName = zoneName ?? zone?.name ?? null;
+
+            zoneCode = zone?.code ?? null;
+
+            bayNumber = bayNumber ?? bay?.bay_number ?? null;
+
+            bayCode = bayCode ?? bay?.code ?? null;
+          } catch (metadataError) {
+            console.warn(
+              "[SmartPark Session Payment] Unable to resolve parking metadata:",
+              metadataError,
+            );
+          }
+        }
+
+        const humanReadableZone = [zoneName, zoneCode]
+          .filter(Boolean)
+          .join(" · ");
+
+        const humanReadableBay = [bayNumber, bayCode]
+          .filter(Boolean)
+          .join(" · ");
+
         setSession({
           id: raw.id,
           amount: backendAmount,
@@ -421,18 +555,13 @@ export default function SessionPayment() {
 
           sessionNumber: raw.session_number,
 
-          facility:
-            raw.facility_name ??
-            raw.facility?.name ??
-            raw.parking_facility?.name ??
-            "Parking facility",
+          facility: facilityName ?? "Parking facility",
+
+          zone: humanReadableZone || "—",
 
           vehicle: raw.vehicle_registration ?? "—",
 
-          bay:
-            raw.parking_bay_number ??
-            raw.bay_number ??
-            (raw.parking_bay_id ? `Bay #${raw.parking_bay_id}` : "—"),
+          bay: humanReadableBay || "—",
 
           entryTime: raw.entry_time,
 
@@ -566,10 +695,9 @@ export default function SessionPayment() {
     return Math.min(availableLoyaltyPoints, amountCap);
   }, [session?.amount, availableLoyaltyPoints]);
 
-  const loyaltyPointsToRedeem = Math.min(
-    requestedLoyaltyPoints,
-    maximumRedeemablePoints,
-  );
+  const loyaltyPointsToRedeem = useLoyaltyPoints
+    ? Math.min(requestedLoyaltyPoints, maximumRedeemablePoints)
+    : 0;
 
   const loyaltyValue = loyaltyPointsToRedeem;
 
@@ -706,10 +834,14 @@ export default function SessionPayment() {
     /*
      * M-PESA validation is only required when
      * there is still a monetary amount to pay.
+     *
+     * A zero-value checkout is valid during the
+     * parking grace period and does not require
+     * a payment phone number.
      */
     if (
       paymentMethod === "MPESA" &&
-      !loyaltyCoversFullAmount &&
+      (remainingAmount ?? 0) > 0 &&
       !validMpesaPhone(normalizedPhone)
     ) {
       setStatus("FAILED");
@@ -722,11 +854,11 @@ export default function SessionPayment() {
     }
 
     /*
-     * If loyalty points cover the complete amount,
-     * no external monetary payment method is required.
+     * Loyalty redemption is optional.
      *
-     * We still send the selected payment method because
-     * the backend payment transaction schema requires it.
+     * When the remaining amount is zero, the backend
+     * accepts the zero-value transaction and completes
+     * the checkout without requiring Wallet/M-PESA.
      */
     setProcessing(true);
     setStatus("PROCESSING");
@@ -759,7 +891,7 @@ export default function SessionPayment() {
          */
         subtotal_amount: session.amount,
 
-        discount_amount: loyaltyValue,
+        discount_amount: 0,
 
         tax_amount: 0,
 
@@ -800,11 +932,17 @@ export default function SessionPayment() {
         setProcessing(false);
 
         setMessage(
-          loyaltyPointsToRedeem > 0
-            ? `Payment successful. ${loyaltyPointsToRedeem.toLocaleString(
-                "en-KE",
-              )} loyalty points were redeemed and your remaining parking charge was settled.`
-            : "Payment successful. Your parking charge has been settled. Proceed to the exit within 15 minutes.",
+          (remainingAmount ?? 0) <= 0
+            ? loyaltyPointsToRedeem > 0
+              ? `Checkout successful. ${loyaltyPointsToRedeem.toLocaleString(
+                  "en-KE",
+                )} loyalty points were redeemed and the remaining parking charge was KES 0.00. Proceed to the exit within 15 minutes.`
+              : "Checkout successful. Your parking charge is KES 0.00 under the grace period. Proceed to the exit within 15 minutes."
+            : loyaltyPointsToRedeem > 0
+              ? `Payment successful. ${loyaltyPointsToRedeem.toLocaleString(
+                  "en-KE",
+                )} loyalty points were redeemed and your remaining parking charge was settled.`
+              : "Payment successful. Your parking charge has been settled. Proceed to the exit within 15 minutes.",
         );
 
         /*
@@ -820,10 +958,12 @@ export default function SessionPayment() {
         );
       } else {
         setMessage(
-          paymentMethod === "MPESA"
-            ? "M-PESA payment request sent. Complete the prompt on your phone; SmartPark will confirm the payment automatically."
-            : loyaltyCoversFullAmount
+          (remainingAmount ?? 0) <= 0
+            ? loyaltyPointsToRedeem > 0
               ? "Your loyalty redemption is being processed. Please wait for confirmation."
+              : "Your zero-value checkout is being processed. Please wait for confirmation."
+            : paymentMethod === "MPESA"
+              ? "M-PESA payment request sent. Complete the prompt on your phone; SmartPark will confirm the payment automatically."
               : "Payment is being processed. Please wait for confirmation.",
         );
       }
@@ -877,11 +1017,17 @@ export default function SessionPayment() {
           setProcessing(false);
 
           setMessage(
-            loyaltyPointsToRedeem > 0
-              ? `Payment successful. ${loyaltyPointsToRedeem.toLocaleString(
-                  "en-KE",
-                )} loyalty points were redeemed and your remaining parking charge was settled.`
-              : "Payment successful. Your parking charge has been settled. Proceed to the exit within 15 minutes.",
+            (remainingAmount ?? 0) <= 0
+              ? loyaltyPointsToRedeem > 0
+                ? `Checkout successful. ${loyaltyPointsToRedeem.toLocaleString(
+                    "en-KE",
+                  )} loyalty points were redeemed and the remaining parking charge was KES 0.00. Proceed to the exit within 15 minutes.`
+                : "Checkout successful. Your parking charge is KES 0.00 under the grace period. Proceed to the exit within 15 minutes."
+              : loyaltyPointsToRedeem > 0
+                ? `Payment successful. ${loyaltyPointsToRedeem.toLocaleString(
+                    "en-KE",
+                  )} loyalty points were redeemed and your remaining parking charge was settled.`
+                : "Payment successful. Your parking charge has been settled. Proceed to the exit within 15 minutes.",
           );
 
           void loadLoyaltyAccount();
@@ -989,9 +1135,9 @@ export default function SessionPayment() {
               <h1 className="mt-3 text-3xl font-black">Pay & Check Out</h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                Settle the parking charge for this active session. You can use
-                your SmartPark loyalty points toward the charge, then pay any
-                remaining balance using Wallet or M-PESA.
+                Settle the parking charge for this active session. Loyalty
+                points are optional; you may use them toward the charge or pay
+                the full amount using Wallet or M-PESA.
               </p>
             </div>
 
@@ -1059,6 +1205,8 @@ export default function SessionPayment() {
               />
 
               <CheckoutDetail label="Facility" value={session.facility} />
+
+              <CheckoutDetail label="Parking Zone" value={session.zone} />
 
               <CheckoutDetail label="Vehicle" value={session.vehicle} />
 
@@ -1157,8 +1305,8 @@ export default function SessionPayment() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Apply loyalty points first, then select how to settle any
-                  remaining amount.
+                  Loyalty points are optional. Choose whether to use them, then
+                  select how to settle any remaining amount.
                 </p>
 
                 {/* ==============================================
@@ -1172,9 +1320,9 @@ export default function SessionPayment() {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <h3 className="font-black text-emerald-900">
-                          Redeem Loyalty Points
+                          Loyalty Points
                         </h3>
 
                         <span className="text-xs font-bold text-emerald-700">
@@ -1184,20 +1332,41 @@ export default function SessionPayment() {
                       </div>
 
                       <p className="mt-1 text-xs leading-5 text-emerald-700">
-                        Use your loyalty points to reduce the parking amount.
-                        You can redeem up to{" "}
+                        Loyalty points are optional. If you choose to use them,
+                        you can redeem up to{" "}
                         <strong>
                           {maximumRedeemablePoints.toLocaleString("en-KE")}{" "}
                           points
                         </strong>{" "}
                         for this payment.
                       </p>
+
+                      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border border-emerald-200 bg-white px-3 py-3">
+                        <input
+                          type="checkbox"
+                          checked={useLoyaltyPoints}
+                          onChange={(e) => {
+                            setUseLoyaltyPoints(e.target.checked);
+                            setStatus("IDLE");
+                            setMessage(null);
+                          }}
+                          disabled={
+                            processing ||
+                            loyaltyLoading ||
+                            maximumRedeemablePoints <= 0
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-sm font-bold text-emerald-900">
+                          Use loyalty points for this payment
+                        </span>
+                      </label>
                     </div>
                   </div>
 
                   <div className="mt-4">
                     <label className="block text-sm font-bold text-slate-700">
-                      Points to Redeem
+                      Points to Redeem{useLoyaltyPoints ? "" : " (optional)"}
                       <div className="mt-2 flex gap-2">
                         <input
                           value={loyaltyPointsInput}
@@ -1211,6 +1380,7 @@ export default function SessionPayment() {
                           disabled={
                             processing ||
                             loyaltyLoading ||
+                            !useLoyaltyPoints ||
                             availableLoyaltyPoints <= 0
                           }
                           placeholder="0"
@@ -1223,6 +1393,7 @@ export default function SessionPayment() {
                           disabled={
                             processing ||
                             loyaltyLoading ||
+                            !useLoyaltyPoints ||
                             maximumRedeemablePoints <= 0
                           }
                           className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-xs font-black text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -1270,8 +1441,9 @@ export default function SessionPayment() {
 
                   {loyaltyCoversFullAmount && (
                     <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-3 text-sm font-bold text-emerald-800">
-                      ✓ Your loyalty points cover the full parking charge. No
-                      additional monetary payment is required.
+                      {loyaltyPointsToRedeem > 0
+                        ? "✓ Your loyalty points cover the full parking charge. No additional monetary payment is required."
+                        : "✓ No monetary payment is required. This session is within the free parking grace period."}
                     </div>
                   )}
                 </div>
@@ -1280,94 +1452,90 @@ export default function SessionPayment() {
                     Payment Methods
                     ============================================== */}
 
-                {!loyaltyCoversFullAmount && (
-                  <>
-                    <div className="mt-6 grid gap-3">
-                      {/* Wallet */}
+                <div className="mt-6 grid gap-3">
+                  {/* Wallet */}
 
-                      <button
-                        type="button"
-                        disabled={processing}
-                        onClick={() => {
-                          setPaymentMethod("WALLET");
+                  <button
+                    type="button"
+                    disabled={processing}
+                    onClick={() => {
+                      setPaymentMethod("WALLET");
 
-                          setPaymentProvider("INTERNAL");
+                      setPaymentProvider("INTERNAL");
 
-                          setStatus("IDLE");
+                      setStatus("IDLE");
 
-                          setMessage(null);
-                        }}
-                        className={`rounded-2xl border p-4 text-left transition disabled:opacity-60 ${
-                          paymentMethod === "WALLET"
-                            ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100"
-                            : "border-slate-200 bg-white hover:bg-slate-50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Wallet size={21} className="text-emerald-600" />
+                      setMessage(null);
+                    }}
+                    className={`rounded-2xl border p-4 text-left transition disabled:opacity-60 ${
+                      paymentMethod === "WALLET"
+                        ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100"
+                        : "border-slate-200 bg-white hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Wallet size={21} className="text-emerald-600" />
 
-                          <span className="font-extrabold text-slate-900">
-                            SmartPark Wallet
-                          </span>
-                        </div>
-
-                        <p className="mt-2 text-xs leading-5 text-slate-500">
-                          Pay the remaining balance using your SmartPark wallet.
-                        </p>
-                      </button>
-
-                      {/* M-PESA */}
-
-                      <button
-                        type="button"
-                        disabled={processing}
-                        onClick={() => {
-                          setPaymentMethod("MPESA");
-
-                          setPaymentProvider("SAFARICOM");
-
-                          setStatus("IDLE");
-
-                          setMessage(null);
-                        }}
-                        className={`rounded-2xl border p-4 text-left transition disabled:opacity-60 ${
-                          paymentMethod === "MPESA"
-                            ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100"
-                            : "border-slate-200 bg-white hover:bg-slate-50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Smartphone size={21} className="text-emerald-600" />
-
-                          <span className="font-extrabold text-slate-900">
-                            M-PESA
-                          </span>
-                        </div>
-
-                        <p className="mt-2 text-xs leading-5 text-slate-500">
-                          Pay the remaining balance using an M-PESA number.
-                        </p>
-                      </button>
+                      <span className="font-extrabold text-slate-900">
+                        SmartPark Wallet
+                      </span>
                     </div>
 
-                    {/* ==========================================
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      Pay the remaining balance using your SmartPark wallet.
+                    </p>
+                  </button>
+
+                  {/* M-PESA */}
+
+                  <button
+                    type="button"
+                    disabled={processing}
+                    onClick={() => {
+                      setPaymentMethod("MPESA");
+
+                      setPaymentProvider("SAFARICOM");
+
+                      setStatus("IDLE");
+
+                      setMessage(null);
+                    }}
+                    className={`rounded-2xl border p-4 text-left transition disabled:opacity-60 ${
+                      paymentMethod === "MPESA"
+                        ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100"
+                        : "border-slate-200 bg-white hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Smartphone size={21} className="text-emerald-600" />
+
+                      <span className="font-extrabold text-slate-900">
+                        M-PESA
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      Pay the remaining balance using an M-PESA number.
+                    </p>
+                  </button>
+                </div>
+
+                {/* ==========================================
                         M-PESA Number
                         ========================================== */}
 
-                    {paymentMethod === "MPESA" && (
-                      <label className="mt-5 block text-sm font-bold text-slate-700">
-                        M-PESA Phone Number
-                        <input
-                          value={mpesaPhone}
-                          onChange={(e) => setMpesaPhone(e.target.value)}
-                          placeholder="0712345678"
-                          inputMode="tel"
-                          disabled={processing}
-                          className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
-                        />
-                      </label>
-                    )}
-                  </>
+                {paymentMethod === "MPESA" && (
+                  <label className="mt-5 block text-sm font-bold text-slate-700">
+                    M-PESA Phone Number
+                    <input
+                      value={mpesaPhone}
+                      onChange={(e) => setMpesaPhone(e.target.value)}
+                      placeholder="0712345678"
+                      inputMode="tel"
+                      disabled={processing}
+                      className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                    />
+                  </label>
                 )}
 
                 {/* ==============================================
@@ -1414,20 +1582,24 @@ export default function SessionPayment() {
                 >
                   {processing ? (
                     <RefreshCw size={17} className="animate-spin" />
-                  ) : loyaltyCoversFullAmount ? (
+                  ) : loyaltyPointsToRedeem > 0 && loyaltyCoversFullAmount ? (
                     <Gift size={17} />
+                  ) : (remainingAmount ?? 0) <= 0 ? (
+                    <CheckCircle2 size={17} />
                   ) : (
                     <CreditCard size={17} />
                   )}
 
                   {processing
-                    ? "Processing Payment..."
+                    ? "Processing Checkout..."
                     : session.amount === null
                       ? "Amount unavailable"
-                      : loyaltyCoversFullAmount
-                        ? `Redeem ${loyaltyPointsToRedeem.toLocaleString(
-                            "en-KE",
-                          )} Points`
+                      : (remainingAmount ?? 0) <= 0
+                        ? loyaltyPointsToRedeem > 0
+                          ? `Redeem ${loyaltyPointsToRedeem.toLocaleString(
+                              "en-KE",
+                            )} Points & Complete Checkout`
+                          : "Complete Free Checkout"
                         : `Pay ${money(remainingAmount, session.currency)}`}
                 </button>
 
@@ -1469,11 +1641,15 @@ export default function SessionPayment() {
 
                     <div>
                       <h2 className="text-xl font-black text-emerald-900">
-                        Payment successful
+                        Checkout successful
                       </h2>
 
                       <p className="mt-2 text-sm leading-6 text-emerald-800">
-                        Your parking charge has been settled successfully.
+                        {(remainingAmount ?? 0) <= 0
+                          ? loyaltyPointsToRedeem > 0
+                            ? "Your parking charge has been settled using loyalty points."
+                            : "Your parking charge was KES 0.00 under the grace period, so no monetary payment was required."
+                          : "Your parking charge has been settled successfully."}
                       </p>
 
                       {loyaltyPointsToRedeem > 0 && (
@@ -1509,7 +1685,7 @@ export default function SessionPayment() {
 
                 <button
                   type="button"
-                  onClick={() => navigate("/parking-sessions")}
+                  onClick={() => navigate("/sessions")}
                   className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white hover:bg-slate-800"
                 >
                   Return to Parking Sessions
