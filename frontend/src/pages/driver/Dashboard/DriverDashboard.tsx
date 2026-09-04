@@ -288,8 +288,8 @@ export default function DriverDashboard() {
     setRefreshVersion((current) => current + 1);
   };
 
-  const reservationUrl = nearestFacility
-    ? `/reservations?facilityId=${encodeURIComponent(
+  const createReservationUrl = nearestFacility
+    ? `/reservations/create?facilityId=${encodeURIComponent(
         String(nearestFacility.id),
       )}&facilityName=${encodeURIComponent(nearestFacility.name)}`
     : "/reservations";
@@ -494,7 +494,7 @@ export default function DriverDashboard() {
               <div className="driver-dashboard-facility-actions">
                 <div className="driver-dashboard-facility-primary-actions">
                   <Link
-                    to={reservationUrl}
+                    to={createReservationUrl}
                     className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700"
                   >
                     <CalendarPlus size={16} />

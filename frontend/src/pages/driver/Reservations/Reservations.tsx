@@ -42,6 +42,12 @@ export default function Reservations() {
   const [facilities, setFacilities] = useState<ParkingFacility[]>([]);
   const [zones, setZones] = useState<ParkingZone[]>([]);
   const [bays, setBays] = useState<ParkingBay[]>([]);
+  const [activeParkingSessions, setActiveParkingSessions] = useState<
+    Array<{
+      vehicle_registration?: string | null;
+      parking_bay_id?: number | null;
+    }>
+  >([]);
 
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -125,13 +131,24 @@ export default function Reservations() {
          *    ↓
          * Parking Facility
          */
-        const [reservationResult, facilityResult, zoneResult, bayResult] =
-          await Promise.allSettled([
-            parkingReservationsApi.byCustomer(user.id),
-            parkingFacilitiesApi.list(0, 500),
-            parkingZonesApi.list(0, 500),
-            parkingBaysApi.list(0, 500),
-          ]);
+        const [
+          reservationResult,
+          facilityResult,
+          zoneResult,
+          bayResult,
+          activeSessionsResult,
+        ] = await Promise.allSettled([
+          parkingReservationsApi.byCustomer(user.id),
+          parkingFacilitiesApi.list(0, 500),
+          parkingZonesApi.list(0, 500),
+          parkingBaysApi.list(0, 500),
+          api.get<{
+            items?: Array<{
+              vehicle_registration?: string | null;
+              parking_bay_id?: number | null;
+            }>;
+          }>("/parking-sessions"),
+        ]);
 
         if (cancelled) return;
 
@@ -159,6 +176,16 @@ export default function Reservations() {
           setBays(bayResult.value.items);
         } else {
           failures.push("parking bays");
+        }
+
+        if (activeSessionsResult.status === "fulfilled") {
+          setActiveParkingSessions(
+            activeSessionsResult.value.data?.items ?? [],
+          );
+        } else {
+          // Active-session state is used only to lock reservation actions.
+          // The reservation list itself remains usable if this lookup fails.
+          setActiveParkingSessions([]);
         }
 
         if (failures.includes("reservations")) {
@@ -332,6 +359,28 @@ export default function Reservations() {
   // Reservation status
   // ----------------------------------------------------------
 
+  const activeParkingSessionKeys = useMemo(() => {
+    return new Set(
+      activeParkingSessions.map((session) => {
+        const registration = String(session.vehicle_registration ?? "")
+          .trim()
+          .toUpperCase();
+
+        return `${registration}::${String(session.parking_bay_id ?? "")}`;
+      }),
+    );
+  }, [activeParkingSessions]);
+
+  const hasActiveParkingSession = (reservation: ParkingReservation) => {
+    const registration = String(reservation.vehicle_registration ?? "")
+      .trim()
+      .toUpperCase();
+
+    return activeParkingSessionKeys.has(
+      `${registration}::${String(reservation.parking_bay_id ?? "")}`,
+    );
+  };
+
   const getStatus = (reservation: ParkingReservation) => {
     const status = String(reservation.status ?? "").toLowerCase();
 
@@ -349,7 +398,11 @@ export default function Reservations() {
       };
     }
 
-    if (status.includes("check") || reservation.checked_in_at) {
+    if (
+      status.includes("check") ||
+      reservation.checked_in_at ||
+      hasActiveParkingSession(reservation)
+    ) {
       return {
         label: "Checked In",
         className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
@@ -431,10 +484,11 @@ export default function Reservations() {
       return (
         status.includes("active") ||
         status.includes("check") ||
-        Boolean(reservation.checked_in_at)
+        Boolean(reservation.checked_in_at) ||
+        hasActiveParkingSession(reservation)
       );
     });
-  }, [reservations]);
+  }, [reservations, activeParkingSessionKeys]);
 
   const completedReservations = useMemo(() => {
     return reservations.filter((reservation) => {
@@ -460,7 +514,8 @@ export default function Reservations() {
         return (
           status.includes("active") ||
           status.includes("check") ||
-          Boolean(reservation.checked_in_at)
+          Boolean(reservation.checked_in_at) ||
+          hasActiveParkingSession(reservation)
         );
       }
 
@@ -522,6 +577,7 @@ export default function Reservations() {
     bayMap,
     zoneMap,
     facilityMap,
+    activeParkingSessionKeys,
   ]);
 
   // ----------------------------------------------------------
@@ -535,9 +591,18 @@ export default function Reservations() {
     setError(null);
 
     try {
-      const result = await parkingReservationsApi.byCustomer(user.id);
+      const [result, activeSessionsResult] = await Promise.all([
+        parkingReservationsApi.byCustomer(user.id),
+        api.get<{
+          items?: Array<{
+            vehicle_registration?: string | null;
+            parking_bay_id?: number | null;
+          }>;
+        }>("/parking-sessions"),
+      ]);
 
       setReservations(result.items);
+      setActiveParkingSessions(activeSessionsResult.data?.items ?? []);
       setLastUpdated(new Date());
     } catch (err) {
       if (err instanceof Error) {

@@ -17,10 +17,12 @@ import {
   parkingBaysApi,
   parkingFacilitiesApi,
   parkingReservationsApi,
+  parkingSessionsApi,
   parkingZonesApi,
   type ParkingBay,
   type ParkingFacility,
   type ParkingReservation,
+  type ParkingSession,
   type ParkingZone,
 } from "../../../api";
 
@@ -34,6 +36,8 @@ export default function ActiveReservations() {
   // ==========================================================
 
   const [reservations, setReservations] = useState<ParkingReservation[]>([]);
+
+  const [activeSessions, setActiveSessions] = useState<ParkingSession[]>([]);
 
   const [facilities, setFacilities] = useState<ParkingFacility[]>([]);
 
@@ -79,19 +83,27 @@ export default function ActiveReservations() {
 
       try {
         /*
-         * Load the customer's ACTIVE reservations directly from
-         * the dedicated backend endpoint.
+         * Load the customer's reservations.
+         * The active page is derived strictly by matching these
+         * reservations to a currently active parking session.
          *
-         * This is intentionally NOT the general reservations
-         * endpoint.
+         * The general customer reservation list is required here
+         * because a reservation becomes CHECKED_IN when the vehicle
+         * arrives, and must still be discoverable on this page.
          */
-        const [reservationResult, facilityResult, zoneResult, bayResult] =
-          await Promise.allSettled([
-            parkingReservationsApi.activeByCustomer(user.id),
-            parkingFacilitiesApi.list(0, 500),
-            parkingZonesApi.list(0, 500),
-            parkingBaysApi.list(0, 500),
-          ]);
+        const [
+          reservationResult,
+          activeSessionResult,
+          facilityResult,
+          zoneResult,
+          bayResult,
+        ] = await Promise.allSettled([
+          parkingReservationsApi.byCustomer(user.id),
+          parkingSessionsApi.active(),
+          parkingFacilitiesApi.list(0, 500),
+          parkingZonesApi.list(0, 500),
+          parkingBaysApi.list(0, 500),
+        ]);
 
         if (cancelled) return;
 
@@ -105,6 +117,25 @@ export default function ActiveReservations() {
           setReservations(reservationResult.value.items);
         } else {
           failures.push("active reservations");
+        }
+
+        // ------------------------------------------------------
+        // Active Parking Sessions
+        // ------------------------------------------------------
+
+        if (activeSessionResult.status === "fulfilled") {
+          const sessions = activeSessionResult.value.items ?? [];
+
+          const customerSessions = sessions.filter(
+            (session) =>
+              session.customer_id === null ||
+              session.customer_id === undefined ||
+              String(session.customer_id) === String(user.id),
+          );
+
+          setActiveSessions(customerSessions);
+        } else {
+          failures.push("active parking sessions");
         }
 
         // ------------------------------------------------------
@@ -227,6 +258,51 @@ export default function ActiveReservations() {
     return zone ? (facilityMap.get(zone.facility_id) ?? null) : null;
   };
 
+  const getActiveSession = (reservation: ParkingReservation) => {
+    const reservationRegistration = String(
+      reservation.vehicle_registration ?? "",
+    )
+      .trim()
+      .toUpperCase();
+
+    return (
+      activeSessions.find((session) => {
+        const sessionWithReservation = session as ParkingSession & {
+          reservation_id?: number | null;
+        };
+
+        // Reservation-created parking sessions carry the exact
+        // reservation ID. Prefer this authoritative relationship.
+        if (
+          sessionWithReservation.reservation_id != null &&
+          Number(sessionWithReservation.reservation_id) ===
+            Number(reservation.id)
+        ) {
+          return true;
+        }
+
+        const sessionRegistration = String(session.vehicle_registration ?? "")
+          .trim()
+          .toUpperCase();
+
+        const sameBay =
+          Number(session.parking_bay_id) === Number(reservation.parking_bay_id);
+
+        const sameVehicle =
+          reservation.vehicle_id != null &&
+          session.vehicle_id != null &&
+          Number(session.vehicle_id) === Number(reservation.vehicle_id);
+
+        const sameRegistration =
+          reservationRegistration !== "" &&
+          sessionRegistration !== "" &&
+          reservationRegistration === sessionRegistration;
+
+        return sameBay && (sameVehicle || sameRegistration);
+      }) ?? null
+    );
+  };
+
   // ==========================================================
   // Formatting
   // ==========================================================
@@ -296,36 +372,23 @@ export default function ActiveReservations() {
   };
 
   // ==========================================================
+  // Only reservations with an ACTIVE parking session
+  // ==========================================================
+
+  const checkedInReservations = useMemo(() => {
+    return reservations.filter(
+      (reservation) => getActiveSession(reservation) !== null,
+    );
+  }, [reservations, activeSessions]);
+
+  // ==========================================================
   // Status
   // ==========================================================
 
-  const getStatus = (reservation: ParkingReservation) => {
-    const status = String(reservation.status ?? "").toLowerCase();
-
-    if (status.includes("check") || reservation.checked_in_at) {
-      return {
-        label: "Checked In",
-        className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-      };
-    }
-
-    if (status.includes("confirm")) {
-      return {
-        label: "Confirmed",
-        className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-      };
-    }
-
-    return {
-      label: reservation.status
-        ? String(reservation.status)
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, (letter) => letter.toUpperCase())
-        : "Active",
-
-      className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-    };
-  };
+  const getStatus = (_reservation: ParkingReservation) => ({
+    label: "Checked In",
+    className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  });
 
   // ==========================================================
   // Search
@@ -335,7 +398,7 @@ export default function ActiveReservations() {
     const query = searchTerm.trim().toLowerCase();
 
     if (!query) {
-      return reservations;
+      return checkedInReservations;
     }
 
     const tokens = query
@@ -343,7 +406,7 @@ export default function ActiveReservations() {
       .map((token) => token.trim())
       .filter(Boolean);
 
-    return reservations.filter((reservation) => {
+    return checkedInReservations.filter((reservation) => {
       const bay = getBay(reservation);
 
       const zone = getZone(reservation);
@@ -377,7 +440,14 @@ export default function ActiveReservations() {
 
       return tokens.every((token) => searchableText.includes(token));
     });
-  }, [reservations, searchTerm, bayMap, zoneMap, facilityMap]);
+  }, [
+    checkedInReservations,
+    searchTerm,
+    bayMap,
+    zoneMap,
+    facilityMap,
+    activeSessions,
+  ]);
 
   // ==========================================================
   // Refresh
@@ -390,9 +460,23 @@ export default function ActiveReservations() {
     setError(null);
 
     try {
-      const result = await parkingReservationsApi.activeByCustomer(user.id);
+      const [reservationResult, activeSessionResult] = await Promise.all([
+        parkingReservationsApi.byCustomer(user.id),
+        parkingSessionsApi.active(),
+      ]);
 
-      setReservations(result.items);
+      setReservations(reservationResult.items);
+
+      const sessions = activeSessionResult.items ?? [];
+
+      setActiveSessions(
+        sessions.filter(
+          (session) =>
+            session.customer_id === null ||
+            session.customer_id === undefined ||
+            String(session.customer_id) === String(user.id),
+        ),
+      );
 
       setLastUpdated(new Date());
     } catch (err) {
@@ -469,24 +553,14 @@ export default function ActiveReservations() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <Metric
             label="Active"
-            value={loading ? "…" : String(reservations.length)}
+            value={loading ? "…" : String(checkedInReservations.length)}
             note="Ongoing parking"
             Icon={Activity}
           />
 
           <Metric
             label="Checked In"
-            value={
-              loading
-                ? "…"
-                : String(
-                    reservations.filter(
-                      (reservation) =>
-                        String(reservation.status ?? "").toUpperCase() ===
-                        "CHECKED_IN",
-                    ).length,
-                  )
-            }
+            value={loading ? "…" : String(checkedInReservations.length)}
             note="Currently on site"
             Icon={CheckCircle2}
           />
@@ -496,13 +570,19 @@ export default function ActiveReservations() {
             value={
               loading
                 ? "…"
-                : reservations[0]
-                  ? formatDate(reservations[0].checked_in_at)
+                : checkedInReservations[0]
+                  ? formatDate(
+                      checkedInReservations[0].checked_in_at ??
+                        getActiveSession(checkedInReservations[0])?.entry_time,
+                    )
                   : "None"
             }
             note={
-              reservations[0]
-                ? formatTime(reservations[0].checked_in_at)
+              checkedInReservations[0]
+                ? formatTime(
+                    checkedInReservations[0].checked_in_at ??
+                      getActiveSession(checkedInReservations[0])?.entry_time,
+                  )
                 : "No active session"
             }
             Icon={Clock3}
@@ -532,7 +612,7 @@ export default function ActiveReservations() {
         ==================================================== */}
 
         <Card
-          title="Current Parking Session"
+          title="My Current Checked-In Reservations"
           sub={
             lastUpdated
               ? `Live data • Last updated ${formatDateTime(
@@ -806,7 +886,10 @@ export default function ActiveReservations() {
                         </div>
 
                         <p className="mt-2 text-sm font-extrabold text-slate-900">
-                          {formatDateTime(reservation.checked_in_at)}
+                          {formatDateTime(
+                            reservation.checked_in_at ??
+                              getActiveSession(reservation)?.entry_time,
+                          )}
                         </p>
 
                         <p className="mt-1 text-xs text-slate-500">
@@ -900,10 +983,10 @@ export default function ActiveReservations() {
 
                       <p className="text-xs leading-5 text-slate-600">
                         Your parking session is currently active. Once the
-                        vehicle is checked out and payment is completed, the
+                        payment is completed and vehicle is checked out, the
                         reservation will automatically move to
-                        <b className="ml-1 text-slate-800">COMPLETED</b>
-                        and will no longer appear under Active Reservations.
+                        <b className="ml-1 text-slate-800">COMPLETED </b>
+                         and will no longer appear under Active Reservations.
                       </p>
                     </div>
                   </article>

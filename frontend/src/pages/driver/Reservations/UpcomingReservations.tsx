@@ -22,10 +22,12 @@ import {
   parkingBaysApi,
   parkingFacilitiesApi,
   parkingReservationsApi,
+  parkingSessionsApi,
   parkingZonesApi,
   type ParkingBay,
   type ParkingFacility,
   type ParkingReservation,
+  type ParkingSession,
   type ParkingZone,
 } from "../../../api";
 
@@ -35,6 +37,7 @@ export default function UpcomingReservations() {
   const { user } = useAuth();
 
   const [reservations, setReservations] = useState<ParkingReservation[]>([]);
+  const [activeSessions, setActiveSessions] = useState<ParkingSession[]>([]);
   const [facilities, setFacilities] = useState<ParkingFacility[]>([]);
   const [zones, setZones] = useState<ParkingZone[]>([]);
   const [bays, setBays] = useState<ParkingBay[]>([]);
@@ -107,13 +110,19 @@ export default function UpcomingReservations() {
       setError(null);
 
       try {
-        const [reservationResult, facilityResult, zoneResult, bayResult] =
-          await Promise.allSettled([
-            parkingReservationsApi.byCustomer(user.id),
-            parkingFacilitiesApi.list(0, 500),
-            parkingZonesApi.list(0, 500),
-            parkingBaysApi.list(0, 500),
-          ]);
+        const [
+          reservationResult,
+          activeSessionResult,
+          facilityResult,
+          zoneResult,
+          bayResult,
+        ] = await Promise.allSettled([
+          parkingReservationsApi.byCustomer(user.id),
+          parkingSessionsApi.active(),
+          parkingFacilitiesApi.list(0, 500),
+          parkingZonesApi.list(0, 500),
+          parkingBaysApi.list(0, 500),
+        ]);
 
         if (cancelled) return;
 
@@ -123,6 +132,21 @@ export default function UpcomingReservations() {
           setReservations(reservationResult.value.items);
         } else {
           failures.push("reservations");
+        }
+
+        if (activeSessionResult.status === "fulfilled") {
+          const sessions = activeSessionResult.value.items ?? [];
+
+          setActiveSessions(
+            sessions.filter(
+              (session) =>
+                session.customer_id === null ||
+                session.customer_id === undefined ||
+                String(session.customer_id) === String(user.id),
+            ),
+          );
+        } else {
+          failures.push("active parking sessions");
         }
 
         if (facilityResult.status === "fulfilled") {
@@ -217,6 +241,37 @@ export default function UpcomingReservations() {
     const zone = getZone(reservation);
 
     return zone ? (facilityMap.get(zone.facility_id) ?? null) : null;
+  };
+
+  const getActiveSession = (reservation: ParkingReservation) => {
+    const reservationRegistration = String(
+      reservation.vehicle_registration ?? "",
+    )
+      .trim()
+      .toUpperCase();
+
+    return (
+      activeSessions.find((session) => {
+        const sessionRegistration = String(session.vehicle_registration ?? "")
+          .trim()
+          .toUpperCase();
+
+        const sameBay =
+          Number(session.parking_bay_id) === Number(reservation.parking_bay_id);
+
+        const sameVehicle =
+          reservation.vehicle_id != null &&
+          session.vehicle_id != null &&
+          Number(session.vehicle_id) === Number(reservation.vehicle_id);
+
+        const sameRegistration =
+          reservationRegistration !== "" &&
+          sessionRegistration !== "" &&
+          reservationRegistration === sessionRegistration;
+
+        return sameBay && (sameVehicle || sameRegistration);
+      }) ?? null
+    );
   };
 
   // ==========================================================
@@ -357,14 +412,11 @@ export default function UpcomingReservations() {
          * be cancelled, completed, expired, active, or checked in.
          */
         if (
-          status.includes("cancel") ||
-          status.includes("complete") ||
-          status.includes("expire") ||
-          status.includes("active") ||
-          status.includes("check") ||
+          status !== "confirmed" ||
           reservation.cancelled_at ||
           reservation.completed_at ||
-          reservation.checked_in_at
+          reservation.checked_in_at ||
+          getActiveSession(reservation)
         ) {
           return false;
         }
@@ -387,7 +439,7 @@ export default function UpcomingReservations() {
           new Date(a.reserved_from).getTime() -
           new Date(b.reserved_from).getTime(),
       );
-  }, [reservations, now]);
+  }, [reservations, activeSessions, now]);
 
   // ==========================================================
   // Search
@@ -443,9 +495,24 @@ export default function UpcomingReservations() {
     setError(null);
 
     try {
-      const result = await parkingReservationsApi.byCustomer(user.id);
+      const [reservationResult, activeSessionResult] = await Promise.all([
+        parkingReservationsApi.byCustomer(user.id),
+        parkingSessionsApi.active(),
+      ]);
 
-      setReservations(result.items);
+      setReservations(reservationResult.items);
+
+      const sessions = activeSessionResult.items ?? [];
+
+      setActiveSessions(
+        sessions.filter(
+          (session) =>
+            session.customer_id === null ||
+            session.customer_id === undefined ||
+            String(session.customer_id) === String(user.id),
+        ),
+      );
+
       setLastUpdated(new Date());
     } catch (err) {
       setError(
@@ -751,7 +818,7 @@ export default function UpcomingReservations() {
               <CalendarClock className="text-emerald-600" size={22} />
 
               <h2 className="text-xl font-extrabold text-slate-900">
-                Upcoming Reservations
+                My Upcoming Reservations
               </h2>
             </div>
 
@@ -816,7 +883,7 @@ export default function UpcomingReservations() {
                     ).length,
                   )
             }
-            note="Ready for parking"
+            note="Ready for Check-In"
             Icon={CheckCircle2}
           />
         </div>
@@ -844,7 +911,7 @@ export default function UpcomingReservations() {
         ==================================================== */}
 
         <Card
-          title="Future Bookings"
+          title="My Future Bookings"
           sub={
             lastUpdated
               ? `Live data • Last updated ${formatDateTime(
@@ -1182,7 +1249,7 @@ export default function UpcomingReservations() {
                       {status.label === "Confirmed" && (
                         <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700">
                           <CheckCircle2 size={15} />
-                          Ready for parking
+                          Ready for Check-In
                         </div>
                       )}
                     </div>

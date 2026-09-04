@@ -919,7 +919,7 @@ export default function Shell({
                   <b className="block truncate text-sm">{fullName}</b>
 
                   <small className="block capitalize text-slate-500">
-                    {role} portal
+                    Driver
                   </small>
                 </div>
 

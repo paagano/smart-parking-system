@@ -359,10 +359,7 @@ class ParkingReservationService:
             await self._generate_reservation_number()
         )
 
-        expires_at = (
-            data.reserved_from
-            - timedelta(minutes=30)
-        )
+        expires_at = data.reserved_until
 
         # Calculate estimated amount once
 
@@ -498,6 +495,29 @@ class ParkingReservationService:
 
         if reservation is None:
             return None
+
+        # A reservation is locked once its vehicle has been checked in
+        # and an ACTIVE parking session exists for the same vehicle/bay.
+        if reservation.status in (
+            ReservationStatus.CHECKED_IN,
+            ReservationStatus.COMPLETED,
+        ):
+            raise BadRequestException(
+                "Checked-in or completed reservations cannot be updated."
+            )
+
+        active_session = await self.parking_session_service.get_active_session(
+            reservation.vehicle_registration
+        )
+
+        if (
+            active_session is not None
+            and active_session.parking_bay_id == reservation.parking_bay_id
+        ):
+            raise BadRequestException(
+                "This reservation cannot be updated because the vehicle "
+                "already has an active parking session."
+            )
 
         # ======================================================
         # Extract Update Data
@@ -661,8 +681,7 @@ class ParkingReservationService:
         if "reserved_from" in update_data:
 
             reservation.expires_at = (
-                reservation.reserved_from
-                - timedelta(minutes=30)
+                reservation.reserved_until
             )
 
         # ======================================================
@@ -761,6 +780,15 @@ class ParkingReservationService:
                 "Only CREATED reservations can be confirmed."
             )
 
+        # A reservation may still be stored as CREATED if the automatic
+        # overdue-expiration job has not yet run. Never allow confirmation
+        # after the reservation window has elapsed.
+        if utc_now() >= reservation.reserved_until:
+            await self.expire_reservation(reservation_id)
+            raise BadRequestException(
+                "Reservation has expired and can no longer be confirmed."
+            )
+
         reservation.status = (
             ReservationStatus.CONFIRMED
         )
@@ -822,6 +850,19 @@ class ParkingReservationService:
             raise BadRequestException(
                 "Completed or checked-in reservations "
                 "cannot be cancelled."
+            )
+
+        active_session = await self.parking_session_service.get_active_session(
+            reservation.vehicle_registration
+        )
+
+        if (
+            active_session is not None
+            and active_session.parking_bay_id == reservation.parking_bay_id
+        ):
+            raise BadRequestException(
+                "This reservation cannot be cancelled because the vehicle "
+                "already has an active parking session."
             )
 
         reservation.status = (
@@ -1000,6 +1041,11 @@ class ParkingReservationService:
         Retrieve all reservations for a customer.
         """
 
+        # Keep reservation status current whenever customer reservations
+        # are retrieved. This also handles overdue reservations when no
+        # background expiration worker has run since their expiry.
+        await self.expire_overdue_reservations()
+
         return await self.repository.get_by_customer(
             customer_id,
         )
@@ -1011,6 +1057,10 @@ class ParkingReservationService:
         """
         Retrieve active reservations for a customer.
         """
+
+        # Ensure overdue reservations are transitioned to EXPIRED before
+        # the active list is returned.
+        await self.expire_overdue_reservations()
 
         return await self.repository.get_active_by_customer(
             customer_id,
@@ -1104,10 +1154,10 @@ class ParkingReservationService:
                 "before their reserved time."
             )
 
-        if now > reservation.reserved_until:
+        if now >= reservation.reserved_until:
+            await self.expire_reservation(reservation_id)
             raise BadRequestException(
-                "Vehicles cannot be checked in after "
-                "their reserved time."
+                "Reservation has expired and cannot be checked in."
             )
 
         # Create parking session from reservation
