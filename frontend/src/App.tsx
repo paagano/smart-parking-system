@@ -1,11 +1,20 @@
 import { Navigate, Route, Routes } from "react-router";
 
 import Login from "./auth/Login";
+import Register from "./auth/Register";
+import ForgotPassword from "./auth/ForgotPassword";
+import ResetPassword from "./auth/ResetPassword";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import RoleRoute from "./auth/RoleRoute";
 import { normalizeRole } from "./auth/role";
 import { useAuth } from "./auth/AuthContext";
 import Shell from "./components/layout/Shell";
+
+// ==========================================================
+// PUBLIC AUTHENTICATION
+// ==========================================================
+
+import VerifyEmail from "./pages/auth/VerifyEmail";
 
 // ==========================================================
 // DRIVER
@@ -72,6 +81,73 @@ export default function App() {
       ================================================== */}
 
       <Route path="/login" element={<Login />} />
+
+      {/* ==================================================
+          REGISTER
+      ==================================================
+
+          This route MUST remain outside ProtectedRoute.
+
+          A new user must be able to create an account
+          without being authenticated.
+
+          Expected URL:
+
+          /register
+      ================================================== */}
+
+      <Route path="/register" element={<Register />} />
+
+      {/* ==================================================
+          FORGOT PASSWORD
+      ==================================================
+
+          This route MUST remain outside ProtectedRoute.
+
+          A user who has forgotten their password must be
+          able to request a password reset without being
+          authenticated.
+
+          Expected URL:
+
+          /forgot-password
+      ================================================== */}
+
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+
+      {/* ==================================================
+          RESET PASSWORD
+      ==================================================
+
+          This route MUST remain outside ProtectedRoute.
+
+          The password-reset link is delivered by email and
+          the user must be able to open it without being
+          authenticated.
+
+          Expected URL:
+
+          /reset-password?token=<password-reset-token>
+      ================================================== */}
+
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* ==================================================
+          EMAIL VERIFICATION
+      ==================================================
+
+          This route MUST remain outside ProtectedRoute.
+
+          The verification link is delivered by email and
+          the user must be able to open it even if they are
+          not currently authenticated.
+
+          Expected URL:
+
+          /verify-email?token=<verification-token>
+      ================================================== */}
+
+      <Route path="/verify-email" element={<VerifyEmail />} />
 
       {/* ==================================================
           PROTECTED APPLICATION
@@ -176,7 +252,7 @@ function AuthenticatedApplication() {
         {/* ==================================================
             DRIVER — PAYMENT HISTORY
         ==================================================
-        
+
             This is the normal payment-history page.
             Do NOT use this route for parking-session checkout.
         ================================================== */}
@@ -193,7 +269,7 @@ function AuthenticatedApplication() {
         {/* ==================================================
             DRIVER — PARKING SESSION CHECKOUT
         ==================================================
-        
+
             Dedicated checkout route.
 
             Expected URL:

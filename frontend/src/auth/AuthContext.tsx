@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -19,7 +20,9 @@ interface AuthContextValue {
 
   login: (email: string, password: string) => Promise<CurrentUser>;
 
-  logout: () => void;
+  logout: () => Promise<void>;
+
+  updateUser: (user: CurrentUser) => void;
 }
 
 // ==========================================================
@@ -165,16 +168,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // ========================================================
+  // Update User
+  // ========================================================
+
+  //
+  // IMPORTANT:
+  //
+  // Keep this callback stable.
+  //
+  // Profile.tsx depends on updateUser in its useEffect
+  // dependency array. Without useCallback, every AuthProvider
+  // render creates a new updateUser function, causing Profile
+  // to repeatedly call GET /users/me.
+  //
+  const updateUser = useCallback((updatedUser: CurrentUser) => {
+    console.log(
+      "[SmartPark Auth] Updating authenticated user state:",
+      updatedUser,
+    );
+
+    setUser(updatedUser);
+  }, []);
+
+  // ========================================================
   // Logout
   // ========================================================
 
-  const logout = () => {
+  const logout = useCallback(async (): Promise<void> => {
     console.log("[SmartPark Auth] Logging out...");
 
-    authApi.logout();
-
-    setUser(null);
-  };
+    try {
+      //
+      // Tell the backend to revoke the current JWT.
+      //
+      await authApi.logout();
+    } finally {
+      //
+      // Always clear the authenticated user from
+      // React state, even if the backend logout
+      // request fails.
+      //
+      setUser(null);
+    }
+  }, []);
 
   // ========================================================
   // Provider
@@ -188,6 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

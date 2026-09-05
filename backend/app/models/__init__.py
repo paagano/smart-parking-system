@@ -14,6 +14,12 @@ from .wallet_transaction import WalletTransaction
 from .vehicle import Vehicle
 
 # ==========================================================
+# Authentication / Security Models
+# ==========================================================
+
+from .revoked_token import RevokedToken
+
+# ==========================================================
 # Loyalty Models
 # ==========================================================
 
@@ -22,7 +28,6 @@ from .loyalty_point_transaction import LoyaltyPointTransaction
 from .loyalty_reward import LoyaltyReward
 from .loyalty_reward_redemption import LoyaltyRewardRedemption
 from .loyalty_coupon import LoyaltyCoupon
-
 
 
 __all__ = [
@@ -40,6 +45,7 @@ __all__ = [
     "Wallet",
     "WalletTransaction",
     "Vehicle",
+    "RevokedToken",
     "LoyaltyAccount",
     "LoyaltyPointTransaction",
     "LoyaltyReward",

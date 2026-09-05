@@ -62,6 +62,10 @@ from app.repositories.receipt_repository import (
     ReceiptRepository,
 )
 
+from app.repositories.revoked_token_repository import (
+    RevokedTokenRepository,
+)
+
 
 # ==========================================================
 # Database Dependency
@@ -188,10 +192,10 @@ def get_payment_repository(
         db=db,
     )
 
+
 # ==========================================================
 # Receipt Repository
 # ==========================================================
-
 
 def get_receipt_repository(
     db: DbSession,
@@ -233,6 +237,22 @@ def get_notification_repository(
     """
 
     return NotificationRepository(
+        db=db,
+    )
+
+
+# ==========================================================
+# Revoked Token Repository
+# ==========================================================
+
+def get_revoked_token_repository(
+    db: DbSession,
+) -> RevokedTokenRepository:
+    """
+    Return a RevokedTokenRepository instance.
+    """
+
+    return RevokedTokenRepository(
         db=db,
     )
 
@@ -288,10 +308,12 @@ PaymentRepositoryDep = Annotated[
     Depends(get_payment_repository),
 ]
 
+
 ReceiptRepositoryDep = Annotated[
     ReceiptRepository,
     Depends(get_receipt_repository),
 ]
+
 
 VehicleRepositoryDep = Annotated[
     VehicleRepository,
@@ -302,4 +324,10 @@ VehicleRepositoryDep = Annotated[
 NotificationRepositoryDep = Annotated[
     NotificationRepository,
     Depends(get_notification_repository),
+]
+
+
+RevokedTokenRepositoryDep = Annotated[
+    RevokedTokenRepository,
+    Depends(get_revoked_token_repository),
 ]

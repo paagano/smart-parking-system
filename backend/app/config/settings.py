@@ -87,9 +87,10 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "SmartPark AI"
     SMTP_USE_TLS: bool = True
 
-    # ===============================================================================
-    # Storage (Dual Storage - use 'local' for development, 'supabase' for production)
-    # ===============================================================================
+    # =========================================================================
+    # Storage (Dual Storage - use 'local' for development, 'supabase' for
+    # production)
+    # =========================================================================
 
     STORAGE_BACKEND: str = "supabase"
     LOCAL_STORAGE_PATH: str = "storage"
@@ -97,6 +98,11 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
     SUPABASE_BUCKET: str = "receipts"
+
+    # Dedicated bucket for authenticated-user profile pictures.
+    SUPABASE_PROFILE_PICTURE_BUCKET: str = "profile-pictures"
+    SUPABASE_PROFILE_PICTURE_PUBLIC: bool = True
+
     SUPABASE_PUBLIC_BUCKET: bool = False
 
     # ==========================================================

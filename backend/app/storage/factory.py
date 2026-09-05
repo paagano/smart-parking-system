@@ -79,6 +79,63 @@ def get_storage() -> StorageService:
 
 
 # ==========================================================
+# Profile Picture Storage Factory
+# ==========================================================
+
+
+def get_profile_picture_storage() -> StorageService:
+    """
+    Return the storage implementation dedicated to profile
+    pictures.
+
+    Profile pictures use a separate storage namespace/bucket
+    from receipts so that changing profile-picture storage
+    configuration does not affect receipt storage.
+
+    The implementation is selected using STORAGE_BACKEND.
+
+    Supported values:
+
+        local
+        supabase
+
+    Returns:
+        Configured StorageService implementation.
+
+    Raises:
+        ValueError:
+            If STORAGE_BACKEND contains an unsupported value.
+    """
+
+    backend = settings.STORAGE_BACKEND.strip().lower()
+
+    # ------------------------------------------------------
+    # Local Storage
+    # ------------------------------------------------------
+
+    if backend == "local":
+        return LocalStorage()
+
+    # ------------------------------------------------------
+    # Supabase Storage
+    # ------------------------------------------------------
+
+    if backend == "supabase":
+        return SupabaseStorage(
+            bucket=settings.SUPABASE_PROFILE_PICTURE_BUCKET,
+        )
+
+    # ------------------------------------------------------
+    # Unsupported Backend
+    # ------------------------------------------------------
+
+    raise ValueError(
+        f"Unsupported STORAGE_BACKEND: '{settings.STORAGE_BACKEND}'. "
+        "Supported values are: 'local' or 'supabase'."
+    )
+
+
+# ==========================================================
 # Singleton-style Accessor
 # ==========================================================
 

@@ -911,9 +911,21 @@ export default function Shell({
                 aria-haspopup="menu"
                 className="flex items-center gap-3 rounded-2xl px-2 py-1.5 text-left transition hover:bg-slate-50"
               >
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-900 font-bold text-white">
-                  {initials}
-                </span>
+                {/* ==================================================
+                    USER PROFILE AVATAR
+                ================================================== */}
+
+                {user?.profile_picture_url ? (
+                  <img
+                    src={user.profile_picture_url}
+                    alt={`${fullName}'s profile`}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-900 font-bold text-white">
+                    {initials}
+                  </span>
+                )}
 
                 <div className="min-w-0">
                   <b className="block truncate text-sm">{fullName}</b>

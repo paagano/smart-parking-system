@@ -15,6 +15,9 @@ export interface CurrentUser {
 
   phone_number: number | string;
 
+  // NEW: Profile picture
+  profile_picture_url: string | null;
+
   role: "DRIVER" | "ATTENDANT" | "ADMIN";
 
   is_active: boolean;
@@ -43,5 +46,46 @@ export const usersApi = {
 
     return response.data;
   },
-};
 
+  /**
+   * Upload or replace the currently authenticated user's
+   * profile picture.
+   *
+   * Backend endpoint:
+   *
+   * POST /users/me/profile-picture
+   *
+   * Requires:
+   *
+   * Authorization: Bearer <JWT>
+   */
+  uploadProfilePicture: async (file: File): Promise<CurrentUser> => {
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    const response = await api.post<CurrentUser>(
+      "/users/me/profile-picture",
+      formData,
+    );
+
+    return response.data;
+  },
+
+  /**
+   * Delete the currently authenticated user's profile picture.
+   *
+   * Backend endpoint:
+   *
+   * DELETE /users/me/profile-picture
+   *
+   * Requires:
+   *
+   * Authorization: Bearer <JWT>
+   */
+  deleteProfilePicture: async (): Promise<CurrentUser> => {
+    const response = await api.delete<CurrentUser>("/users/me/profile-picture");
+
+    return response.data;
+  },
+};

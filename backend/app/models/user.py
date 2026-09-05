@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 from sqlalchemy import (
     Boolean,
     Enum,
+    Integer,
     String,
 )
 from sqlalchemy.orm import (
@@ -58,6 +59,11 @@ class User(BaseModel):
         nullable=True,
     )
 
+    profile_picture_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
     # ==========================================================
     # Authentication
     # ==========================================================
@@ -74,6 +80,12 @@ class User(BaseModel):
         ),
         nullable=False,
         default=UserRole.DRIVER,
+    )
+
+    token_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
     )
 
     # ==========================================================

@@ -10,6 +10,13 @@ class InvalidCredentialsException(AuthenticationException):
     """
 
 
+class InvalidCurrentPasswordException(AuthenticationException):
+    """
+    Raised when the current password supplied for a password change
+    is incorrect.
+    """
+
+
 class EmailAlreadyExistsException(AuthenticationException):
     """
     Raised when attempting to register an existing email.

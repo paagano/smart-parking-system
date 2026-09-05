@@ -1,22 +1,24 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type React from "react";
 import {
   Bell,
   Check,
   ChevronDown,
   LockKeyhole,
-  Mail,
+  Eye,
+  EyeOff,
+  Loader2,
   Moon,
   Palette,
-  Phone,
   Save,
   ShieldCheck,
   Sun,
-  User,
   UserRound,
 } from "lucide-react";
 
-import { usersApi } from "../../../api";
+import { api } from "../../api";
+import { useAuth } from "../../auth/AuthContext";
+import { useNavigate } from "react-router";
 
 // ==========================================================
 // Types
@@ -82,48 +84,11 @@ function saveStoredPreferences<T>(key: string, value: T) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-function formatDate(value?: string | null): string {
-  if (!value) {
-    return "—";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("en-KE", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatRole(role?: string | null): string {
-  if (!role) {
-    return "Driver";
-  }
-
-  return role
-    .replace(/[_-]/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
 // ==========================================================
 // Component
 // ==========================================================
 
 export default function Settings() {
-  const [user, setUser] = useState<Awaited<
-    ReturnType<typeof usersApi.me>
-  > | null>(null);
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState<string | null>(null);
-
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   const [notificationPreferences, setNotificationPreferences] =
@@ -145,45 +110,25 @@ export default function Settings() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   // ========================================================
-  // Load current user
+  // Password change
   // ========================================================
 
-  useEffect(() => {
-    let mounted = true;
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
-    async function loadUser() {
-      try {
-        setLoading(true);
-        setError(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
-        const currentUser = await usersApi.me();
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
-        if (mounted) {
-          setUser(currentUser);
-        }
-      } catch (err: any) {
-        console.error("[SmartPark Settings] Failed to load current user:", err);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
-        if (mounted) {
-          setError(
-            err?.response?.data?.detail ??
-              err?.message ??
-              "Unable to load your account information.",
-          );
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadUser();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const [showChangePasswordForm, setShowChangePasswordForm] = useState(false);
 
   // ========================================================
   // Save preferences
@@ -212,25 +157,128 @@ export default function Settings() {
   }
 
   // ========================================================
-  // Loading state
+  // Change password
   // ========================================================
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
-          <div className="mt-2 h-4 w-96 animate-pulse rounded bg-slate-200" />
-        </div>
+  async function handleChangePassword() {
+    setPasswordError(null);
+    setPasswordSuccess(null);
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white" />
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white lg:col-span-2" />
-        </div>
+    if (!currentPassword) {
+      setPasswordError("Please enter your current password.");
+      return;
+    }
 
-        <div className="h-80 animate-pulse rounded-2xl border border-slate-200 bg-white" />
-      </div>
-    );
+    if (!newPassword) {
+      setPasswordError("Please enter a new password.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters long.");
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      setPasswordError(
+        "New password must contain at least one uppercase letter.",
+      );
+      return;
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      setPasswordError(
+        "New password must contain at least one lowercase letter.",
+      );
+      return;
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      setPasswordError("New password must contain at least one number.");
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      setPasswordError(
+        "New password must contain at least one special character.",
+      );
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("The new passwords do not match.");
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      await api.post("/users/me/change-password", {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+
+      setPasswordSuccess(
+        "Your password has been changed successfully. Please sign in again.",
+      );
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmNewPassword(false);
+
+      // The backend revokes the JWT used for the password change.
+      // Clear the frontend authentication state and return to login.
+      try {
+        await logout();
+      } catch {
+        // The token has already been revoked by the backend.
+        // AuthContext.logout clears the local authentication state
+        // even when its follow-up logout request returns 401.
+      }
+
+      navigate("/login", { replace: true });
+    } catch (err: any) {
+      console.error("[SmartPark Settings] Failed to change password:", err);
+
+      const detail = err?.response?.data?.detail;
+
+      if (typeof detail === "string") {
+        setPasswordError(detail);
+      } else if (Array.isArray(detail)) {
+        setPasswordError(
+          detail
+            .map((item: any) =>
+              typeof item === "string"
+                ? item
+                : (item?.msg ?? "Validation error."),
+            )
+            .join(", "),
+        );
+      } else {
+        setPasswordError(err?.message ?? "Unable to change your password.");
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  }
+
+  function cancelChangePassword() {
+    if (changingPassword) {
+      return;
+    }
+
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setPasswordError(null);
+    setPasswordSuccess(null);
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmNewPassword(false);
+    setShowChangePasswordForm(false);
   }
 
   // ========================================================
@@ -285,120 +333,6 @@ export default function Settings() {
           {savedMessage}
         </div>
       )}
-
-      {/* ====================================================
-          ERROR
-      ==================================================== */}
-
-      {error && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-          <p className="font-bold">Unable to load account information</p>
-          <p className="mt-1">{error}</p>
-        </div>
-      )}
-
-      {/* ====================================================
-          PROFILE
-      ==================================================== */}
-
-      <section className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col items-center text-center">
-            <div className="grid h-24 w-24 place-items-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60">
-              <User size={42} />
-            </div>
-
-            <h2 className="mt-5 text-xl font-extrabold text-slate-900">
-              {user ? `${user.first_name} ${user.last_name}` : "Driver"}
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">{user?.email ?? "—"}</p>
-
-            <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-              <ShieldCheck size={14} />
-              {formatRole(user?.role)}
-            </span>
-
-            <div className="mt-6 w-full border-t border-slate-100 pt-5 text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500">Account status</span>
-
-                <span
-                  className={`text-sm font-bold ${
-                    user?.is_active ? "text-emerald-600" : "text-rose-600"
-                  }`}
-                >
-                  {user?.is_active ? "Active" : "Inactive"}
-                </span>
-              </div>
-
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-sm text-slate-500">Verification</span>
-
-                <span className="text-sm font-bold text-slate-800">
-                  {user?.is_verified ? "Verified" : "Not verified"}
-                </span>
-              </div>
-
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-sm text-slate-500">Member since</span>
-
-                <span className="text-sm font-bold text-slate-800">
-                  {formatDate(user?.created_at)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
-              Account Information
-            </p>
-
-            <h2 className="mt-1 text-lg font-extrabold text-slate-900">
-              Personal details
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Information associated with your SmartPark account.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <InfoField
-              icon={<User size={17} />}
-              label="First name"
-              value={user?.first_name ?? "—"}
-            />
-
-            <InfoField
-              icon={<User size={17} />}
-              label="Last name"
-              value={user?.last_name ?? "—"}
-            />
-
-            <InfoField
-              icon={<Mail size={17} />}
-              label="Email address"
-              value={user?.email ?? "—"}
-            />
-
-            <InfoField
-              icon={<Phone size={17} />}
-              label="Phone number"
-              value={String(user?.phone_number ?? "—")}
-            />
-          </div>
-
-          <div className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
-            Your account details are managed by SmartPark authentication.
-            Profile editing can be enabled here once the corresponding backend
-            update endpoint is exposed.
-          </div>
-        </div>
-      </section>
 
       {/* ====================================================
           NOTIFICATION PREFERENCES
@@ -521,23 +455,168 @@ export default function Settings() {
         }
       >
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <div className="flex items-start gap-4">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-600 shadow-sm">
-              <LockKeyhole size={19} />
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-600 shadow-sm">
+                <LockKeyhole size={19} />
+              </div>
+
+              <div>
+                <h3 className="font-extrabold text-slate-800">
+                  Password & Authentication
+                </h3>
+
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                  Keep your SmartPark account secure by regularly updating your
+                  password.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h3 className="font-extrabold text-slate-800">
-                Password & authentication
-              </h3>
+            {!showChangePasswordForm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPasswordError(null);
+                  setPasswordSuccess(null);
+                  setShowChangePasswordForm(true);
+                }}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-slate-800"
+              >
+                <LockKeyhole size={16} />
+                Change Password
+              </button>
+            )}
+          </div>
 
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Your SmartPark account is protected using authenticated access.
-                Password-management controls should be connected here when the
-                backend password-change endpoint is exposed.
+          {showChangePasswordForm && (
+            <div className="mt-5 border-t border-slate-200 pt-5">
+              {passwordError && (
+                <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                  <p className="font-bold">Unable to change password</p>
+                  <p className="mt-1">{passwordError}</p>
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
+                  <Check size={17} className="mt-0.5 shrink-0" />
+                  <p>{passwordSuccess}</p>
+                </div>
+              )}
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <PasswordField
+                  label="Current password"
+                  value={currentPassword}
+                  onChange={setCurrentPassword}
+                  showPassword={showCurrentPassword}
+                  onToggleVisibility={() =>
+                    setShowCurrentPassword((current) => !current)
+                  }
+                  disabled={changingPassword}
+                  autoComplete="current-password"
+                />
+
+                <PasswordField
+                  label="New password"
+                  value={newPassword}
+                  onChange={setNewPassword}
+                  showPassword={showNewPassword}
+                  onToggleVisibility={() =>
+                    setShowNewPassword((current) => !current)
+                  }
+                  disabled={changingPassword}
+                  autoComplete="new-password"
+                />
+
+                <PasswordField
+                  label="Confirm new password"
+                  value={confirmNewPassword}
+                  onChange={setConfirmNewPassword}
+                  showPassword={showConfirmNewPassword}
+                  onToggleVisibility={() =>
+                    setShowConfirmNewPassword((current) => !current)
+                  }
+                  disabled={changingPassword}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
+                  Password requirements
+                </p>
+
+                <div className="mt-3 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
+                  <PasswordRequirement
+                    met={newPassword.length >= 8}
+                    label="At least 8 characters"
+                  />
+                  <PasswordRequirement
+                    met={/[A-Z]/.test(newPassword)}
+                    label="One uppercase letter"
+                  />
+                  <PasswordRequirement
+                    met={/[a-z]/.test(newPassword)}
+                    label="One lowercase letter"
+                  />
+                  <PasswordRequirement
+                    met={/[0-9]/.test(newPassword)}
+                    label="One number"
+                  />
+                  <PasswordRequirement
+                    met={/[^A-Za-z0-9]/.test(newPassword)}
+                    label="One special character"
+                  />
+                  <PasswordRequirement
+                    met={
+                      Boolean(newPassword) &&
+                      Boolean(confirmNewPassword) &&
+                      newPassword === confirmNewPassword
+                    }
+                    label="Passwords match"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={cancelChangePassword}
+                  disabled={changingPassword}
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => void handleChangePassword()}
+                  disabled={changingPassword}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {changingPassword ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Updating Password...
+                    </>
+                  ) : (
+                    <>
+                      <LockKeyhole size={16} />
+                      Update Password
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <p className="mt-4 text-xs leading-5 text-slate-500">
+                For security, you will be signed out after successfully changing
+                your password and will need to sign in again with your new
+                password.
               </p>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5">
@@ -576,36 +655,6 @@ export default function Settings() {
           Save Preferences
         </button>
       </div>
-    </div>
-  );
-}
-
-// ==========================================================
-// Info Field
-// ==========================================================
-
-function InfoField({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <div className="flex items-center gap-2 text-slate-400">
-        {icon}
-
-        <span className="text-xs font-bold uppercase tracking-widest">
-          {label}
-        </span>
-      </div>
-
-      <p className="mt-2 break-words text-sm font-extrabold text-slate-800">
-        {value}
-      </p>
     </div>
   );
 }
@@ -704,6 +753,81 @@ function PreferenceRow({
           }`}
         />
       </button>
+    </div>
+  );
+}
+
+// ==========================================================
+// Password Field
+// ==========================================================
+
+function PasswordField({
+  label,
+  value,
+  onChange,
+  showPassword,
+  onToggleVisibility,
+  disabled,
+  autoComplete,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  showPassword: boolean;
+  onToggleVisibility: () => void;
+  disabled: boolean;
+  autoComplete: string;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-extrabold text-slate-700">
+        {label}
+      </label>
+
+      <div className="relative">
+        <input
+          type={showPassword ? "text" : "password"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          autoComplete={autoComplete}
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+          placeholder="Enter password"
+        />
+
+        <button
+          type="button"
+          onClick={onToggleVisibility}
+          disabled={disabled}
+          aria-label={showPassword ? "Hide password" : "Show password"}
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================
+// Password Requirement
+// ==========================================================
+
+function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
+  return (
+    <div
+      className={`flex items-center gap-2 ${met ? "text-emerald-600" : "text-slate-500"}`}
+    >
+      <span
+        className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border ${
+          met
+            ? "border-emerald-500 bg-emerald-500 text-white"
+            : "border-slate-300 bg-white"
+        }`}
+      >
+        {met && <Check size={10} strokeWidth={3} />}
+      </span>
+      <span>{label}</span>
     </div>
   );
 }

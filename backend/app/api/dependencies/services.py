@@ -31,6 +31,7 @@ from app.api.dependencies.repositories import (
     ParkingReservationRepositoryDep,
     ParkingSessionRepositoryDep,
     PaymentRepositoryDep,
+    RevokedTokenRepositoryDep,
     UserRepositoryDep,
     VehicleRepositoryDep,
 )
@@ -39,8 +40,16 @@ from app.api.dependencies.wallet import (
     WalletServiceDep,
 )
 
+from app.api.dependencies.storage import (
+    ProfilePictureStorageServiceDep,
+)
+
 from app.services.auth_service import (
     AuthService,
+)
+
+from app.services.email_service import (
+    EmailService,
 )
 
 from app.services.parking_facility_service import (
@@ -69,6 +78,19 @@ from app.services.vehicle_service import (
 
 
 # ==========================================================
+# Email Service
+# ==========================================================
+
+
+def get_email_service() -> EmailService:
+    """
+    Return an EmailService instance.
+    """
+
+    return EmailService()
+
+
+# ==========================================================
 # Authentication Service
 # ==========================================================
 
@@ -76,6 +98,12 @@ from app.services.vehicle_service import (
 def get_auth_service(
     repository: UserRepositoryDep,
     wallet_service: WalletServiceDep,
+    revoked_token_repository: RevokedTokenRepositoryDep,
+    profile_picture_storage_service: ProfilePictureStorageServiceDep,
+    email_service: Annotated[
+        EmailService,
+        Depends(get_email_service),
+    ],
 ) -> AuthService:
     """
     Return an AuthService instance.
@@ -84,6 +112,9 @@ def get_auth_service(
     return AuthService(
         user_repository=repository,
         wallet_service=wallet_service,
+        revoked_token_repository=revoked_token_repository,
+        storage_service=profile_picture_storage_service,
+        email_service=email_service,
     )
 
 

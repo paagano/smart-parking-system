@@ -18,8 +18,6 @@ import asyncio
 from pathlib import PurePosixPath
 from typing import Any
 
-from typing import Any
-
 from supabase import create_client
 
 from app.config import settings
@@ -37,6 +35,9 @@ class SupabaseStorage(StorageService):
         SUPABASE_BUCKET
         SUPABASE_PUBLIC_BUCKET
 
+    The bucket and public/private behavior can also be overridden
+    for specialized storage domains such as profile pictures.
+
     Example storage path:
 
         payments/2026/08/RCPT-20260811-001.pdf
@@ -52,6 +53,7 @@ class SupabaseStorage(StorageService):
         self,
         client: Any | None = None,
         bucket: str | None = None,
+        public_bucket: bool | None = None,
     ) -> None:
         """
         Initialize Supabase Storage.
@@ -67,6 +69,17 @@ class SupabaseStorage(StorageService):
                 Optional bucket override.
 
                 If omitted, SUPABASE_BUCKET from settings is used.
+
+            public_bucket:
+                Optional public/private bucket override.
+
+                If omitted, SUPABASE_PUBLIC_BUCKET from settings
+                is used.
+
+                This allows specialized storage services, such
+                as profile-picture storage, to have their own
+                public/private behavior without changing the
+                application's default receipt storage configuration.
         """
 
         self.bucket_name = (
@@ -78,6 +91,12 @@ class SupabaseStorage(StorageService):
             raise ValueError(
                 "SUPABASE_BUCKET must be configured."
             )
+
+        self.public_bucket = (
+            settings.SUPABASE_PUBLIC_BUCKET
+            if public_bucket is None
+            else public_bucket
+        )
 
         if client is not None:
             self.client = client
@@ -391,11 +410,9 @@ class SupabaseStorage(StorageService):
 
         For a public bucket, this returns the Supabase public URL.
 
-        For a private bucket, this method returns the Supabase
-        public URL structure but does NOT make the object publicly
-        accessible.
-
-        Private receipt access should use get_signed_url().
+        For a private bucket, this method cannot be used to expose
+        the object publicly. Private objects should instead be
+        accessed through get_signed_url().
 
         Args:
             path:
@@ -403,13 +420,17 @@ class SupabaseStorage(StorageService):
 
         Returns:
             Supabase object URL.
+
+        Raises:
+            ValueError:
+                If this storage instance represents a private bucket.
         """
 
         normalized_path = self._normalize_path(
             path,
         )
 
-        if not settings.SUPABASE_PUBLIC_BUCKET:
+        if not self.public_bucket:
             raise ValueError(
                 "Cannot return a public URL for a private "
                 "Supabase bucket. Use get_signed_url() instead."

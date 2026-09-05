@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import {
   ArrowRight,
@@ -164,11 +164,11 @@ export default function Login() {
             </div>
 
             <h2 className="mt-2 text-3xl font-black text-slate-900">
-              Welcome back
+              Welcome Back!
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              Sign in to access your SmartPark AI portal.
+              Sign in to access your SmartPark AI account.
             </p>
 
             {/* ==================================================
@@ -218,12 +218,14 @@ export default function Login() {
               {/* PASSWORD */}
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-semibold text-slate-700"
-                >
-                  Password
-                </label>
+                <div className="mb-2">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-semibold text-slate-700"
+                  >
+                    Password
+                  </label>
+                </div>
 
                 <div className="relative">
                   <LockKeyhole
@@ -241,6 +243,15 @@ export default function Login() {
                     disabled={isSubmitting}
                     className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
                   />
+                </div>
+
+                <div className="mt-2 flex justify-end">
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
               </div>
 
@@ -269,6 +280,22 @@ export default function Login() {
                 )}
               </button>
             </form>
+
+            {/* ==================================================
+                            REGISTRATION
+                ================================================== */}
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-slate-500">
+                Don't have an account?{" "}
+                <Link
+                  to="/register"
+                  className="font-bold text-emerald-600 transition hover:text-emerald-700"
+                >
+                  Create an account
+                </Link>
+              </p>
+            </div>
 
             {/* ==================================================
                             FOOTER
