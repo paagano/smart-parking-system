@@ -251,7 +251,7 @@ function paymentTitle(payment: Payment): string {
   }
 
   if (payment.reservation_id) {
-    return "Reservation Payment";
+    return "Parking Booking Payment";
   }
 
   return "Payment";
@@ -599,12 +599,12 @@ function PaymentsHistory() {
             <Loader2 size={30} className="animate-spin" />
           </div>
 
-          <h2 className="mt-5 text-lg font-black text-slate-900">
-            Loading payments
+          <h2 className="mt-5 text-lg font-semibold text-slate-900">
+            Loading your payments
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Retrieving your payment history...
+            Getting your payment history ready...
           </p>
         </div>
       </div>
@@ -616,7 +616,7 @@ function PaymentsHistory() {
   // ========================================================
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-5 sm:space-y-6">
       {/* ====================================================
           Header
       ==================================================== */}
@@ -629,12 +629,12 @@ function PaymentsHistory() {
             </div>
 
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px]">
                 Payments
               </h1>
 
               <p className="mt-0.5 text-sm font-medium text-slate-500">
-                View and manage your SmartPark AI payment history.
+                View details and manage your parking payments in one place.
               </p>
             </div>
           </div>
@@ -644,10 +644,10 @@ function PaymentsHistory() {
           type="button"
           onClick={() => void loadPayments(true)}
           disabled={refreshing}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-          Refresh
+          Refresh payments
         </button>
       </div>
 
@@ -661,7 +661,7 @@ function PaymentsHistory() {
             <AlertCircle size={20} className="mt-0.5 shrink-0 text-rose-600" />
 
             <div className="flex-1">
-              <p className="text-sm font-extrabold text-rose-900">
+              <p className="text-sm font-medium text-rose-900">
                 Payment information unavailable
               </p>
 
@@ -688,7 +688,7 @@ function PaymentsHistory() {
           icon={<History size={20} />}
           label="Total Payments"
           value={String(statistics.total)}
-          description="All recorded transactions"
+          description="All recorded payments"
           tone="slate"
         />
 
@@ -696,7 +696,7 @@ function PaymentsHistory() {
           icon={<CheckCircle2 size={20} />}
           label="Successful"
           value={String(statistics.successful)}
-          description="Successfully completed"
+          description="Successfully completed payments"
           tone="green"
         />
 
@@ -704,7 +704,7 @@ function PaymentsHistory() {
           icon={<Clock3 size={20} />}
           label="Pending"
           value={String(statistics.pending)}
-          description="Awaiting completion"
+          description="Waiting to be completed"
           tone="amber"
         />
 
@@ -712,7 +712,7 @@ function PaymentsHistory() {
           icon={<CreditCard size={20} />}
           label="Amount Paid"
           value={money(statistics.totalAmount)}
-          description="Successful payments"
+          description="Completed payments"
           tone="blue"
         />
       </section>
@@ -721,14 +721,14 @@ function PaymentsHistory() {
           Receipt Lookup
       ==================================================== */}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-2">
               <FileText size={17} className="text-emerald-600" />
 
-              <label className="text-sm font-extrabold text-slate-800">
-                Find a Payment / Receipt
+              <label className="text-sm font-medium text-slate-800">
+                Find a payment or receipt
               </label>
             </div>
 
@@ -745,7 +745,7 @@ function PaymentsHistory() {
                     void searchReceipt();
                   }
                 }}
-                placeholder="Enter receipt number e.g. RCP-..."
+                placeholder="Enter a receipt number, e.g. RCP-..."
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
 
@@ -753,7 +753,7 @@ function PaymentsHistory() {
                 type="button"
                 onClick={() => void searchReceipt()}
                 disabled={receiptLoading}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {receiptLoading ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -777,12 +777,12 @@ function PaymentsHistory() {
           Filters
       ==================================================== */}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 sm:p-6">
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]">
           {/* Search */}
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-400">
+            <label className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
               Search
             </label>
 
@@ -804,7 +804,7 @@ function PaymentsHistory() {
                     void lookupTransaction();
                   }
                 }}
-                placeholder="Transaction, receipt, provider..."
+                placeholder="Search payment, receipt or provider..."
                 className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm font-semibold outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
@@ -837,7 +837,7 @@ function PaymentsHistory() {
           {/* From */}
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-400">
+            <label className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
               From
             </label>
 
@@ -855,7 +855,7 @@ function PaymentsHistory() {
           {/* To */}
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-400">
+            <label className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
               To
             </label>
 
@@ -875,7 +875,7 @@ function PaymentsHistory() {
           <button
             type="button"
             onClick={resetFilters}
-            className="self-end rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-50"
+            className="self-end rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
           >
             Reset
           </button>
@@ -884,7 +884,7 @@ function PaymentsHistory() {
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
           <p className="text-xs font-semibold text-slate-400">
             Showing{" "}
-            <span className="font-black text-slate-700">
+            <span className="font-semibold text-slate-700">
               {filteredPayments.length}
             </span>{" "}
             matching payment
@@ -896,7 +896,7 @@ function PaymentsHistory() {
             methodFilter !== "ALL" ||
             dateFrom ||
             dateTo) && (
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700">
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
               Filters active
             </span>
           )}
@@ -910,16 +910,16 @@ function PaymentsHistory() {
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <div>
-            <h2 className="text-base font-black text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900">
               Payment History
             </h2>
 
             <p className="mt-1 text-xs text-slate-500">
-              Your SmartPark AI financial transactions.
+              Your recent parking payments.
             </p>
           </div>
 
-          <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-extrabold text-slate-600">
+          <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">
             {filteredPayments.length} records
           </span>
         </div>
@@ -930,7 +930,7 @@ function PaymentsHistory() {
               <CreditCard size={27} />
             </div>
 
-            <h3 className="mt-4 text-sm font-black text-slate-900">
+            <h3 className="mt-4 text-sm font-semibold text-slate-900">
               No payments found
             </h3>
 
@@ -942,9 +942,9 @@ function PaymentsHistory() {
             <button
               type="button"
               onClick={resetFilters}
-              className="mt-5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50"
+              className="mt-5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
-              Clear Filters
+              Clear filters
             </button>
           </div>
         ) : (
@@ -955,27 +955,27 @@ function PaymentsHistory() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/70">
-                    <th className="px-6 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Payment
                     </th>
 
-                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Method
                     </th>
 
-                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Date
                     </th>
 
-                    <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Amount
                     </th>
 
-                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Status
                     </th>
 
-                    <th className="px-6 py-3 text-right text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Action
                     </th>
                   </tr>
@@ -1014,8 +1014,10 @@ function PaymentsHistory() {
         {filteredPayments.length > PAGE_SIZE && (
           <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
             <p className="text-xs font-semibold text-slate-500">
-              Page <span className="font-black text-slate-800">{safePage}</span>{" "}
-              of <span className="font-black text-slate-800">{totalPages}</span>
+              Page{" "}
+              <span className="font-semibold text-slate-800">{safePage}</span>{" "}
+              of{" "}
+              <span className="font-semibold text-slate-800">{totalPages}</span>
             </p>
 
             <div className="flex items-center gap-2">
@@ -1077,7 +1079,7 @@ function PaymentTableRow({
   const amount = Number(payment.total_amount ?? 0);
 
   return (
-    <tr className="group transition hover:bg-slate-50/80">
+    <tr className="group transition hover:bg-emerald-50/30">
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <div
@@ -1091,11 +1093,11 @@ function PaymentTableRow({
           </div>
 
           <div className="min-w-0">
-            <p className="max-w-[230px] truncate text-sm font-extrabold text-slate-900">
+            <p className="max-w-[230px] truncate text-sm font-medium text-slate-900">
               {paymentTitle(payment)}
             </p>
 
-            <p className="mt-0.5 truncate font-mono text-[10px] font-bold text-slate-400">
+            <p className="mt-0.5 truncate font-mono text-[10px] font-medium text-slate-400">
               {payment.transaction_number ?? `Payment #${payment.id}`}
             </p>
 
@@ -1109,7 +1111,7 @@ function PaymentTableRow({
       </td>
 
       <td className="px-4 py-4">
-        <div className="text-xs font-extrabold text-slate-700">
+        <div className="text-xs font-medium text-slate-700">
           {displayText(payment.payment_method)}
         </div>
 
@@ -1119,14 +1121,14 @@ function PaymentTableRow({
       </td>
 
       <td className="px-4 py-4">
-        <p className="text-xs font-bold text-slate-700">
+        <p className="text-xs font-medium text-slate-700">
           {dateTime(payment.paid_at ?? payment.created_at)}
         </p>
       </td>
 
       <td className="px-4 py-4 text-right">
         <p
-          className={`text-sm font-black ${
+          className={`text-sm font-semibold ${
             credit ? "text-emerald-600" : "text-slate-900"
           }`}
         >
@@ -1143,9 +1145,9 @@ function PaymentTableRow({
         <button
           type="button"
           onClick={onView}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 transition hover:bg-slate-50"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
         >
-          View
+          View details
         </button>
       </td>
     </tr>
@@ -1171,7 +1173,7 @@ function PaymentMobileCard({
     <button
       type="button"
       onClick={onView}
-      className="block w-full p-5 text-left transition hover:bg-slate-50"
+      className="block w-full p-5 text-left transition hover:bg-emerald-50/30 sm:p-6"
     >
       <div className="flex items-start gap-3">
         <div
@@ -1187,17 +1189,17 @@ function PaymentMobileCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-extrabold text-slate-900">
+              <p className="truncate text-sm font-medium text-slate-900">
                 {paymentTitle(payment)}
               </p>
 
-              <p className="mt-1 truncate font-mono text-[10px] font-bold text-slate-400">
+              <p className="mt-1 truncate font-mono text-[10px] font-medium text-slate-400">
                 {payment.transaction_number ?? `Payment #${payment.id}`}
               </p>
             </div>
 
             <p
-              className={`shrink-0 text-sm font-black ${
+              className={`shrink-0 text-sm font-semibold ${
                 credit ? "text-emerald-600" : "text-slate-900"
               }`}
             >
@@ -1209,7 +1211,7 @@ function PaymentMobileCard({
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <PaymentStatusBadge status={payment.status} />
 
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-500">
               {displayText(payment.payment_method)}
             </span>
 
@@ -1253,7 +1255,7 @@ function PaymentStatusBadge({ status }: { status: string | null | undefined }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${classes}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${classes}`}
     >
       <Icon size={12} />
 
@@ -1287,18 +1289,18 @@ function PaymentStatCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 sm:p-6">
       <div
         className={`grid h-10 w-10 place-items-center rounded-xl ${classes[tone]}`}
       >
         {icon}
       </div>
 
-      <p className="mt-4 text-xs font-bold uppercase tracking-wide text-slate-400">
+      <p className="mt-4 text-[11px] font-medium uppercase tracking-wide text-slate-400">
         {label}
       </p>
 
-      <p className="mt-1 truncate text-xl font-black tracking-tight text-slate-900">
+      <p className="mt-1 truncate text-xl font-semibold tracking-tight text-slate-900">
         {value}
       </p>
 
@@ -1324,7 +1326,7 @@ function FilterSelect({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-400">
+      <label className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
         {label}
       </label>
 
@@ -1365,18 +1367,18 @@ function PaymentDetailsModal({
       aria-modal="true"
       aria-labelledby="payment-details-title"
     >
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white shadow-2xl">
         {/* Header */}
 
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
               SmartPark AI
             </p>
 
             <h2
               id="payment-details-title"
-              className="mt-1 text-lg font-black text-slate-900"
+              className="mt-1 text-lg font-semibold text-slate-900"
             >
               Payment Details
             </h2>
@@ -1406,7 +1408,7 @@ function PaymentDetailsModal({
               </p>
 
               <p
-                className={`mt-1 text-3xl font-black ${
+                className={`mt-1 text-3xl font-semibold ${
                   credit ? "text-emerald-600" : "text-slate-900"
                 }`}
               >
@@ -1424,7 +1426,7 @@ function PaymentDetailsModal({
         <div className="space-y-6 p-6">
           <DetailsSection title="Transaction">
             <DetailItem
-              label="Transaction Number"
+              label="Payment Reference"
               value={payment.transaction_number}
               mono
             />
@@ -1462,7 +1464,7 @@ function PaymentDetailsModal({
             />
 
             <DetailItem
-              label="Provider Transaction"
+              label="Provider Reference"
               value={payment.provider_transaction_id}
               mono
             />
@@ -1474,7 +1476,7 @@ function PaymentDetailsModal({
             />
 
             <DetailItem
-              label="Provider Message"
+              label="Payment Provider Message"
               value={payment.provider_status_message}
             />
           </DetailsSection>
@@ -1502,7 +1504,7 @@ function PaymentDetailsModal({
             />
           </DetailsSection>
 
-          <DetailsSection title="Related SmartPark Record">
+          <DetailsSection title="Related Parking Record">
             <DetailItem
               label="Parking Session"
               value={
@@ -1513,7 +1515,7 @@ function PaymentDetailsModal({
             />
 
             <DetailItem
-              label="Reservation"
+              label="Parking Booking"
               value={
                 payment.reservation_id ? String(payment.reservation_id) : null
               }
@@ -1526,7 +1528,7 @@ function PaymentDetailsModal({
             />
 
             <DetailItem
-              label="Parent Transaction"
+              label="Related Payment"
               value={
                 payment.parent_transaction_id
                   ? String(payment.parent_transaction_id)
@@ -1549,7 +1551,7 @@ function PaymentDetailsModal({
 
           {payment.notes && (
             <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                 Notes
               </p>
 
@@ -1566,7 +1568,7 @@ function PaymentDetailsModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
+            className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Close
           </button>
@@ -1589,7 +1591,7 @@ function DetailsSection({
 }) {
   return (
     <section>
-      <h3 className="mb-3 text-sm font-black text-slate-900">{title}</h3>
+      <h3 className="mb-3 text-sm font-semibold text-slate-900">{title}</h3>
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 divide-y divide-slate-100">
         {children}
@@ -1620,8 +1622,8 @@ function DetailItem({
       <span
         className={`break-all text-sm sm:text-right ${
           emphasis
-            ? "font-black text-slate-900"
-            : "font-extrabold text-slate-700"
+            ? "font-semibold text-slate-900"
+            : "font-medium text-slate-700"
         } ${mono ? "font-mono text-xs" : ""}`}
       >
         {value ?? "—"}

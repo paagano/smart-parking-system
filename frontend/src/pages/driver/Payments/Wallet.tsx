@@ -321,7 +321,7 @@ export default function Wallet() {
     useState<TopUpResponse | null>(null);
 
   // ========================================================
-  // Transaction Details
+  // Activity Details
   // ========================================================
 
   const [selectedTransaction, setSelectedTransaction] =
@@ -438,7 +438,7 @@ export default function Wallet() {
           }
         } else {
           setTransactionError(
-            "Wallet loaded, but transaction history could not be retrieved.",
+            "Your wallet is available, but recent activity could not be loaded.",
           );
         }
 
@@ -744,7 +744,7 @@ export default function Wallet() {
 
       if (status === "SUCCESSFUL" || status === "COMPLETED") {
         setTopUpMessage(
-          "Wallet top-up successful. Your wallet balance has been updated.",
+          "Money added successfully. Your wallet balance has been updated.",
         );
 
         setTopUpProcessing(false);
@@ -842,7 +842,7 @@ export default function Wallet() {
 
         if (latestStatus === "SUCCESSFUL" || latestStatus === "COMPLETED") {
           setTopUpMessage(
-            "Wallet top-up successful. Your wallet balance has been updated.",
+            "Money added successfully. Your wallet balance has been updated.",
           );
 
           setTopUpProcessing(false);
@@ -870,7 +870,7 @@ export default function Wallet() {
            * the modal and check the wallet again later.
            */
           setTopUpMessage(
-            "Payment is still pending. We could not confirm the final status yet. Please check your wallet again shortly.",
+            "Your payment is still pending. You can close this window and check your wallet again shortly.",
           );
 
           setTopUpProcessing(false);
@@ -882,7 +882,7 @@ export default function Wallet() {
           setTopUpProcessing(true);
 
           setTopUpMessage(
-            "Your payment is still being processed. Please wait while we confirm the transaction.",
+            "Your payment is still being processed. Please wait while we confirm it.",
           );
         }
       } catch (err) {
@@ -897,7 +897,7 @@ export default function Wallet() {
           setTopUpProcessing(false);
 
           setTopUpMessage(
-            "Payment is still pending. We could not confirm the final status yet. Please check your wallet again shortly.",
+            "Your payment is still pending. You can close this window and check your wallet again shortly.",
           );
 
           if (intervalId !== undefined) {
@@ -935,12 +935,12 @@ export default function Wallet() {
             <Loader2 size={30} className="animate-spin" />
           </div>
 
-          <h2 className="mt-5 text-lg font-black text-slate-900">
+          <h2 className="mt-5 text-lg font-semibold text-slate-900">
             Loading your wallet
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Retrieving your latest wallet information...
+            Getting your latest wallet information ready...
           </p>
         </div>
       </div>
@@ -952,7 +952,7 @@ export default function Wallet() {
   // ========================================================
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-5 sm:space-y-6">
       {/* ====================================================
           PAGE HEADER
       ==================================================== */}
@@ -965,12 +965,13 @@ export default function Wallet() {
             </div>
 
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">
-                My Wallet
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+                My SmartPark Wallet
               </h1>
 
               <p className="mt-0.5 text-sm font-medium text-slate-500">
-                Manage your SmartPark AI wallet and view your wallet activity.
+                Add money to your wallet, track your balance, and view your
+                payment activity.
               </p>
             </div>
           </div>
@@ -987,19 +988,19 @@ export default function Wallet() {
             type="button"
             onClick={() => void loadWallet(true)}
             disabled={refreshing}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-            Refresh
+            Refresh wallet
           </button>
 
           <button
             type="button"
             onClick={openTopUp}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700"
           >
             <ArrowDownLeft size={17} />
-            Top Up
+            Add Money
           </button>
         </div>
       </div>
@@ -1017,8 +1018,8 @@ export default function Wallet() {
             <XCircle size={20} className="mt-0.5 shrink-0 text-rose-600" />
 
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-extrabold text-rose-900">
-                Unable to load wallet
+              <p className="text-sm font-medium text-rose-900">
+                Unable to load your wallet
               </p>
 
               <p className="mt-1 text-sm leading-6 text-rose-800">{error}</p>
@@ -1040,7 +1041,7 @@ export default function Wallet() {
           WALLET HERO
       ==================================================== */}
 
-      <section className="overflow-hidden rounded-3xl bg-[#071a2d] text-white shadow-sm">
+      <section className="overflow-hidden rounded-3xl bg-[#071a2d] text-white shadow-md">
         <div className="relative p-6 sm:p-8">
           <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-2xl" />
 
@@ -1053,35 +1054,35 @@ export default function Wallet() {
                 </div>
 
                 <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Available Balance
+                  Available to spend
                 </p>
 
-                <p className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">
+                <p className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
                   {formatMoney(availableBalance, currency)}
                 </p>
 
                 <p className="mt-2 text-sm font-medium text-slate-400">
-                  Spendable wallet balance
+                  Available for parking and other payments
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[390px]">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <p className="text-xs font-semibold text-slate-400">
-                    Reserved
+                    Set Aside
                   </p>
 
-                  <p className="mt-1 text-lg font-black text-white">
+                  <p className="mt-1 text-lg font-semibold text-white">
                     {formatMoney(reservedBalance, currency)}
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <p className="text-xs font-semibold text-slate-400">
-                    Total Balance
+                    Wallet Balance
                   </p>
 
-                  <p className="mt-1 text-lg font-black text-white">
+                  <p className="mt-1 text-lg font-semibold text-white">
                     {formatMoney(totalWalletBalance, currency)}
                   </p>
                 </div>
@@ -1101,7 +1102,7 @@ export default function Wallet() {
 
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-extrabold ${
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
                     String(wallet?.status ?? "").toUpperCase() === "ACTIVE"
                       ? "bg-emerald-400/15 text-emerald-300"
                       : "bg-amber-400/15 text-amber-300"
@@ -1112,7 +1113,7 @@ export default function Wallet() {
                   {wallet?.status ?? "UNKNOWN"}
                 </span>
 
-                <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-extrabold text-slate-300">
+                <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-300">
                   {currency}
                 </span>
               </div>
@@ -1128,17 +1129,17 @@ export default function Wallet() {
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           icon={<ArrowDownLeft size={20} />}
-          title="Total Credited"
+          title="Money Added"
           value={formatMoney(totalCredited, currency)}
-          description="Funds added to wallet"
+          description="Money added to your wallet"
           tone="green"
         />
 
         <SummaryCard
           icon={<ArrowUpRight size={20} />}
-          title="Total Debited"
+          title="Money Spent"
           value={formatMoney(totalDebited, currency)}
-          description="Funds used from wallet"
+          description="Money used for parking and other payments"
           tone="blue"
         />
 
@@ -1146,7 +1147,7 @@ export default function Wallet() {
           icon={<History size={20} />}
           title="Transactions"
           value={String(statistics?.total_transactions ?? transactions.length)}
-          description="Wallet ledger entries"
+          description="Recorded wallet activity"
           tone="purple"
         />
 
@@ -1154,7 +1155,7 @@ export default function Wallet() {
           icon={<CheckCircle2 size={20} />}
           title="Successful"
           value={String(successfulTransactionCount)}
-          description="Completed transactions"
+          description="Completed payments"
           tone="amber"
         />
       </section>
@@ -1169,7 +1170,7 @@ export default function Wallet() {
             <AlertCircle size={19} className="mt-0.5 shrink-0 text-amber-600" />
 
             <div>
-              <p className="text-sm font-extrabold text-amber-900">
+              <p className="text-sm font-medium text-amber-900">
                 Your wallet balance is low
               </p>
 
@@ -1182,9 +1183,9 @@ export default function Wallet() {
             <button
               type="button"
               onClick={openTopUp}
-              className="ml-auto hidden shrink-0 rounded-xl bg-amber-600 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-amber-700 sm:block"
+              className="ml-auto hidden shrink-0 rounded-xl bg-amber-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-amber-700 sm:block"
             >
-              Top Up
+              Add Money
             </button>
           </div>
         </div>
@@ -1195,14 +1196,14 @@ export default function Wallet() {
       ==================================================== */}
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-black text-slate-900">
-              Recent Wallet Activity
+            <h2 className="text-base font-semibold text-slate-900">
+              Recent Activity
             </h2>
 
             <p className="mt-1 text-xs text-slate-500">
-              Your latest wallet transactions.
+              Your latest wallet payments and wallet activity.
             </p>
           </div>
 
@@ -1224,13 +1225,13 @@ export default function Wallet() {
               <History size={25} />
             </div>
 
-            <h3 className="mt-4 text-sm font-black text-slate-900">
-              No wallet transactions yet
+            <h3 className="mt-4 text-sm font-semibold text-slate-900">
+              No wallet activity yet
             </h3>
 
             <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-slate-500">
-              Your wallet activity will appear here after your first
-              transaction.
+              Your wallet activity will appear here after you make your first
+              payment or add money.
             </p>
           </div>
         ) : (
@@ -1249,7 +1250,7 @@ export default function Wallet() {
                   }
                   type="button"
                   onClick={() => setSelectedTransaction(transaction)}
-                  className="flex w-full items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50"
+                  className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-emerald-50/40"
                 >
                   <div
                     className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${
@@ -1266,7 +1267,7 @@ export default function Wallet() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-extrabold text-slate-900">
+                    <p className="truncate text-sm font-medium text-slate-900">
                       {transaction.description ||
                         formatTransactionType(transaction.transaction_type)}
                     </p>
@@ -1288,7 +1289,7 @@ export default function Wallet() {
 
                   <div className="shrink-0 text-right">
                     <p
-                      className={`text-sm font-black ${
+                      className={`text-sm font-semibold ${
                         credit ? "text-emerald-600" : "text-slate-900"
                       }`}
                     >
@@ -1310,7 +1311,7 @@ export default function Wallet() {
       ==================================================== */}
 
       <section className="grid gap-4 md:grid-cols-2">
-        <InfoCard title="Wallet Information" icon={<WalletIcon size={19} />}>
+        <InfoCard title="Wallet Details" icon={<WalletIcon size={19} />}>
           <InfoRow
             label="Wallet Number"
             value={wallet?.wallet_number ?? "—"}
@@ -1324,24 +1325,24 @@ export default function Wallet() {
           <InfoRow label="Created" value={formatDateTime(wallet?.created_at)} />
         </InfoCard>
 
-        <InfoCard title="Wallet Usage" icon={<CreditCard size={19} />}>
+        <InfoCard title="Balance Summary" icon={<CreditCard size={19} />}>
           <InfoRow
-            label="Available Balance"
+            label="Available to spend"
             value={formatMoney(availableBalance, currency)}
           />
 
           <InfoRow
-            label="Reserved Balance"
+            label="Set Aside Balance"
             value={formatMoney(reservedBalance, currency)}
           />
 
           <InfoRow
-            label="Total Credited"
+            label="Money Added"
             value={formatMoney(totalCredited, currency)}
           />
 
           <InfoRow
-            label="Total Debited"
+            label="Money Spent"
             value={formatMoney(totalDebited, currency)}
           />
         </InfoCard>
@@ -1372,13 +1373,13 @@ export default function Wallet() {
                 <div>
                   <h2
                     id="wallet-topup-title"
-                    className="text-lg font-black text-slate-900"
+                    className="text-lg font-semibold text-slate-900"
                   >
-                    Top Up Wallet
+                    Add Money
                   </h2>
 
                   <p className="text-xs text-slate-500">
-                    Add funds to your SmartPark wallet.
+                    Add money to your wallet using M-PESA.
                   </p>
                 </div>
               </div>
@@ -1410,7 +1411,7 @@ export default function Wallet() {
                       Current balance
                     </p>
 
-                    <p className="mt-1 text-2xl font-black text-slate-900">
+                    <p className="mt-1 text-2xl font-semibold text-slate-900">
                       {formatMoney(availableBalance, currency)}
                     </p>
                   </div>
@@ -1426,13 +1427,13 @@ export default function Wallet() {
               <div>
                 <label
                   htmlFor="topUpAmount"
-                  className="mb-2 block text-sm font-extrabold text-slate-800"
+                  className="mb-2 block text-sm font-medium text-slate-800"
                 >
-                  Top-up Amount
+                  Amount to Add
                 </label>
 
                 <div className="relative">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-500">
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
                     {currency}
                   </span>
 
@@ -1453,7 +1454,7 @@ export default function Wallet() {
                     placeholder="500.00"
                     inputMode="decimal"
                     disabled={topUpProcessing}
-                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-14 pr-4 text-sm font-black text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-14 pr-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
                   />
                 </div>
 
@@ -1468,7 +1469,7 @@ export default function Wallet() {
 
               <div>
                 <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  Quick Select
+                  Quick Amounts
                 </p>
 
                 <div className="grid grid-cols-4 gap-2">
@@ -1478,7 +1479,7 @@ export default function Wallet() {
                       type="button"
                       disabled={topUpProcessing}
                       onClick={() => setTopUpAmount(String(amount))}
-                      className={`rounded-xl border px-3 py-2.5 text-xs font-extrabold transition ${
+                      className={`rounded-xl border px-3 py-2.5 text-xs font-medium transition ${
                         Number(topUpAmount) === amount
                           ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
@@ -1495,7 +1496,7 @@ export default function Wallet() {
               ---------------------------------------------- */}
 
               <div>
-                <p className="mb-3 text-sm font-extrabold text-slate-900">
+                <p className="mb-3 text-sm font-medium text-slate-900">
                   Payment Method
                 </p>
 
@@ -1529,7 +1530,7 @@ export default function Wallet() {
                               <Icon size={20} />
                             </div>
 
-                            <span className="text-sm font-black text-slate-900">
+                            <span className="text-sm font-semibold text-slate-900">
                               {option.label}
                             </span>
                           </div>
@@ -1565,9 +1566,9 @@ export default function Wallet() {
                 <div>
                   <label
                     htmlFor="mpesaPhone"
-                    className="mb-2 block text-sm font-extrabold text-slate-800"
+                    className="mb-2 block text-sm font-medium text-slate-800"
                   >
-                    M-PESA Phone Number
+                    M-PESA Number
                   </label>
 
                   <input
@@ -1623,21 +1624,21 @@ export default function Wallet() {
                     )}
 
                     <div>
-                      <p className="text-sm font-extrabold">
+                      <p className="text-sm font-medium">
                         {topUpStatus === "SUCCESSFUL" ||
                         topUpStatus === "COMPLETED"
-                          ? "Top-up Successful"
+                          ? "Money Added Successfully"
                           : topUpStatus === "FAILED" ||
                               topUpStatus === "CANCELLED"
-                            ? "Top-up Failed"
-                            : "Top-up Processing"}
+                            ? "Payment Not Completed"
+                            : "Payment Processing"}
                       </p>
 
                       <p className="mt-1 text-xs leading-5">{topUpMessage}</p>
 
                       {topUpTransaction?.transaction_number && (
                         <p className="mt-2 font-mono text-[11px] font-bold">
-                          Transaction: {topUpTransaction.transaction_number}
+                          Reference: {topUpTransaction.transaction_number}
                         </p>
                       )}
                     </div>
@@ -1654,7 +1655,7 @@ export default function Wallet() {
                   type="button"
                   onClick={closeTopUp}
                   disabled={topUpProcessing}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Close
                 </button>
@@ -1662,17 +1663,17 @@ export default function Wallet() {
                 <button
                   type="submit"
                   disabled={topUpProcessing || topUpStatus === "SUCCESSFUL"}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {topUpProcessing ? (
                     <>
                       <Loader2 size={17} className="animate-spin" />
-                      Processing...
+                      Processing…
                     </>
                   ) : (
                     <>
                       <CreditCard size={17} />
-                      Top Up Wallet
+                      Add Money
                     </>
                   )}
                 </button>
@@ -1701,14 +1702,14 @@ export default function Wallet() {
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                  Wallet Transaction
+                  Wallet Activity
                 </p>
 
                 <h2
                   id="transaction-details-title"
-                  className="mt-1 text-lg font-black text-slate-900"
+                  className="mt-1 text-lg font-semibold text-slate-900"
                 >
-                  Transaction Details
+                  Activity Details
                 </h2>
               </div>
 
@@ -1737,7 +1738,7 @@ export default function Wallet() {
                 <p className="text-xs font-semibold text-slate-500">Amount</p>
 
                 <p
-                  className={`mt-1 text-3xl font-black ${
+                  className={`mt-1 text-3xl font-semibold ${
                     isCreditTransaction(selectedTransaction)
                       ? "text-emerald-600"
                       : "text-slate-900"
@@ -1753,7 +1754,7 @@ export default function Wallet() {
 
               <div className="space-y-0 divide-y divide-slate-100 rounded-2xl border border-slate-100">
                 <DetailRow
-                  label="Transaction Number"
+                  label="Reference Number"
                   value={selectedTransaction.transaction_number ?? "—"}
                   mono
                 />
@@ -1765,7 +1766,7 @@ export default function Wallet() {
                 />
 
                 <DetailRow
-                  label="Transaction Type"
+                  label="Activity Type"
                   value={formatTransactionType(
                     selectedTransaction.transaction_type,
                   )}
@@ -1777,7 +1778,7 @@ export default function Wallet() {
                 />
 
                 <DetailRow
-                  label="Posted"
+                  label="Date"
                   value={formatDateTime(
                     selectedTransaction.posted_at ??
                       selectedTransaction.created_at,
@@ -1827,7 +1828,7 @@ export default function Wallet() {
               <button
                 type="button"
                 onClick={() => setSelectedTransaction(null)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
+                className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 Close
               </button>
@@ -1864,7 +1865,7 @@ function SummaryCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
       <div
         className={`grid h-10 w-10 place-items-center rounded-xl ${toneClasses[tone]}`}
       >
@@ -1875,7 +1876,7 @@ function SummaryCard({
         {title}
       </p>
 
-      <p className="mt-1 text-xl font-black tracking-tight text-slate-900">
+      <p className="mt-1 text-xl font-semibold tracking-tight text-slate-900">
         {value}
       </p>
 
@@ -1904,7 +1905,7 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold ${classes}`}
+      className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${classes}`}
     >
       {status
         .replace(/_/g, " ")
@@ -1931,7 +1932,7 @@ function InfoCard({
       <div className="flex items-center gap-2 border-b border-slate-100 px-6 py-5">
         <span className="text-emerald-600">{icon}</span>
 
-        <h2 className="text-base font-black text-slate-900">{title}</h2>
+        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
       </div>
 
       <div className="divide-y divide-slate-100">{children}</div>
@@ -1957,7 +1958,7 @@ function InfoRow({
       <span className="text-xs font-semibold text-slate-500">{label}</span>
 
       <span
-        className={`text-right text-sm font-extrabold text-slate-800 ${
+        className={`text-right text-sm font-medium text-slate-800 ${
           mono ? "font-mono" : ""
         }`}
       >
@@ -1985,7 +1986,7 @@ function DetailRow({
       <span className="text-xs font-semibold text-slate-500">{label}</span>
 
       <span
-        className={`break-all text-sm font-extrabold text-slate-800 sm:text-right ${
+        className={`break-all text-sm font-medium text-slate-800 sm:text-right ${
           mono ? "font-mono text-xs" : ""
         }`}
       >

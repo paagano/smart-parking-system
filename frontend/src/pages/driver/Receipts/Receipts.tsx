@@ -256,7 +256,7 @@ function isRefund(receipt: Receipt): boolean {
 
 function receiptTitle(receipt: Receipt): string {
   if (isRefund(receipt)) {
-    return "Payment Refund";
+    return "Payment refund";
   }
 
   const purpose = receipt.payment_purpose;
@@ -266,14 +266,14 @@ function receiptTitle(receipt: Receipt): string {
   }
 
   if (receipt.parking_session_id) {
-    return "Parking Session Payment";
+    return "Parking payment";
   }
 
   if (receipt.reservation_id) {
-    return "Reservation Payment";
+    return "Booking payment";
   }
 
-  return "SmartPark Payment";
+  return "SmartPark payment";
 }
 
 function getReceiptDate(receipt: Receipt): string | null {
@@ -528,7 +528,7 @@ export default function Receipts() {
         }
 
         // ----------------------------------------------
-        // Payment Method
+        // Payment method
         // ----------------------------------------------
 
         if (
@@ -649,7 +649,7 @@ export default function Receipts() {
   }, [receipts]);
 
   // ========================================================
-  // Reset Filters
+  // Reset filters
   // ========================================================
 
   const resetFilters = () => {
@@ -662,7 +662,7 @@ export default function Receipts() {
   };
 
   // ========================================================
-  // View Receipt
+  // View receipt
   // ========================================================
 
   const handleViewReceipt = async (receipt: Receipt) => {
@@ -850,7 +850,7 @@ export default function Receipts() {
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Retrieving your SmartPark payment receipts...
+            Getting your payment receipts ready...
           </p>
         </div>
       </div>
@@ -862,7 +862,7 @@ export default function Receipts() {
   // ========================================================
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-5 sm:space-y-6">
       {/* ====================================================
           Header
       ==================================================== */}
@@ -875,12 +875,12 @@ export default function Receipts() {
             </div>
 
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
                 Receipts
               </h1>
 
               <p className="mt-0.5 text-sm font-medium text-slate-500">
-                View and download your SmartPark payment receipts.
+                View, download and keep track of your parking payment receipts.
               </p>
             </div>
           </div>
@@ -890,10 +890,10 @@ export default function Receipts() {
           type="button"
           onClick={() => void loadReceipts(true)}
           disabled={refreshing}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-          Refresh
+          Refresh receipts
         </button>
       </div>
 
@@ -908,7 +908,7 @@ export default function Receipts() {
 
             <div className="min-w-0 flex-1">
               <p className="text-sm font-extrabold text-rose-900">
-                Receipt operation failed
+                Something went wrong
               </p>
 
               <p className="mt-1 text-sm text-rose-800">{error}</p>
@@ -933,49 +933,49 @@ export default function Receipts() {
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <ReceiptStatCard
           icon={<FileText size={20} />}
-          label="Total Receipts"
+          label="Total receipts"
           value={String(statistics.total)}
-          description="Your receipt history"
+          description="All your payment records"
           tone="slate"
         />
 
         <ReceiptStatCard
           icon={<CheckCircle2 size={20} />}
-          label="Successful"
+          label="Successful payments"
           value={String(statistics.successful)}
-          description="Completed payments"
+          description="Payments completed"
           tone="green"
         />
 
         <ReceiptStatCard
           icon={<Clock3 size={20} />}
-          label="Pending"
+          label="Pending payments"
           value={String(statistics.pending)}
-          description="Awaiting completion"
+          description="Still being processed"
           tone="amber"
         />
 
         <ReceiptStatCard
           icon={<Wallet size={20} />}
-          label="Total Paid"
+          label="Total paid"
           value={money(statistics.totalAmount)}
-          description="Successful payments"
+          description="Completed payments"
           tone="blue"
         />
       </section>
 
       {/* ====================================================
-          Quick Receipt Lookup
+          Find a payment
       ==================================================== */}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-2">
               <Search size={17} className="text-emerald-600" />
 
-              <label className="text-sm font-extrabold text-slate-800">
-                Find a Receipt
+              <label className="text-sm font-medium text-slate-800">
+                Find a receipt
               </label>
             </div>
 
@@ -988,7 +988,7 @@ export default function Receipts() {
 
                   setCurrentPage(1);
                 }}
-                placeholder="Receipt number, transaction, M-PESA reference..."
+                placeholder="Search by receipt number, payment reference or M-PESA reference..."
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
@@ -1000,12 +1000,12 @@ export default function Receipts() {
           Filters
       ==================================================== */}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {/* Status */}
 
           <FilterSelect
-            label="Status"
+            label="Payment status"
             value={statusFilter}
             options={STATUS_OPTIONS}
             onChange={(value) => {
@@ -1018,7 +1018,7 @@ export default function Receipts() {
           {/* Method */}
 
           <FilterSelect
-            label="Payment Method"
+            label="Payment method"
             value={methodFilter}
             options={METHOD_OPTIONS}
             onChange={(value) => {
@@ -1031,7 +1031,7 @@ export default function Receipts() {
           {/* From */}
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-400">
+            <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">
               From
             </label>
 
@@ -1057,7 +1057,7 @@ export default function Receipts() {
           {/* To */}
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-400">
+            <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">
               To
             </label>
 
@@ -1088,7 +1088,7 @@ export default function Receipts() {
               onClick={resetFilters}
               className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-50"
             >
-              Reset Filters
+              Reset filters
             </button>
           </div>
         </div>
@@ -1111,33 +1111,33 @@ export default function Receipts() {
             <button
               type="button"
               onClick={resetFilters}
-              className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700"
+              className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
             >
-              Clear active filters
+              Clear filters
             </button>
           )}
         </div>
       </section>
 
       {/* ====================================================
-          Receipt History
+          Payment receipts
       ==================================================== */}
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-black text-slate-900">
-              Receipt History
+              Payment receipts
             </h2>
 
             <p className="mt-1 text-xs font-medium text-slate-500">
-              Your most recent receipt appears first.
+              Your most recent payment receipt appears first.
             </p>
           </div>
 
-          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-extrabold text-emerald-700">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
             <ShieldCheck size={13} />
-            Secure receipts
+            Secure payment records
           </div>
         </div>
 
@@ -1151,20 +1151,20 @@ export default function Receipts() {
               <FileText size={28} />
             </div>
 
-            <h3 className="mt-4 text-sm font-black text-slate-900">
-              No receipts found
+            <h3 className="mt-4 text-sm font-semibold text-slate-900">
+              No payment receipts found
             </h3>
 
             <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-500">
-              No receipts match your current search or filter criteria.
+              Try changing your search or filters to find a payment receipt.
             </p>
 
             <button
               type="button"
               onClick={resetFilters}
-              className="mt-5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-extrabold text-slate-700 transition hover:bg-slate-50"
+              className="mt-5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
             >
-              Clear Filters
+              Clear filters
             </button>
           </div>
         ) : (
@@ -1177,31 +1177,31 @@ export default function Receipts() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/70">
-                    <th className="px-6 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Receipt
                     </th>
 
-                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Transaction
                     </th>
 
-                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Payment
                     </th>
 
-                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Date
                     </th>
 
-                    <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Amount
                     </th>
 
-                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Status
                     </th>
 
-                    <th className="px-6 py-3 text-right text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Action
                     </th>
                   </tr>
@@ -1340,7 +1340,7 @@ function ReceiptTableRow({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <p className="max-w-[200px] truncate font-mono text-xs font-black text-slate-900">
+              <p className="max-w-[200px] truncate font-mono text-xs font-semibold text-slate-900">
                 {getReceiptNumber(receipt)}
               </p>
 
@@ -1361,7 +1361,7 @@ function ReceiptTableRow({
       {/* Transaction */}
 
       <td className="px-4 py-4">
-        <p className="max-w-[190px] truncate font-mono text-xs font-bold text-slate-700">
+        <p className="max-w-[190px] truncate font-mono text-xs font-medium text-slate-700">
           {getTransactionNumber(receipt)}
         </p>
 
@@ -1375,7 +1375,7 @@ function ReceiptTableRow({
       {/* Payment */}
 
       <td className="px-4 py-4">
-        <p className="text-xs font-extrabold text-slate-700">
+        <p className="text-xs font-medium text-slate-700">
           {displayText(receipt.payment_method)}
         </p>
 
@@ -1387,7 +1387,7 @@ function ReceiptTableRow({
       {/* Date */}
 
       <td className="px-4 py-4">
-        <p className="text-xs font-bold text-slate-700">
+        <p className="text-xs font-medium text-slate-700">
           {dateTime(getReceiptDate(receipt))}
         </p>
       </td>
@@ -1395,7 +1395,7 @@ function ReceiptTableRow({
       {/* Amount */}
 
       <td className="px-4 py-4 text-right">
-        <p className="text-sm font-black text-slate-900">
+        <p className="text-sm font-semibold text-slate-900">
           {money(receipt.total_amount, currency)}
         </p>
       </td>
@@ -1413,7 +1413,7 @@ function ReceiptTableRow({
           <button
             type="button"
             onClick={onView}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 transition hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
           >
             View
           </button>
@@ -1423,8 +1423,8 @@ function ReceiptTableRow({
             onClick={onDownload}
             disabled={downloading}
             className="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-            title="Download PDF"
-            aria-label="Download receipt PDF"
+            title="Download receipt"
+            aria-label="Download receipt"
           >
             {downloading ? (
               <Loader2 size={14} className="animate-spin" />
@@ -1468,7 +1468,7 @@ function ReceiptMobileCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="truncate font-mono text-xs font-black text-slate-900">
+                <p className="truncate font-mono text-xs font-semibold text-slate-900">
                   {getReceiptNumber(receipt)}
                 </p>
 
@@ -1479,33 +1479,33 @@ function ReceiptMobileCard({
                 )}
               </div>
 
-              <p className="mt-1 text-xs font-bold text-slate-600">
+              <p className="mt-1 text-xs font-medium text-slate-600">
                 {receiptTitle(receipt)}
               </p>
             </div>
 
-            <p className="shrink-0 text-sm font-black text-slate-900">
+            <p className="shrink-0 text-sm font-semibold text-slate-900">
               {money(receipt.total_amount, currency)}
             </p>
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                 Transaction
               </p>
 
-              <p className="mt-1 truncate font-mono text-[10px] font-bold text-slate-700">
+              <p className="mt-1 truncate font-mono text-[10px] font-medium text-slate-700">
                 {getTransactionNumber(receipt)}
               </p>
             </div>
 
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                 Date
               </p>
 
-              <p className="mt-1 text-[10px] font-bold text-slate-700">
+              <p className="mt-1 text-[10px] font-medium text-slate-700">
                 {dateOnly(getReceiptDate(receipt))}
               </p>
             </div>
@@ -1514,7 +1514,7 @@ function ReceiptMobileCard({
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <ReceiptStatusBadge status={receipt.status} />
 
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-500">
               {displayText(receipt.payment_method)}
             </span>
           </div>
@@ -1523,16 +1523,16 @@ function ReceiptMobileCard({
             <button
               type="button"
               onClick={onView}
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700 transition hover:bg-slate-50"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
             >
-              View Receipt
+              View receipt
             </button>
 
             <button
               type="button"
               onClick={onDownload}
               disabled={downloading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-extrabold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {downloading ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -1616,18 +1616,18 @@ function ReceiptStatCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300">
       <div
         className={`grid h-10 w-10 place-items-center rounded-xl ${toneClasses[tone]}`}
       >
         {icon}
       </div>
 
-      <p className="mt-4 text-xs font-bold uppercase tracking-wide text-slate-400">
+      <p className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-400">
         {label}
       </p>
 
-      <p className="mt-1 truncate text-xl font-black tracking-tight text-slate-900">
+      <p className="mt-1 truncate text-xl font-semibold tracking-tight text-slate-900">
         {value}
       </p>
 
@@ -1653,7 +1653,7 @@ function FilterSelect({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-400">
+      <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">
         {label}
       </label>
 
@@ -1664,7 +1664,25 @@ function FilterSelect({
       >
         {options.map((option) => (
           <option key={option} value={option}>
-            {option === "ALL" ? "All" : displayText(option)}
+            {option === "ALL"
+              ? "All"
+              : option === "AVAILABLE"
+                ? "Ready"
+                : option === "SUCCESSFUL"
+                  ? "Successful"
+                  : option === "COMPLETED"
+                    ? "Completed"
+                    : option === "PENDING"
+                      ? "Pending"
+                      : option === "PROCESSING"
+                        ? "Processing"
+                        : option === "FAILED"
+                          ? "Failed"
+                          : option === "CANCELLED"
+                            ? "Cancelled"
+                            : option === "REFUNDED"
+                              ? "Refunded"
+                              : displayText(option)}
           </option>
         ))}
       </select>
@@ -1707,7 +1725,7 @@ function ReceiptDetailsModal({
 
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wide text-emerald-600">
+            <p className="text-xs font-medium uppercase tracking-wide text-emerald-600">
               SmartPark AI
             </p>
 
@@ -1715,10 +1733,10 @@ function ReceiptDetailsModal({
               id="receipt-details-title"
               className="mt-1 text-lg font-black text-slate-900"
             >
-              Payment Receipt
+              Payment receipt
             </h2>
 
-            <p className="mt-0.5 truncate font-mono text-xs font-bold text-slate-400">
+            <p className="mt-0.5 truncate font-mono text-xs font-medium text-slate-400">
               {getReceiptNumber(receipt)}
             </p>
           </div>
@@ -1743,7 +1761,7 @@ function ReceiptDetailsModal({
             <Loader2 size={18} className="animate-spin text-emerald-600" />
 
             <span className="ml-2 text-xs font-semibold text-slate-500">
-              Loading receipt details...
+              Loading payment details...
             </span>
           </div>
         )}
@@ -1778,7 +1796,7 @@ function ReceiptDetailsModal({
                 {receiptTitle(receipt)}
               </p>
 
-              <p className="mt-1 text-3xl font-black tracking-tight text-slate-900">
+              <p className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
                 {money(receipt.total_amount, currency)}
               </p>
 
@@ -1798,7 +1816,7 @@ function ReceiptDetailsModal({
         <div className="space-y-6 p-6">
           {/* Receipt Identity */}
 
-          <DetailsSection title="Receipt Information">
+          <DetailsSection title="Receipt information">
             <DetailItem
               label="Receipt Number"
               value={getReceiptNumber(receipt)}
@@ -1807,43 +1825,43 @@ function ReceiptDetailsModal({
             />
 
             <DetailItem
-              label="Transaction Number"
+              label="Payment reference"
               value={getTransactionNumber(receipt)}
               mono
             />
 
             <DetailItem
-              label="Receipt Date"
+              label="Date paid"
               value={dateTime(getReceiptDate(receipt))}
             />
 
             <DetailItem
-              label="Payment Purpose"
+              label="What this payment was for"
               value={displayText(receipt.payment_purpose)}
             />
           </DetailsSection>
 
           {/* Payment */}
 
-          <DetailsSection title="Payment Details">
+          <DetailsSection title="Payment details">
             <DetailItem
-              label="Payment Method"
+              label="Payment method"
               value={displayText(receipt.payment_method)}
             />
 
             <DetailItem
-              label="Payment Provider"
+              label="Payment service"
               value={displayText(receipt.payment_provider)}
             />
 
             <DetailItem
-              label="Provider Transaction"
+              label="Service transaction"
               value={receipt.provider_transaction_id}
               mono
             />
 
             <DetailItem
-              label="Provider Receipt"
+              label="Service receipt"
               value={receipt.provider_receipt_number}
               mono
               emphasis
@@ -1869,17 +1887,17 @@ function ReceiptDetailsModal({
             />
 
             <DetailItem
-              label="Total Paid"
+              label="Total paid"
               value={money(receipt.total_amount, currency)}
               emphasis
             />
           </DetailsSection>
 
-          {/* SmartPark References */}
+          {/* Parking references */}
 
-          <DetailsSection title="SmartPark Reference">
+          <DetailsSection title="Parking reference">
             <DetailItem
-              label="Parking Session"
+              label="Parking visit"
               value={
                 receipt.parking_session_id
                   ? String(receipt.parking_session_id)
@@ -1888,14 +1906,14 @@ function ReceiptDetailsModal({
             />
 
             <DetailItem
-              label="Reservation"
+              label="Booking"
               value={
                 receipt.reservation_id ? String(receipt.reservation_id) : null
               }
             />
 
             <DetailItem
-              label="Payment ID"
+              label="Payment reference ID"
               value={receipt.payment_id ? String(receipt.payment_id) : null}
             />
           </DetailsSection>
@@ -1905,7 +1923,7 @@ function ReceiptDetailsModal({
           {(receipt.payer_name ||
             receipt.payer_phone ||
             receipt.payer_email) && (
-            <DetailsSection title="Customer Information">
+            <DetailsSection title="Payer information">
               <DetailItem label="Name" value={receipt.payer_name} />
 
               <DetailItem label="Phone" value={receipt.payer_phone} />
@@ -1918,7 +1936,7 @@ function ReceiptDetailsModal({
 
           {receipt.notes && (
             <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
                 Notes
               </p>
 
@@ -1937,12 +1955,13 @@ function ReceiptDetailsModal({
               </div>
 
               <div>
-                <p className="text-xs font-black text-emerald-900">
-                  Authentic SmartPark Receipt
+                <p className="text-xs font-semibold text-emerald-900">
+                  Verified SmartPark payment
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-emerald-800">
-                  This receipt is associated with your SmartPark payment record.
+                  This receipt is securely linked to your SmartPark payment
+                  record.
                 </p>
               </div>
             </div>
@@ -1967,7 +1986,7 @@ function ReceiptDetailsModal({
                 <Download size={17} />
               )}
 
-              {downloading ? "Preparing PDF..." : "Download Receipt PDF"}
+              {downloading ? "Preparing your receipt..." : "Download receipt"}
             </button>
 
             <button
@@ -1998,7 +2017,7 @@ function DetailsSection({
 }) {
   return (
     <section>
-      <h3 className="mb-3 text-sm font-black text-slate-900">{title}</h3>
+      <h3 className="mb-3 text-sm font-semibold text-slate-900">{title}</h3>
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 divide-y divide-slate-100">
         {children}

@@ -52,17 +52,17 @@ export default function Reservations() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastEditd, setLastEditd] = useState<Date | null>(null);
   const [processingReservationId, setProcessingReservationId] = useState<
     number | null
   >(null);
 
   // Search / reservation view
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
 
   // ----------------------------------------------------------
-  // Update reservation modal
+  // Edit reservation modal
   // ----------------------------------------------------------
 
   const [editingReservation, setEditingReservation] =
@@ -75,7 +75,7 @@ export default function Reservations() {
   const [editReservedFrom, setEditReservedFrom] = useState("");
   const [editReservedUntil, setEditReservedUntil] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [savingUpdate, setSavingUpdate] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
@@ -125,7 +125,7 @@ export default function Reservations() {
          *
          * Reservation
          *    ↓
-         * Parking Bay
+         * Parking Space
          *    ↓
          * Parking Zone
          *    ↓
@@ -175,7 +175,7 @@ export default function Reservations() {
         if (bayResult.status === "fulfilled") {
           setBays(bayResult.value.items);
         } else {
-          failures.push("parking bays");
+          failures.push("parking spaces");
         }
 
         if (activeSessionsResult.status === "fulfilled") {
@@ -189,9 +189,7 @@ export default function Reservations() {
         }
 
         if (failures.includes("reservations")) {
-          setError(
-            "Unable to load your reservations from the SmartPark AI backend.",
-          );
+          setError("Unable to load your bookings right now. Please try again.");
         } else if (failures.length > 0) {
           /*
            * The reservation list can still work even if the
@@ -204,7 +202,7 @@ export default function Reservations() {
           );
         }
 
-        setLastUpdated(new Date());
+        setLastEditd(new Date());
       } catch (err) {
         if (cancelled) return;
 
@@ -603,14 +601,12 @@ export default function Reservations() {
 
       setReservations(result.items);
       setActiveParkingSessions(activeSessionsResult.data?.items ?? []);
-      setLastUpdated(new Date());
+      setLastEditd(new Date());
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError(
-          "Unable to refresh reservations from the SmartPark AI backend.",
-        );
+        setError("Unable to refresh your bookings right now.");
       }
     } finally {
       setIsRefreshing(false);
@@ -646,7 +642,7 @@ export default function Reservations() {
   const isValidKenyanMpesaPhone = (value: string) =>
     /^254(?:7|1)\d{8}$/.test(value);
 
-  const handleUpdate = (reservation: ParkingReservation) => {
+  const handleEdit = (reservation: ParkingReservation) => {
     const bay = getReservationBay(reservation);
     const zone = getReservationZone(reservation);
     const facility = getReservationFacility(reservation);
@@ -664,8 +660,8 @@ export default function Reservations() {
     setError(null);
   };
 
-  const closeUpdateModal = () => {
-    if (savingUpdate) return;
+  const closeEditModal = () => {
+    if (savingEdit) return;
     setEditingReservation(null);
     setEditError(null);
   };
@@ -680,11 +676,11 @@ export default function Reservations() {
     return () => window.clearTimeout(timeoutId);
   }, [successToast]);
 
-  const handleSaveUpdate = async () => {
+  const handleSaveEdit = async () => {
     if (!editingReservation) return;
 
     if (editBayId === "") {
-      setEditError("Please select a parking bay.");
+      setEditError("Please select a parking space.");
       return;
     }
 
@@ -716,7 +712,7 @@ export default function Reservations() {
       return;
     }
 
-    setSavingUpdate(true);
+    setSavingEdit(true);
     setEditError(null);
 
     try {
@@ -739,7 +735,7 @@ export default function Reservations() {
         ),
       );
       setEditingReservation(null);
-      setLastUpdated(new Date());
+      setLastEditd(new Date());
       setSuccessToast(
         `Reservation ${editingReservation.reservation_number} updated successfully.`,
       );
@@ -753,10 +749,10 @@ export default function Reservations() {
       setEditError(
         typeof detail === "string"
           ? detail
-          : "The reservation could not be updated. Please review the selected details and try again.",
+          : "The booking could not be updated. Please review the details and try again.",
       );
     } finally {
-      setSavingUpdate(false);
+      setSavingEdit(false);
     }
   };
 
@@ -778,6 +774,45 @@ export default function Reservations() {
     setPaymentMessage(null);
     setPaymentId(null);
   };
+
+  // ----------------------------------------------------------
+  // Open payment modal from SmartPark AI
+  // ----------------------------------------------------------
+  //
+  // SmartPark AI can navigate here with:
+  // /reservations?payReservation=RES-XXXXXXXX
+  //
+  // Resolve the reservation from the already-loaded customer
+  // reservations, open the existing payment modal, then remove
+  // the query parameter so closing the modal does not reopen it.
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const reservationNumber = searchParams.get("payReservation")?.trim();
+
+    if (!reservationNumber || reservations.length === 0) {
+      return;
+    }
+
+    const reservation = reservations.find(
+      (item) =>
+        String(item.reservation_number ?? "")
+          .trim()
+          .toUpperCase() === reservationNumber.toUpperCase(),
+    );
+
+    if (!reservation) {
+      return;
+    }
+
+    handleConfirm(reservation);
+
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("payReservation");
+      return next;
+    });
+  }, [reservations, searchParams, setSearchParams]);
 
   const handlePayment = async () => {
     if (!paymentReservation || !user?.id) {
@@ -852,22 +887,20 @@ export default function Reservations() {
               : item,
           ),
         );
-        setPaymentMessage(
-          "Payment successful. Your reservation is now confirmed.",
-        );
+        setPaymentMessage("Payment successful. Your booking is now confirmed.");
         setPaymentProcessing(false);
       } else if (
         ["FAILED", "CANCELLED"].includes(response.data.status.toUpperCase())
       ) {
         setPaymentMessage(
-          "Payment was not completed. Your reservation remains unconfirmed.",
+          "Payment was not completed. Your booking is still awaiting payment.",
         );
         setPaymentProcessing(false);
       } else {
         setPaymentMessage(
           paymentMethod === "MPESA"
             ? "M-PESA payment request sent. Complete the prompt on your phone; we will confirm the reservation automatically once payment succeeds."
-            : "Payment is being processed. Please wait for confirmation.",
+            : "Your payment is being processed. Please wait for confirmation.",
         );
       }
     } catch (err: any) {
@@ -877,7 +910,7 @@ export default function Reservations() {
       setPaymentMessage(
         typeof detail === "string"
           ? detail
-          : "Payment could not be completed. Your reservation has not been confirmed.",
+          : "Payment could not be completed. Your booking has not been confirmed.",
       );
       setPaymentProcessing(false);
     }
@@ -921,12 +954,12 @@ export default function Reservations() {
             ),
           );
           setPaymentMessage(
-            "Payment successful. Your reservation is now confirmed.",
+            "Payment successful. Your booking is now confirmed.",
           );
           setPaymentProcessing(false);
         } else if (["FAILED", "CANCELLED"].includes(latestStatus)) {
           setPaymentMessage(
-            "Payment was not completed. Your reservation remains unconfirmed.",
+            "Payment was not completed. Your booking is still awaiting payment.",
           );
           setPaymentProcessing(false);
         } else if (attempts >= maxAttempts) {
@@ -982,7 +1015,7 @@ export default function Reservations() {
           item.id === reservation.id ? response.data : item,
         ),
       );
-      setLastUpdated(new Date());
+      setLastEditd(new Date());
     } catch (err: any) {
       console.error(
         "[SmartPark Reservations] Failed to cancel reservation:",
@@ -1018,7 +1051,7 @@ export default function Reservations() {
       setReservations((current) =>
         current.filter((item) => item.id !== reservation.id),
       );
-      setLastUpdated(new Date());
+      setLastEditd(new Date());
     } catch (err: any) {
       console.error(
         "[SmartPark Reservations] Failed to delete reservation:",
@@ -1048,12 +1081,12 @@ export default function Reservations() {
           role="status"
           aria-live="polite"
         >
-          <div className="flex min-w-[320px] max-w-[90vw] items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-5 py-4 text-sm font-bold text-emerald-800 shadow-2xl ring-1 ring-black/5">
+          <div className="flex min-w-[320px] max-w-[90vw] items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-5 py-4 text-sm font-medium text-emerald-800 shadow-2xl ring-1 ring-black/5">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-600">
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <p className="font-extrabold text-emerald-900">Success</p>
+              <p className="font-semibold text-emerald-900">Success</p>
               <p className="mt-0.5 font-medium text-emerald-700">
                 {successToast}
               </p>
@@ -1065,18 +1098,18 @@ export default function Reservations() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <Page
           title="My Reservations"
-          text="Manage upcoming and completed parking bookings."
+          text="View and manage your parking bookings in one place."
         />
 
         <button
           type="button"
           onClick={refresh}
           disabled={isRefreshing || loading}
-          className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
         >
           <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
 
-          {isRefreshing ? "Refreshing..." : "Refresh"}
+          {isRefreshing ? "Refreshing..." : "Refresh bookings"}
         </button>
       </div>
 
@@ -1086,30 +1119,30 @@ export default function Reservations() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
-          label="Total Reservations"
+          label="Total bookings"
           value={loading ? "…" : String(reservations.length)}
-          note="All reservations"
+          note="All your bookings"
           Icon={ParkingCircle}
         />
 
         <Metric
           label="Upcoming"
           value={loading ? "…" : String(upcomingReservations.length)}
-          note="Future bookings"
+          note="Scheduled parking"
           Icon={Clock3}
         />
 
         <Metric
           label="Active"
           value={loading ? "…" : String(activeReservations.length)}
-          note="Currently active"
+          note="Currently in use"
           Icon={CheckCircle2}
         />
 
         <Metric
           label="Completed"
           value={loading ? "…" : String(completedReservations.length)}
-          note="Completed bookings"
+          note="Past bookings"
           Icon={Activity}
         />
       </div>
@@ -1124,7 +1157,7 @@ export default function Reservations() {
             <Activity size={18} className="mt-0.5 shrink-0" />
 
             <div>
-              <b className="font-bold">Live data warning</b>
+              <b className="font-medium">Live data warning</b>
 
               <p className="mt-1">{error}</p>
             </div>
@@ -1139,16 +1172,40 @@ export default function Reservations() {
       <Card
         title="Reservations"
         sub={
-          lastUpdated
-            ? `Live data • Last updated ${formatDateTime(
-                lastUpdated.toISOString(),
-              )}`
-            : "Live reservation data from SmartPark AI"
+          lastEditd
+            ? `Updated ${formatDateTime(lastEditd.toISOString())}`
+            : "Your latest parking bookings"
         }
       >
         {/* ---------------------------------------------------
-            Intelligent reservation search
+            Reservation views + search
         --------------------------------------------------- */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {[
+            ["all", "All bookings"],
+            ["upcoming", "Upcoming"],
+            ["active", "Active"],
+            ["history", "History"],
+          ].map(([view, label]) => {
+            const selected = reservationView === view;
+
+            return (
+              <button
+                key={view}
+                type="button"
+                onClick={() => navigate(`/reservations?view=${view}`)}
+                className={`rounded-xl px-3.5 py-2 text-xs font-medium transition ${
+                  selected
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "border border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search
@@ -1159,7 +1216,7 @@ export default function Reservations() {
               type="search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search reservation number, vehicle, facility, bay, status or date..."
+              placeholder="Search by booking number, vehicle, location, space or date..."
               aria-label="Search reservations"
               className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
             />
@@ -1169,7 +1226,7 @@ export default function Reservations() {
             <button
               type="button"
               onClick={() => setSearchTerm("")}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
             >
               Clear
             </button>
@@ -1222,18 +1279,18 @@ export default function Reservations() {
               <ParkingCircle size={28} />
             </div>
 
-            <h3 className="mt-4 text-lg font-extrabold text-slate-900">
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">
               No reservations yet
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              You currently have no parking reservations. Find a parking
-              facility and reserve a space when you are ready.
+              You currently have no parking bookings. Find a parking location
+              and reserve a space when you are ready.
             </p>
 
             <Link
               to="/parking"
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-400"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
             >
               Find Parking
               <ArrowRight size={16} />
@@ -1249,20 +1306,20 @@ export default function Reservations() {
               <Search size={28} />
             </div>
 
-            <h3 className="mt-4 text-lg font-extrabold text-slate-900">
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">
               No matching reservations
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Try another reservation number, vehicle registration, facility,
-              parking bay, status, or date.
+              Try another booking number, vehicle registration, location,
+              parking space, status, or date.
             </p>
 
             {searchTerm.trim() && (
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
+                className="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
                 Clear search
               </button>
@@ -1291,7 +1348,7 @@ export default function Reservations() {
                 return (
                   <article
                     key={reservation.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-slate-300 hover:shadow-sm"
+                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-md sm:p-6"
                   >
                     {/* ---------------------------------------
                         Header
@@ -1305,13 +1362,13 @@ export default function Reservations() {
                           </div>
 
                           <div className="min-w-0">
-                            <h3 className="truncate text-base font-extrabold text-slate-900">
+                            <h3 className="truncate text-base font-semibold text-slate-900">
                               {facility?.name ?? "Parking Facility"}
                             </h3>
 
                             <p className="mt-0.5 text-xs text-slate-500">
                               Reservation{" "}
-                              <span className="font-bold text-slate-700">
+                              <span className="font-medium text-slate-700">
                                 {reservation.reservation_number}
                               </span>
                             </p>
@@ -1320,7 +1377,7 @@ export default function Reservations() {
                       </div>
 
                       <span
-                        className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-extrabold ${status.className}`}
+                        className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
                       >
                         {status.label}
                       </span>
@@ -1337,7 +1394,7 @@ export default function Reservations() {
                           Date
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
                           {formatDate(reservation.reserved_from)}
                         </p>
                       </div>
@@ -1348,7 +1405,7 @@ export default function Reservations() {
                           Time
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
                           {formatTime(reservation.reserved_from)} –{" "}
                           {formatTime(reservation.reserved_until)}
                         </p>
@@ -1357,13 +1414,13 @@ export default function Reservations() {
                       <div className="rounded-xl bg-slate-50 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <ParkingCircle size={15} />
-                          Parking Bay
+                          Parking Space
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
                           {bay?.bay_number ??
                             bay?.code ??
-                            `Bay #${reservation.parking_bay_id}`}
+                            `Space #${reservation.parking_bay_id}`}
                         </p>
 
                         {zone && (
@@ -1379,7 +1436,7 @@ export default function Reservations() {
                           Vehicle
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
                           {reservation.vehicle_registration || "Not specified"}
                         </p>
 
@@ -1396,10 +1453,10 @@ export default function Reservations() {
                     <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <span className="text-xs text-slate-500">
-                          Estimated amount
+                          Amount to pay
                         </span>
 
-                        <p className="mt-0.5 text-base font-extrabold text-slate-900">
+                        <p className="mt-0.5 text-base font-semibold text-slate-900">
                           {formatAmount(
                             reservation.estimated_amount,
                             reservation.currency || "KES",
@@ -1408,11 +1465,9 @@ export default function Reservations() {
                       </div>
 
                       <div className="text-left sm:text-right">
-                        <span className="text-xs text-slate-500">
-                          Reserved until
-                        </span>
+                        <span className="text-xs text-slate-500">Ends</span>
 
-                        <p className="mt-0.5 text-sm font-bold text-slate-700">
+                        <p className="mt-0.5 text-sm font-medium text-slate-700">
                           {formatDateTime(reservation.reserved_until)}
                         </p>
                       </div>
@@ -1429,7 +1484,7 @@ export default function Reservations() {
                           type="button"
                           onClick={() => void handleDelete(reservation)}
                           disabled={processingReservationId === reservation.id}
-                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <Trash2 size={15} />
                           {processingReservationId === reservation.id
@@ -1437,7 +1492,7 @@ export default function Reservations() {
                             : "Delete"}
                         </button>
                       ) : status.label === "Checked In" ? (
-                        <div className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700">
+                        <div className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700">
                           <Activity size={15} />
                           Parking session in progress...
                         </div>
@@ -1445,14 +1500,14 @@ export default function Reservations() {
                         <>
                           <button
                             type="button"
-                            onClick={() => handleUpdate(reservation)}
+                            onClick={() => handleEdit(reservation)}
                             disabled={
                               processingReservationId === reservation.id
                             }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-emerald-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             <Pencil size={15} />
-                            Update
+                            Edit
                           </button>
 
                           <button
@@ -1461,7 +1516,7 @@ export default function Reservations() {
                             disabled={
                               processingReservationId === reservation.id
                             }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             <XCircle size={15} />
                             {processingReservationId === reservation.id
@@ -1477,10 +1532,10 @@ export default function Reservations() {
                               disabled={
                                 processingReservationId === reservation.id
                               }
-                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               <CreditCard size={15} />
-                              Confirm Reservation
+                              Pay & Confirm Reservation
                             </button>
                           )}
                         </>
@@ -1543,7 +1598,7 @@ export default function Reservations() {
       </Card>
 
       {/* =====================================================
-          Update Reservation Modal
+          Edit Booking Modal
       ===================================================== */}
 
       {editingReservation && (
@@ -1558,9 +1613,9 @@ export default function Reservations() {
               <div>
                 <h2
                   id="update-reservation-title"
-                  className="text-xl font-extrabold text-slate-900"
+                  className="text-xl font-semibold text-slate-900"
                 >
-                  Update Reservation
+                  Edit Booking
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Reservation {editingReservation.reservation_number}
@@ -1568,8 +1623,8 @@ export default function Reservations() {
               </div>
               <button
                 type="button"
-                onClick={closeUpdateModal}
-                disabled={savingUpdate}
+                onClick={closeEditModal}
+                disabled={savingEdit}
                 className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50"
                 aria-label="Close update reservation dialog"
               >
@@ -1589,8 +1644,8 @@ export default function Reservations() {
                     className="mt-0.5 shrink-0 text-rose-600"
                   />
                   <div className="min-w-0">
-                    <p className="font-extrabold text-rose-900">
-                      Unable to update reservation
+                    <p className="font-semibold text-rose-900">
+                      Unable to update booking
                     </p>
                     <p className="mt-1 leading-5">{editError}</p>
                   </div>
@@ -1598,7 +1653,7 @@ export default function Reservations() {
               )}
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   Facility
                   <select
                     value={editFacilityId}
@@ -1623,7 +1678,7 @@ export default function Reservations() {
                   </select>
                 </label>
 
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   Zone / Level
                   <select
                     value={editZoneId}
@@ -1652,8 +1707,8 @@ export default function Reservations() {
                   </select>
                 </label>
 
-                <label className="text-sm font-bold text-slate-700">
-                  Parking Bay
+                <label className="text-sm font-medium text-slate-700">
+                  Parking Space
                   <select
                     value={editBayId}
                     onChange={(event) =>
@@ -1680,7 +1735,7 @@ export default function Reservations() {
                   </select>
                 </label>
 
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   Vehicle Type
                   <select
                     value={editVehicleType}
@@ -1697,7 +1752,7 @@ export default function Reservations() {
                   </select>
                 </label>
 
-                <label className="text-sm font-bold text-slate-700 sm:col-span-2">
+                <label className="text-sm font-medium text-slate-700 sm:col-span-2">
                   Vehicle Registration
                   <input
                     value={editVehicleRegistration}
@@ -1711,7 +1766,7 @@ export default function Reservations() {
                   />
                 </label>
 
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   Start Time
                   <input
                     type="datetime-local"
@@ -1723,7 +1778,7 @@ export default function Reservations() {
                   />
                 </label>
 
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   End Time
                   <input
                     type="datetime-local"
@@ -1736,7 +1791,7 @@ export default function Reservations() {
                   />
                 </label>
 
-                <label className="text-sm font-bold text-slate-700 sm:col-span-2">
+                <label className="text-sm font-medium text-slate-700 sm:col-span-2">
                   Notes
                   <textarea
                     value={editNotes}
@@ -1751,24 +1806,24 @@ export default function Reservations() {
               <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  onClick={closeUpdateModal}
-                  disabled={savingUpdate}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  onClick={closeEditModal}
+                  disabled={savingEdit}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
                   Close
                 </button>
                 <button
                   type="button"
-                  onClick={() => void handleSaveUpdate()}
-                  disabled={savingUpdate}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => void handleSaveEdit()}
+                  disabled={savingEdit}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {savingUpdate ? (
+                  {savingEdit ? (
                     <RefreshCw size={16} className="animate-spin" />
                   ) : (
                     <Save size={16} />
                   )}
-                  {savingUpdate ? "Saving..." : "Save Changes"}
+                  {savingEdit ? "Saving..." : "Save booking"}
                 </button>
               </div>
             </div>
@@ -1791,14 +1846,14 @@ export default function Reservations() {
             <div className="border-b border-slate-100 px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-emerald-600">
-                    Reservation Payment
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+                    Payment
                   </p>
                   <h2
                     id="reservation-payment-title"
-                    className="mt-1 text-xl font-extrabold text-slate-900"
+                    className="mt-1 text-xl font-semibold text-slate-900"
                   >
-                    Pay to Confirm your reservation
+                    Pay to confirm your booking
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     {paymentReservation.reservation_number} •{" "}
@@ -1822,9 +1877,9 @@ export default function Reservations() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold text-slate-500">
-                      Amount payable
+                      Amount to pay
                     </p>
-                    <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                    <p className="mt-1 text-2xl font-semibold text-slate-900">
                       {formatAmount(
                         paymentReservation.estimated_amount,
                         paymentReservation.currency || "KES",
@@ -1839,8 +1894,8 @@ export default function Reservations() {
               ["FAILED", "CANCELLED"].includes(paymentStatus) ? (
                 <>
                   <div>
-                    <p className="mb-3 text-sm font-extrabold text-slate-900">
-                      Choose payment method
+                    <p className="mb-3 text-sm font-semibold text-slate-900">
+                      How would you like to pay?
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <button
@@ -1853,7 +1908,7 @@ export default function Reservations() {
                       >
                         <div className="flex items-center gap-3">
                           <Wallet size={21} className="text-emerald-600" />
-                          <span className="font-extrabold text-slate-900">
+                          <span className="font-semibold text-slate-900">
                             SmartPark Wallet
                           </span>
                         </div>
@@ -1872,7 +1927,7 @@ export default function Reservations() {
                       >
                         <div className="flex items-center gap-3">
                           <Smartphone size={21} className="text-emerald-600" />
-                          <span className="font-extrabold text-slate-900">
+                          <span className="font-semibold text-slate-900">
                             M-PESA
                           </span>
                         </div>
@@ -1884,7 +1939,7 @@ export default function Reservations() {
                   </div>
 
                   {paymentMethod === "MPESA" && (
-                    <label className="block text-sm font-bold text-slate-700">
+                    <label className="block text-sm font-medium text-slate-700">
                       M-PESA Phone Number
                       <input
                         value={mpesaPhone}
@@ -1907,7 +1962,7 @@ export default function Reservations() {
                     type="button"
                     onClick={() => void handlePayment()}
                     disabled={paymentProcessing}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {paymentProcessing ? (
                       <RefreshCw size={17} className="animate-spin" />
@@ -1915,7 +1970,7 @@ export default function Reservations() {
                       <CreditCard size={17} />
                     )}
                     {paymentProcessing
-                      ? "Processing Payment..."
+                      ? "Completing payment..."
                       : `Pay ${formatAmount(paymentReservation.estimated_amount, paymentReservation.currency || "KES")}`}
                   </button>
                 </>
@@ -1927,18 +1982,18 @@ export default function Reservations() {
                       size={22}
                     />
                     <div>
-                      <h3 className="font-extrabold text-emerald-900">
+                      <h3 className="font-semibold text-emerald-900">
                         Payment successful
                       </h3>
                       <p className="mt-1 text-sm text-emerald-800">
-                        Your reservation has been confirmed successfully.
+                        Your booking has been confirmed successfully.
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={closePaymentModal}
-                    className="mt-4 w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-emerald-700"
+                    className="mt-4 w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
                   >
                     Done
                   </button>
@@ -1952,12 +2007,12 @@ export default function Reservations() {
                         size={20}
                       />
                       <div>
-                        <h3 className="font-extrabold text-blue-900">
-                          Payment pending
+                        <h3 className="font-semibold text-blue-900">
+                          Payment being confirmed
                         </h3>
                         <p className="mt-1 text-sm leading-6 text-blue-800">
                           {paymentMessage ||
-                            "We are waiting for the payment provider to confirm your payment."}
+                            "We are waiting for your payment to be confirmed."}
                         </p>
                       </div>
                     </div>
@@ -1966,7 +2021,7 @@ export default function Reservations() {
                     type="button"
                     onClick={closePaymentModal}
                     disabled={paymentProcessing}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                   >
                     Close
                   </button>

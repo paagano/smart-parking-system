@@ -1163,12 +1163,12 @@ export default function Forecast() {
   // ========================================================
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* ==================================================
           HERO
       ================================================== */}
 
-      <section className="rounded-3xl bg-[#071a2d] p-7 text-white">
+      <section className="relative overflow-hidden rounded-3xl bg-[#071a2d] p-7 text-white shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-emerald-300">
@@ -1176,11 +1176,11 @@ export default function Forecast() {
               Production AI Forecasting
             </div>
 
-            <h1 className="mt-3 text-3xl font-black">
+            <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-tight sm:text-4xl">
               Predict parking demand before you arrive.
             </h1>
 
-            <p className="mt-2 max-w-2xl text-slate-300">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
               SmartPark AI uses the production forecasting service to predict
               parking occupancy 30 minutes into the future.
             </p>
@@ -1220,7 +1220,7 @@ export default function Forecast() {
                     : "text-red-800"
                 }`}
               >
-                Forecast service message
+                AI forecast service message
               </b>
 
               <p
@@ -1255,8 +1255,8 @@ export default function Forecast() {
       ================================================== */}
 
       <Card
-        title="Forecast location"
-        sub="Search and choose the parking facility for the AI prediction"
+        title="Select a Farking Facility"
+        sub="Select where you want SmartPark AI to predict parking demand"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="relative min-w-0 flex-1">
@@ -1580,11 +1580,11 @@ export default function Forecast() {
       ================================================== */}
 
       <Card
-        title="Occupancy forecast"
+        title="AI parking demand forecast"
         sub={
           selectedFacility
-            ? `Production forecast for ${selectedFacility.name}`
-            : "Production forecast service"
+            ? `Expected parking demand at ${selectedFacility.name}`
+            : "Your AI-powered parking demand outlook"
         }
       >
         {!forecast && !generating && (
@@ -1622,11 +1622,11 @@ export default function Forecast() {
                 Prediction Summary
             ================================================== */}
 
-            <div className="rounded-3xl bg-slate-50 p-6">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Predicted Occupancy
+                    Expected parking occupancy
                   </div>
 
                   <div className="mt-2 text-5xl font-black tracking-tight text-slate-950">
@@ -1668,7 +1668,7 @@ export default function Forecast() {
 
                   <div className="mt-4 border-t border-slate-100 pt-3">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      Prediction generated from
+                      Prediction based on
                     </div>
 
                     <div className="mt-1 text-xs font-semibold text-slate-600">
@@ -1802,7 +1802,10 @@ export default function Forecast() {
             AI RECOMMENDATION
         ================================================== */}
 
-        <Card title="AI recommendation" sub="Decision support">
+        <Card
+          title="What this means for you"
+          sub="A simple recommendation based on the AI forecast"
+        >
           <div
             className={`rounded-2xl p-5 ${
               forecast ? demandStyles.badge : "bg-slate-50"
@@ -1832,7 +1835,7 @@ export default function Forecast() {
           {forecast && (
             <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-slate-400">
               <Sparkles size={14} />
-              Recommendation generated from the production forecast.
+              Recommendation based on the latest AI forecast.
             </div>
           )}
         </Card>
@@ -1841,7 +1844,10 @@ export default function Forecast() {
             MODEL STATUS
         ================================================== */}
 
-        <Card title="Model status" sub="Production intelligence">
+        <Card
+          title="AI service status"
+          sub="Live status of the forecasting service"
+        >
           <div className="divide-y divide-slate-100">
             {/* Forecast Service */}
 
@@ -1859,7 +1865,7 @@ export default function Forecast() {
               <StatusBadge status={serviceStatus} />
             </div>
 
-            {/* Feature Builder */}
+            {/* Prediction preparation */}
 
             <div className="flex items-center justify-between gap-4 py-3">
               <div className="flex items-center gap-3">
@@ -1893,7 +1899,7 @@ export default function Forecast() {
                 </div>
 
                 <span className="text-sm font-semibold text-slate-600">
-                  Model inference
+                  AI prediction
                 </span>
               </div>
 
@@ -1923,7 +1929,7 @@ export default function Forecast() {
                 </div>
 
                 <span className="text-sm font-semibold text-slate-600">
-                  Prediction latency
+                  Response time
                 </span>
               </div>
 
@@ -1941,8 +1947,8 @@ export default function Forecast() {
 
       {forecast && selectedFacility && (
         <Card
-          title="Take Action"
-          sub={`Reserve a parking space at ${selectedFacility.name}`}
+          title="Plan your visit"
+          sub={`Choose what you want to do at ${selectedFacility.name}`}
         >
           <div className="rounded-3xl bg-slate-50 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1958,7 +1964,7 @@ export default function Forecast() {
 
                   <div className="mt-1 text-xs text-slate-500">
                     {selectedFacility.code ? `${selectedFacility.code} • ` : ""}
-                    Facility ID {selectedFacility.id}
+                    Location ID {selectedFacility.id}
                   </div>
 
                   {selectedFacility.address && (
@@ -1977,7 +1983,7 @@ export default function Forecast() {
                 <button
                   type="button"
                   onClick={handleMakeReservation}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md"
                 >
                   <CalendarPlus size={18} />
                   Make a Reservation
@@ -2001,7 +2007,7 @@ export default function Forecast() {
 
             <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
               <Sparkles size={14} />
-              Based on the selected facility and current AI forecast.
+              Use this forecast to plan ahead for your visit.
             </div>
           </div>
         </Card>
@@ -2013,13 +2019,13 @@ export default function Forecast() {
 
       {forecast && (
         <Card
-          title="Production forecast details"
-          sub="Read-only metadata returned by the forecasting service"
+          title="Forecast Information"
+          sub="Additional details about this AI prediction"
         >
           <div className="grid gap-5 md:grid-cols-2">
             <div>
               <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Target column
+                Prediction target
               </div>
 
               <div className="mt-2 break-all rounded-xl bg-slate-50 px-4 py-3 font-mono text-sm font-semibold text-slate-700">
@@ -2029,7 +2035,7 @@ export default function Forecast() {
 
             <div>
               <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Feature information
+                Information used for prediction
               </div>
 
               <div className="mt-2 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
@@ -2040,7 +2046,7 @@ export default function Forecast() {
 
             <div>
               <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Inference mode
+                Prediction mode
               </div>
 
               <div className="mt-2 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
@@ -2060,7 +2066,7 @@ export default function Forecast() {
 
             <div>
               <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Last prediction
+                Last updated
               </div>
 
               <div className="mt-2 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
@@ -2084,7 +2090,7 @@ export default function Forecast() {
 
         <div className="flex items-center gap-2">
           <ServerCog size={14} />
-          SmartPark AI Production Forecasting
+          SmartPark AI parking forecast
         </div>
       </div>
     </div>

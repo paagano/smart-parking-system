@@ -302,75 +302,85 @@ export default function DriverDashboard() {
       : null;
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-3xl bg-[#071a2d] p-6 sm:p-8 text-white">
-        <div className="max-w-3xl">
-          <h1 className="mt-2 text-2xl sm:text-3xl font-black">
-            Welcome to SmartPark.
-          </h1>
+    <div className="space-y-6">
+      {/* ==========================================================
+          HERO / WELCOME
+      ========================================================== */}
+      <section className="relative overflow-hidden rounded-3xl bg-[#071a2d] px-5 py-6 text-white shadow-sm sm:px-7 sm:py-7 lg:px-8">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-emerald-400/[0.07] blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-28 right-24 h-56 w-56 rounded-full bg-cyan-400/[0.045] blur-3xl" />
 
-          <br />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0 max-w-2xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/15 bg-emerald-400/[0.07] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              AI-powered parking intelligence
+            </div>
 
-          <div className="text-emerald-300 text-[11px] font-bold uppercase tracking-[.2em]">
-            AN AI-powered parking intelligence
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              Welcome to SmartPark.
+            </h1>
+
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+              Find nearby parking, reserve spaces and use AI-powered occupancy
+              predictions before you arrive.
+            </p>
           </div>
 
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            Find nearby parking, reserve spaces and use AI-powered occupancy
-            predictions before you arrive.
-          </p>
-        </div>
-
-        <div className="driver-dashboard-hero-actions">
-          <div className="driver-dashboard-hero-links">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Link
               to="/parking"
-              className="rounded-xl bg-emerald-400 text-[#071a2d] px-4 py-2.5 font-extrabold text-xs"
+              className="inline-flex items-center justify-center rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-semibold text-[#071a2d] transition hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/60 focus:ring-offset-2 focus:ring-offset-[#071a2d]"
             >
-              Find Parking
+              Find Parking Space
             </Link>
 
             <Link
               to="/forecast"
-              className="rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 font-bold text-xs"
+              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-xs font-medium text-white transition hover:bg-white/[0.09] focus:outline-none focus:ring-2 focus:ring-white/30"
             >
               View AI Prediction
             </Link>
+
+            <button
+              type="button"
+              onClick={refresh}
+              disabled={isRefreshing}
+              aria-label="Refresh dashboard data"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-2.5 text-xs font-medium text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw
+                size={15}
+                className={isRefreshing ? "animate-spin" : ""}
+              />
+              {isRefreshing ? "Refreshing..." : "Refresh"}
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={isRefreshing}
-            aria-label="Refresh dashboard data"
-            className="driver-dashboard-hero-refresh inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <RefreshCw
-              size={16}
-              className={isRefreshing ? "animate-spin" : ""}
-            />
-
-            {isRefreshing ? "Refreshing..." : "Refresh"}
-          </button>
         </div>
       </section>
 
+      {/* ==========================================================
+          PARTIAL-DATA WARNING
+      ========================================================== */}
       {error && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 flex items-center justify-between gap-3">
-          <span>{error}</span>
+        <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5 text-xs text-amber-800 sm:flex-row sm:items-center sm:justify-between">
+          <span className="leading-5">{error}</span>
 
           <button
             type="button"
             onClick={refresh}
             disabled={isRefreshing}
-            className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-xs font-bold ring-1 ring-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+            className="shrink-0 self-start rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-amber-800 ring-1 ring-amber-200 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
           >
             {isRefreshing ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 [&>div]:!p-4 [&>div]:min-h-0">
+      {/* ==========================================================
+          KEY METRICS
+      ========================================================== */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 [&>div]:!min-h-0 [&>div]:!p-4">
         <Metric
           label="Available spaces"
           value={
@@ -420,84 +430,88 @@ export default function DriverDashboard() {
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      {/* ==========================================================
+          PRIMARY WORKSPACE
+      ========================================================== */}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
         <Card
           title="Nearby Parking Facility"
           sub="Live availability from SmartPark AI"
         >
           {nearestFacility ? (
-            <div className="rounded-2xl bg-slate-50 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <ParkingCircle className="text-emerald-600" size={22} />
+            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 sm:p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+                      <ParkingCircle size={18} />
+                    </span>
 
-                    <b className="text-base">{nearestFacility.name}</b>
+                    <div className="min-w-0">
+                      <h2 className="truncate text-base font-semibold text-slate-900">
+                        {nearestFacility.name}
+                      </h2>
+
+                      {nearestFacility.facility_type && (
+                        <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                          {nearestFacility.facility_type}
+                        </p>
+                      )}
+
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {nearestFacility.address}, {nearestFacility.city}
+                      </p>
+
+                      {nearestFacilityDistanceKm !== null && (
+                        <p className="mt-1 text-xs font-medium text-emerald-700">
+                          {nearestFacilityDistanceKm.toFixed(1)} km away
+                        </p>
+                      )}
+                    </div>
                   </div>
-
-                  {/* ==================================================
-                      FACILITY TYPE
-                      ================================================== */}
-
-                  {nearestFacility.facility_type && (
-                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                      {nearestFacility.facility_type}
-                    </p>
-                  )}
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    {nearestFacility.address}, {nearestFacility.city}
-                  </p>
-
-                  {/* ==================================================
-                      DISTANCE
-                      ================================================== */}
-
-                  {nearestFacilityDistanceKm !== null && (
-                    <p className="mt-1 text-xs font-bold text-emerald-600">
-                      {nearestFacilityDistanceKm.toFixed(1)} KM away
-                    </p>
-                  )}
                 </div>
 
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                <span className="inline-flex w-fit shrink-0 items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700">
                   {nearestStats.available} available
                 </span>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl bg-white p-2.5 ring-1 ring-slate-200">
-                  <b className="text-base">{nearestStats.total}</b>
-
-                  <small className="block text-slate-500">Active bays</small>
+              <div className="mt-5 grid grid-cols-3 gap-2.5">
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-center">
+                  <div className="text-base font-semibold text-slate-900">
+                    {nearestStats.total}
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-slate-500">
+                    Active Bays
+                  </div>
                 </div>
 
-                <div className="rounded-xl bg-white p-2.5 ring-1 ring-slate-200">
-                  <b className="text-base">
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-center">
+                  <div className="text-base font-semibold text-slate-900">
                     {nearestStats.total - nearestStats.available}
-                  </b>
-
-                  <small className="block text-slate-500">Occupied</small>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-slate-500">
+                    Occupied
+                  </div>
                 </div>
 
-                <div className="rounded-xl bg-white p-2.5 ring-1 ring-slate-200">
-                  <b className="text-base">
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-center">
+                  <div className="text-base font-semibold text-slate-900">
                     {nearestFacility.is_active === false ? "Closed" : "Open"}
-                  </b>
-
-                  <small className="block text-slate-500">
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-slate-500">
                     Facility status
-                  </small>
+                  </div>
                 </div>
               </div>
 
-              <div className="driver-dashboard-facility-actions">
-                <div className="driver-dashboard-facility-primary-actions">
+              <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap gap-2">
                   <Link
                     to={createReservationUrl}
-                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-emerald-700"
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                   >
-                    <CalendarPlus size={16} />
+                    <CalendarPlus size={15} />
                     Make a Reservation
                   </Link>
 
@@ -506,14 +520,14 @@ export default function DriverDashboard() {
                       href={navigationUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
                     >
-                      <Navigation size={16} />
+                      <Navigation size={15} />
                       Navigate to Facility
                     </a>
                   ) : (
-                    <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-400">
-                      <Navigation size={16} />
+                    <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-400">
+                      <Navigation size={15} />
                       Navigation unavailable
                     </span>
                   )}
@@ -521,18 +535,20 @@ export default function DriverDashboard() {
 
                 <Link
                   to="/parking"
-                  className="driver-dashboard-find-more inline-flex items-center gap-2 text-xs font-bold text-emerald-700"
+                  className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-emerald-700 transition hover:text-emerald-800"
                 >
-                  Find More Facilities
-                  <ArrowRight size={16} />
+                  Find more facilities
+                  <ArrowRight size={15} />
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl bg-slate-50 p-6 text-center">
-              <ParkingCircle className="mx-auto text-slate-400" size={28} />
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center">
+              <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-slate-100 text-slate-400">
+                <ParkingCircle size={22} />
+              </span>
 
-              <p className="mt-3 text-sm text-slate-500">
+              <p className="mx-auto mt-3 max-w-sm text-sm leading-5 text-slate-500">
                 No parking facilities are currently available from the backend.
               </p>
             </div>
@@ -540,36 +556,48 @@ export default function DriverDashboard() {
         </Card>
 
         <Card title="AI Prediction" sub="Production forecasting service">
-          <div className="rounded-2xl bg-emerald-50 p-5">
-            <BrainCircuit className="text-emerald-600" size={28} />
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-4">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+                <BrainCircuit size={21} />
+              </span>
 
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <div>
-                <b className="text-sm text-emerald-900">
-                  Forecast service: {forecastStatus}
-                </b>
-
-                <p className="mt-1 text-xs text-emerald-800">
-                  {forecastModel
-                    ? `Production model: ${forecastModel}.`
-                    : "Production model diagnostics are available."}
-                </p>
-              </div>
-
-              <span className="h-3 w-3 rounded-full bg-emerald-500" />
+              <span
+                className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+                  forecastStatus === "Online"
+                    ? "bg-emerald-500"
+                    : "bg-amber-500"
+                }`}
+                aria-label={`Forecast service ${forecastStatus}`}
+              />
             </div>
 
-            <p className="mt-3 text-[11px] leading-4 text-emerald-800">
-              The current production forecast API exposes the validated
-              30-minute inference flow.
-            </p>
+            <div className="mt-4">
+              <p className="text-sm font-medium text-emerald-950">
+                Forecast Service:{" "}
+                <span className="font-semibold">{forecastStatus}</span>
+              </p>
+
+              <p className="mt-1.5 text-xs leading-5 text-emerald-800">
+                {forecastModel
+                  ? `Production model: ${forecastModel}.`
+                  : "Production model diagnostics are available."}
+              </p>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-emerald-100/80 bg-white/45 px-3.5 py-3">
+              <p className="text-[11px] leading-4 text-emerald-800">
+                The current production forecast API exposes the validated
+                30-minute inference flow.
+              </p>
+            </div>
 
             <Link
               to="/forecast"
-              className="mt-3 flex justify-center rounded-xl bg-emerald-600 text-white py-2.5 text-xs font-bold"
+              className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/25"
             >
               Open prediction engine
-              <ArrowRight size={16} className="ml-2" />
+              <ArrowRight size={15} className="ml-2" />
             </Link>
           </div>
         </Card>

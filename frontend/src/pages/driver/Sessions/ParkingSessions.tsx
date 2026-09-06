@@ -317,7 +317,7 @@ function extractQuoteAmount(quote: BackendQuote): number | null {
 function StatusBadge({ status }: { status: NormalizedStatus }) {
   if (status === "ACTIVE") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
         ACTIVE
       </span>
@@ -326,7 +326,7 @@ function StatusBadge({ status }: { status: NormalizedStatus }) {
 
   if (status === "COMPLETED") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
         <CheckCircle2 size={13} />
         COMPLETED
       </span>
@@ -335,7 +335,7 @@ function StatusBadge({ status }: { status: NormalizedStatus }) {
 
   if (status === "CANCELLED") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
         CANCELLED
       </span>
     );
@@ -343,7 +343,7 @@ function StatusBadge({ status }: { status: NormalizedStatus }) {
 
   if (status === "PENDING") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
         <Clock3 size={13} />
         PENDING
       </span>
@@ -351,7 +351,7 @@ function StatusBadge({ status }: { status: NormalizedStatus }) {
   }
 
   return (
-    <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
+    <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
       {humanize(status)}
     </span>
   );
@@ -375,14 +375,16 @@ function SummaryMetric({
   iconClass: string;
 }) {
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
+          <div className="text-xs font-medium uppercase tracking-widest text-slate-400">
             {label}
           </div>
 
-          <div className="mt-3 text-3xl font-black text-slate-950">{value}</div>
+          <div className="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">
+            {value}
+          </div>
 
           <div className="mt-1 text-sm text-slate-500">{description}</div>
         </div>
@@ -434,7 +436,7 @@ function ActiveSessionCard({
     .join(", ");
 
   return (
-    <section className="overflow-hidden rounded-3xl bg-[#071a2d] text-white shadow-sm">
+    <section className="overflow-hidden rounded-2xl bg-[#071a2d] text-white shadow-sm">
       <div className="p-6 sm:p-7">
         {/* ==================================================
             Header
@@ -442,13 +444,13 @@ function ActiveSessionCard({
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-emerald-300">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[.2em] text-emerald-300">
               <Activity size={16} />
-              Active Parking Session
+              Currently Parked
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                 {session.session_number ?? `Session #${session.id}`}
               </h2>
 
@@ -456,7 +458,7 @@ function ActiveSessionCard({
             </div>
 
             <p className="mt-2 text-sm text-slate-300">
-              Your latest active parking session.
+              Your vehicle is currently parked.
             </p>
           </div>
         </div>
@@ -467,17 +469,17 @@ function ActiveSessionCard({
 
         <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 xl:col-span-1">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <MapPin size={15} />
-              Facility
+              Parking Location
             </div>
 
-            <div className="mt-2 text-base font-black text-white">
-              {facility?.name ?? "Facility information unavailable"}
+            <div className="mt-2 text-base font-semibold text-white">
+              {facility?.name ?? "Parking location unavailable"}
             </div>
 
             {facility?.code && (
-              <div className="mt-1 text-xs font-bold uppercase tracking-wide text-emerald-300">
+              <div className="mt-1 text-xs font-medium uppercase tracking-wide text-emerald-300">
                 {facility.code}
               </div>
             )}
@@ -490,12 +492,12 @@ function ActiveSessionCard({
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <CarFront size={15} />
               Vehicle
             </div>
 
-            <div className="mt-2 text-base font-black">
+            <div className="mt-2 text-base font-semibold">
               {session.vehicle_registration ?? "—"}
             </div>
 
@@ -505,17 +507,17 @@ function ActiveSessionCard({
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <MapPin size={15} />
-              Parking Zone
+              Parking Area
             </div>
 
-            <div className="mt-2 text-base font-black">
-              {zone?.name ?? "Zone information unavailable"}
+            <div className="mt-2 text-base font-semibold">
+              {zone?.name ?? "Parking area unavailable"}
             </div>
 
             {zone?.code && (
-              <div className="mt-1 text-xs font-bold uppercase tracking-wide text-emerald-300">
+              <div className="mt-1 text-xs font-medium uppercase tracking-wide text-emerald-300">
                 {zone.code}
               </div>
             )}
@@ -528,17 +530,17 @@ function ActiveSessionCard({
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <ParkingCircle size={15} />
-              Parking Bay
+              Parking Space
             </div>
 
-            <div className="mt-2 text-base font-black">
-              {bay?.bay_number ?? `Bay #${session.parking_bay_id}`}
+            <div className="mt-2 text-base font-semibold">
+              {bay?.bay_number ?? `Space #${session.parking_bay_id}`}
             </div>
 
             {bay?.code && (
-              <div className="mt-1 text-xs font-bold uppercase tracking-wide text-emerald-300">
+              <div className="mt-1 text-xs font-medium uppercase tracking-wide text-emerald-300">
                 {bay.code}
               </div>
             )}
@@ -551,17 +553,17 @@ function ActiveSessionCard({
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <Timer size={15} />
               Duration
             </div>
 
-            <div className="mt-2 text-base font-black">
+            <div className="mt-2 text-base font-semibold">
               {formatDuration(duration)}
             </div>
 
             <div className="mt-1 text-xs text-slate-400">
-              Started {formatTime(getCheckIn(session))}
+              Arrived {formatTime(getCheckIn(session))}
             </div>
           </div>
         </div>
@@ -573,12 +575,12 @@ function ActiveSessionCard({
         <div className="mt-4 rounded-2xl bg-emerald-400/10 p-5 ring-1 ring-emerald-300/20">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.15em] text-emerald-300">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[.15em] text-emerald-300">
                 <CreditCardIcon />
-                Current Outstanding Bill
+                Current Outstanding Amount
               </div>
 
-              <div className="mt-2 text-3xl font-black tracking-tight text-white">
+              <div className="mt-2 text-3xl font-semibold tracking-tight text-white">
                 {quoteLoading
                   ? "Updating..."
                   : currentAmount === null
@@ -593,14 +595,14 @@ function ActiveSessionCard({
             </div>
 
             <div className="rounded-xl bg-white/5 px-4 py-3 text-xs text-slate-400 ring-1 ring-white/10">
-              <div className="font-bold text-slate-300">Pricing Status</div>
+              <div className="font-medium text-slate-300">Billing Status</div>
 
               <div className="mt-1">
                 {quoteLoading
-                  ? "Retrieving latest quote..."
+                  ? "Updating amount..."
                   : currentAmount !== null
-                    ? "Latest Quote"
-                    : "Current quote unavailable"}
+                    ? "Amount up to date"
+                    : "Current amount unavailable"}
               </div>
             </div>
           </div>
@@ -612,31 +614,31 @@ function ActiveSessionCard({
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/10">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Check-in
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              Arrived
             </div>
 
-            <div className="mt-1 text-sm font-bold text-white">
+            <div className="mt-1 text-sm font-medium text-white">
               {formatDateTime(getCheckIn(session))}
             </div>
           </div>
 
           <div className="rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/10">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Billing Type
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              Payment Type
             </div>
 
-            <div className="mt-1 text-sm font-bold text-white">
+            <div className="mt-1 text-sm font-medium text-white">
               {humanize(session.billing_type)}
             </div>
           </div>
 
           <div className="rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/10">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Session Source
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              Parking Source
             </div>
 
-            <div className="mt-1 text-sm font-bold text-white">
+            <div className="mt-1 text-sm font-medium text-white">
               {humanize(session.session_source)}
             </div>
           </div>
@@ -651,7 +653,9 @@ function ActiveSessionCard({
             <Clock3 size={18} className="mt-0.5 shrink-0 text-emerald-300" />
 
             <div>
-              <div className="text-sm font-bold">Parking session is active</div>
+              <div className="text-sm font-medium">
+                Your parking visit is active
+              </div>
 
               <p className="mt-1 text-xs leading-5 text-slate-400">
                 The displayed duration and outstanding bill updates periodically
@@ -669,18 +673,18 @@ function ActiveSessionCard({
           <button
             type="button"
             onClick={onView}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
           >
-            View Session
+            View Details
             <ArrowRight size={16} />
           </button>
 
           <button
             type="button"
             onClick={onPay}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-400"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-medium text-white transition hover:bg-emerald-400"
           >
-            Pay & Check Out
+            Pay & Leave
             <ArrowRight size={16} />
           </button>
         </div>
@@ -772,7 +776,7 @@ function SessionRow({
       setRowCurrency(quote.currency ?? "KES");
     } catch (err) {
       console.warn(
-        "[SmartPark Sessions] Current quote unavailable for session row:",
+        "[SmartPark Sessions] Current amount unavailable for session row:",
         err,
       );
 
@@ -811,7 +815,7 @@ function SessionRow({
               <button
                 type="button"
                 onClick={onView}
-                className="truncate text-left text-sm font-bold text-slate-900 hover:text-emerald-600"
+                className="truncate text-left text-sm font-medium text-slate-900 hover:text-emerald-600"
               >
                 {session.session_number ?? `Session #${session.id}`}
               </button>
@@ -820,7 +824,7 @@ function SessionRow({
             </div>
 
             <div className="mt-1 text-sm font-semibold text-slate-700">
-              Parking Bay #{session.parking_bay_id}
+              Parking Space #{session.parking_bay_id}
             </div>
 
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
@@ -839,42 +843,42 @@ function SessionRow({
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:min-w-[560px]">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Check-in
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+              Arrived
             </div>
 
-            <div className="mt-1 text-sm font-bold text-slate-700">
+            <div className="mt-1 text-sm font-medium text-slate-700">
               {formatTime(session.entry_time)}
             </div>
           </div>
 
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Check-out
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+              Left
             </div>
 
-            <div className="mt-1 text-sm font-bold text-slate-700">
+            <div className="mt-1 text-sm font-medium text-slate-700">
               {formatTime(session.exit_time)}
             </div>
           </div>
 
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
               Duration
             </div>
 
-            <div className="mt-1 text-sm font-bold text-slate-700">
+            <div className="mt-1 text-sm font-medium text-slate-700">
               {formatDuration(duration)}
             </div>
           </div>
 
           <div className="flex items-end justify-between gap-3 sm:items-center">
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
                 Amount
               </div>
 
-              <div className="mt-1 text-sm font-black text-slate-900">
+              <div className="mt-1 text-sm font-semibold text-slate-900">
                 {rowQuoteLoading && rowAmount === null
                   ? "Updating..."
                   : rowAmount === null
@@ -893,7 +897,7 @@ function SessionRow({
               type="button"
               onClick={onView}
               className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
-              title="View session"
+              title="View parking details"
               aria-label={`View ${
                 session.session_number ?? `session ${session.id}`
               }`}
@@ -992,11 +996,11 @@ export default function ParkingSessions() {
      *
      *     Parking Session
      *          ↓ parking_bay_id
-     *     Parking Bay
+     *     Parking Space
      *          ↓ zone_id
-     *     Parking Zone
+     *     Parking Area
      *          ↓ facility_id
-     *     Parking Facility
+     *     Parking Parking Location
      *
      * The previous implementation requested 500 / 1000 / 2000
      * records. If the backend rejects an oversized limit, Promise.allSettled
@@ -1080,7 +1084,7 @@ export default function ParkingSessions() {
         }
 
         // --------------------------------------------------
-        // Completed sessions
+        // Completed parking
         // --------------------------------------------------
 
         if (completedResult.status === "fulfilled") {
@@ -1329,15 +1333,17 @@ export default function ParkingSessions() {
     [getSessionMetadataIds, resolveBay, zoneMap],
   );
 
-  const resolveFacility = useCallback(
+  const resolveParkingFacility = useCallback(
     (session: ParkingSession) => {
       const directIds = getSessionMetadataIds(session);
 
       if (directIds.facilityId !== null && directIds.facilityId !== undefined) {
-        const directFacility = facilityMap.get(String(directIds.facilityId));
+        const directParkingFacility = facilityMap.get(
+          String(directIds.facilityId),
+        );
 
-        if (directFacility) {
-          return directFacility;
+        if (directParkingFacility) {
+          return directParkingFacility;
         }
       }
 
@@ -1373,7 +1379,7 @@ export default function ParkingSessions() {
   }, [activeSessions]);
 
   // ========================================================
-  // Other Active Sessions
+  // Other Vehicles Currently Parked
   // ========================================================
 
   /*
@@ -1531,7 +1537,7 @@ export default function ParkingSessions() {
 
         const zone = resolveZone(session);
 
-        const facility = resolveFacility(session);
+        const facility = resolveParkingFacility(session);
 
         const haystack = [
           session.id,
@@ -1577,7 +1583,7 @@ export default function ParkingSessions() {
     searchTerm,
     resolveBay,
     resolveZone,
-    resolveFacility,
+    resolveParkingFacility,
   ]);
 
   // ========================================================
@@ -1623,7 +1629,7 @@ export default function ParkingSessions() {
   // ========================================================
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* ====================================================
           PAGE HEADER
       ==================================================== */}
@@ -1636,12 +1642,13 @@ export default function ParkingSessions() {
             </div>
 
             <div>
-              <h1 className="text-3xl font-black text-slate-950">
-                Parking Sessions
+              <h1 className="text-2xl font-semibold text-slate-950 sm:text-3xl">
+                Parking Activity
               </h1>
 
               <p className="mt-1 text-sm text-slate-500">
-                Track your active and completed parking sessions.
+                Keep track of where you have parked, how long you stayed, and
+                your parking history.
               </p>
             </div>
           </div>
@@ -1661,7 +1668,7 @@ export default function ParkingSessions() {
                 void loadParkingMetadata();
               }}
               disabled={refreshing}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCw
                 size={16}
@@ -1682,7 +1689,7 @@ export default function ParkingSessions() {
           <AlertCircle size={19} className="mt-0.5 shrink-0" />
 
           <div className="min-w-0 flex-1">
-            <div className="font-bold">Session Service Message</div>
+            <div className="font-medium">Parking update</div>
 
             <div className="mt-1 text-sm">{error}</div>
           </div>
@@ -1705,7 +1712,7 @@ export default function ParkingSessions() {
       {activeSession && (
         <ActiveSessionCard
           session={activeSession}
-          facility={resolveFacility(activeSession)}
+          facility={resolveParkingFacility(activeSession)}
           zone={resolveZone(activeSession)}
           bay={resolveBay(activeSession)}
           liveNow={liveNow}
@@ -1723,7 +1730,7 @@ export default function ParkingSessions() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryMetric
-          label="Active Sessions"
+          label="Currently Parked"
           value={activeCount}
           description="Currently parked"
           icon={<Activity size={21} />}
@@ -1733,7 +1740,7 @@ export default function ParkingSessions() {
         <SummaryMetric
           label="Completed"
           value={completedCount}
-          description="Finished parking sessions"
+          description="Completed parking"
           icon={<CheckCircle2 size={21} />}
           iconClass="bg-blue-50 text-blue-600"
         />
@@ -1741,13 +1748,13 @@ export default function ParkingSessions() {
         <SummaryMetric
           label="Parking Time"
           value={formatDuration(totalParkingMinutes)}
-          description="Across completed sessions"
+          description="Across completed parking"
           icon={<Clock3 size={21} />}
           iconClass="bg-violet-50 text-violet-600"
         />
 
         <SummaryMetric
-          label="Total Spend"
+          label="Total Spent"
           value={formatCurrency(totalSpend)}
           description="Completed parking"
           icon={<ParkingCircle size={21} />}
@@ -1760,8 +1767,8 @@ export default function ParkingSessions() {
       ==================================================== */}
 
       <Card
-        title="Find a parking session"
-        sub="Search by session number, vehicle, facility, zone or parking bay."
+        title="Find a parking visit"
+        sub="Search by visit number, vehicle, location, parking area or space."
       >
         <div className="space-y-4">
           <div className="relative">
@@ -1774,7 +1781,7 @@ export default function ParkingSessions() {
               type="text"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Session number, vehicle, facility, zone, bay..."
+              placeholder="Visit number, vehicle, location, area, space..."
               className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
             />
           </div>
@@ -1791,10 +1798,10 @@ export default function ParkingSessions() {
                 key={value}
                 type="button"
                 onClick={() => setFilter(value)}
-                className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                   filter === value
-                    ? "bg-[#071a2d] text-white"
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "border border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                 }`}
               >
                 {label}
@@ -1809,8 +1816,8 @@ export default function ParkingSessions() {
       ==================================================== */}
 
       <Card
-        title="Other Active Sessions"
-        sub="All other currently active parking sessions, newest first."
+        title="Your Other Vehicles Currently Parked"
+        sub="Your other vehicles currently parked, with the latest arrival shown first."
       >
         {loading ? (
           <div className="flex min-h-[300px] items-center justify-center">
@@ -1821,7 +1828,7 @@ export default function ParkingSessions() {
               />
 
               <p className="mt-3 text-sm font-semibold text-slate-500">
-                Loading your active parking sessions...
+                Loading your current parking activity...
               </p>
             </div>
           </div>
@@ -1831,13 +1838,12 @@ export default function ParkingSessions() {
               <ParkingCircle size={30} />
             </div>
 
-            <h3 className="mt-5 text-lg font-black text-slate-800">
-              No other active sessions
+            <h3 className="mt-5 text-lg font-semibold text-slate-800">
+              No other vehicles currently parked
             </h3>
 
             <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-              The most recent active parking session is displayed in the active
-              session card above.
+              Your latest parking visit is shown above.
             </p>
           </div>
         ) : (
@@ -1858,8 +1864,8 @@ export default function ParkingSessions() {
       ==================================================== */}
 
       <Card
-        title="Session History"
-        sub="Your parking sessions, filtered by the selection above."
+        title="Parking History"
+        sub="Your parking history, filtered using the options above."
       >
         {loading ? (
           <div className="flex min-h-[220px] items-center justify-center">
@@ -1869,7 +1875,7 @@ export default function ParkingSessions() {
                 className="mx-auto animate-spin text-emerald-600"
               />
               <p className="mt-3 text-sm font-semibold text-slate-500">
-                Loading parking session history...
+                Loading your parking history...
               </p>
             </div>
           </div>
@@ -1879,20 +1885,20 @@ export default function ParkingSessions() {
               <ParkingCircle size={30} />
             </div>
 
-            <h3 className="mt-5 text-lg font-black text-slate-800">
+            <h3 className="mt-5 text-lg font-semibold text-slate-800">
               {filter === "COMPLETED"
-                ? "No completed parking sessions"
+                ? "No completed parking visits"
                 : filter === "ACTIVE"
-                  ? "No active parking sessions"
-                  : "No parking sessions found"}
+                  ? "No active parking visits"
+                  : "No parking visits found"}
             </h3>
 
             <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
               {filter === "COMPLETED"
-                ? "Completed sessions will appear here after successful checkout."
+                ? "Completed parking visits will appear here after you leave."
                 : filter === "ACTIVE"
-                  ? "Currently active parking sessions will appear here."
-                  : "Your parking session history will appear here."}
+                  ? "Parking visits currently in progress will appear here."
+                  : "Your previous parking visits will appear here."}
             </p>
           </div>
         ) : (
@@ -1920,17 +1926,17 @@ export default function ParkingSessions() {
             </div>
 
             <div>
-              <h3 className="font-black text-slate-900">Ready to park?</h3>
+              <h3 className="font-semibold text-slate-900">Ready to park?</h3>
 
               <p className="mt-1 text-sm leading-6 text-slate-600">
-                Find a parking facility or make a reservation before arriving.
-                Your active parking session will appear here after check-in.
+                Find a parking location or make a booking before you arrive.
+                Your current parking visit will appear here after you arrive.
               </p>
 
               <button
                 type="button"
                 onClick={() => navigate("/parking")}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-500"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-500"
               >
                 Find Parking
                 <ArrowRight size={16} />

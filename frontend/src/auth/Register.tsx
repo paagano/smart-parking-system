@@ -201,7 +201,7 @@ export default function Register() {
 
   if (registrationState === "success") {
     return (
-      <div className="min-h-screen bg-[#071a2d] p-3 sm:p-4 grid place-items-center">
+      <div className="min-h-screen bg-[#071a2d] px-3 py-4 sm:px-4 sm:py-5 lg:px-6 lg:py-6 grid place-items-center">
         <div className="w-full max-w-lg">
           {/* Brand */}
           <div className="mb-8 text-center">
@@ -209,7 +209,7 @@ export default function Register() {
               to="/login"
               className="inline-flex items-center gap-3 font-extrabold text-2xl text-white"
             >
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400 text-[#071a2d]">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400 text-[#071a2d] shadow-lg shadow-emerald-950/20">
                 <ParkingCircle size={25} />
               </span>
               SmartPark
@@ -218,17 +218,17 @@ export default function Register() {
           </div>
 
           {/* Success Card */}
-          <div className="rounded-[2rem] bg-white p-8 shadow-2xl sm:p-12">
+          <div className="rounded-[2rem] border border-slate-200/80 bg-white p-7 shadow-[0_24px_70px_rgba(15,23,42,0.18)] sm:p-10">
             <div className="text-center">
               <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-emerald-50">
                 <CheckCircle2 size={42} className="text-emerald-600" />
               </div>
 
-              <div className="mt-7 text-xs font-bold uppercase tracking-[.2em] text-emerald-600">
+              <div className="mt-6 text-xs font-bold uppercase tracking-[.2em] text-emerald-600">
                 Account created
               </div>
 
-              <h1 className="mt-1 text-2xl font-black text-slate-900">
+              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950">
                 Welcome to SmartPark AI
               </h1>
 
@@ -297,17 +297,17 @@ export default function Register() {
   // ======================================================
 
   return (
-    <div className="min-h-screen bg-[#071a2d] p-3 sm:p-4 grid place-items-center">
-      <div className="grid w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-2xl lg:grid-cols-2">
+    <div className="min-h-screen bg-[#071a2d] px-3 py-4 sm:px-4 sm:py-5 lg:px-6 lg:py-6 grid place-items-center">
+      <div className="grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] lg:max-h-[calc(100vh-3rem)] lg:grid-cols-[0.98fr_1.02fr]">
         {/* ==================================================
                     BRAND PANEL
             ================================================== */}
 
-        <div className="hidden min-h-[680px] bg-[#0a2740] p-10 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="hidden min-h-0 bg-[#071f35] p-7 text-white lg:flex lg:flex-col lg:justify-between xl:p-9">
           <div>
             {/* Logo */}
-            <div className="flex items-center gap-3 font-extrabold text-xl">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400 text-[#071a2d]">
+            <div className="flex items-center gap-3 text-xl font-extrabold tracking-tight">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400 text-[#071a2d] shadow-lg shadow-emerald-950/20">
                 <ParkingCircle />
               </span>
               SmartPark
@@ -315,12 +315,12 @@ export default function Register() {
             </div>
 
             {/* Hero */}
-            <div className="mt-20 max-w-lg">
-              <div className="text-emerald-300 text-xs font-bold uppercase tracking-[.2em]">
+            <div className="mt-12 max-w-xl xl:mt-14">
+              <div className="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">
                 Join SmartPark AI
               </div>
 
-              <h1 className="mt-3 text-4xl font-black leading-tight">
+              <h1 className="mt-3 text-4xl font-black leading-[1.08] xl:text-5xl">
                 Park smarter.
                 <br />
                 Travel better.
@@ -328,7 +328,7 @@ export default function Register() {
                 <span className="text-emerald-400">Start today.</span>
               </h1>
 
-              <p className="mt-4 leading-6 text-sm text-slate-300">
+              <p className="mt-4 max-w-lg text-sm leading-6 text-slate-300">
                 Create your SmartPark AI account and get access to real-time
                 parking availability, reservations and intelligent parking
                 insights.
@@ -338,7 +338,7 @@ export default function Register() {
 
           {/* Benefits */}
           <div className="space-y-3">
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-sm">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300">
                 <ParkingCircle size={19} />
               </div>
@@ -352,7 +352,7 @@ export default function Register() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-sm">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300">
                 <CheckCircle2 size={19} />
               </div>
@@ -366,7 +366,7 @@ export default function Register() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-sm">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300">
                 <ArrowRight size={19} />
               </div>
@@ -386,10 +386,10 @@ export default function Register() {
                     REGISTRATION PANEL
             ================================================== */}
 
-        <div className="p-5 sm:p-8 lg:p-9">
-          <div className="mx-auto w-full max-w-xl">
+        <div className="min-h-0 p-5 sm:p-7 lg:overflow-y-auto lg:p-8">
+          <div className="mx-auto w-full max-w-2xl">
             {/* Mobile logo */}
-            <div className="mb-5 flex items-center gap-2 font-extrabold text-lg text-slate-900 lg:hidden">
+            <div className="mb-4 flex items-center gap-2 font-extrabold text-lg text-slate-900 lg:hidden">
               <span className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-400 text-[#071a2d]">
                 <ParkingCircle size={20} />
               </span>
@@ -399,28 +399,33 @@ export default function Register() {
 
             {/* Heading */}
             <div>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Secure account registration
+              </div>
+
               <div className="text-xs font-bold uppercase tracking-[.2em] text-emerald-600">
                 SmartPark AI
               </div>
 
-              <h2 className="mt-1 text-2xl font-black text-slate-900">
+              <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950">
                 Create your account
               </h2>
 
-              <p className="mt-2 text-xs leading-5 text-slate-500">
+              <p className="mt-1.5 text-xs leading-5 text-slate-500">
                 Join SmartPark AI and start parking smarter.
               </p>
             </div>
 
             {/* Error */}
             {error && (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs leading-5 text-red-700">
+              <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs leading-5 text-rose-700">
                 {error}
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="mt-5 space-y-3.5">
+            <form onSubmit={handleSubmit} className="mt-4 space-y-3">
               {/* ==================================================
                             NAME
                 ================================================== */}
@@ -449,7 +454,7 @@ export default function Register() {
                       onChange={(event) => setFirstName(event.target.value)}
                       placeholder="First name"
                       disabled={isSubmitting}
-                      className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/40 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-100"
                     />
                   </div>
                 </div>
@@ -477,7 +482,7 @@ export default function Register() {
                       onChange={(event) => setLastName(event.target.value)}
                       placeholder="Last name"
                       disabled={isSubmitting}
-                      className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/40 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-100"
                     />
                   </div>
                 </div>
@@ -509,7 +514,7 @@ export default function Register() {
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="you@example.com"
                     disabled={isSubmitting}
-                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/40 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-100"
                   />
                 </div>
               </div>
@@ -540,7 +545,7 @@ export default function Register() {
                     onChange={(event) => setPhoneNumber(event.target.value)}
                     placeholder="2547XXXXXXXX"
                     disabled={isSubmitting}
-                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/40 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-100"
                   />
                 </div>
 
@@ -575,7 +580,7 @@ export default function Register() {
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Create a secure password"
                     disabled={isSubmitting}
-                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-11 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/40 py-2.5 pl-10 pr-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-100"
                   />
 
                   <button
@@ -655,7 +660,7 @@ export default function Register() {
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     placeholder="Confirm your password"
                     disabled={isSubmitting}
-                    className={`w-full rounded-2xl border bg-white py-3.5 pl-11 pr-12 text-sm outline-none transition focus:ring-2 disabled:bg-slate-50 ${
+                    className={`w-full rounded-xl border bg-slate-50/40 py-2.5 pl-11 pr-12 text-sm text-slate-900 outline-none transition focus:bg-white focus:ring-4 disabled:bg-slate-100 ${
                       confirmPassword && password !== confirmPassword
                         ? "border-red-300 focus:border-red-400 focus:ring-red-100"
                         : "border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
@@ -695,7 +700,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="group flex w-full items-center justify-center gap-3 rounded-xl bg-[#071a2d] px-5 py-3 font-bold text-sm text-white transition hover:bg-[#0a2740] disabled:cursor-not-allowed disabled:opacity-60"
+                className="group flex w-full items-center justify-center gap-3 rounded-xl bg-[#071a2d] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-900/10 transition hover:-translate-y-0.5 hover:bg-[#0a2740] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 {isSubmitting ? (
                   <>
@@ -714,11 +719,16 @@ export default function Register() {
               </button>
             </form>
 
+            <div className="mt-3 flex items-center justify-center gap-2 text-[10px] font-medium text-slate-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Your account details are securely protected
+            </div>
+
             {/* ==================================================
                             LOGIN LINK
                 ================================================== */}
 
-            <div className="mt-4 text-center">
+            <div className="mt-4 border-t border-slate-100 pt-4 text-center">
               <p className="text-sm text-slate-500">
                 Already have an account?{" "}
                 <Link
@@ -731,7 +741,7 @@ export default function Register() {
             </div>
 
             {/* Footer */}
-            <div className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400">
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
               <ParkingCircle size={14} />
               Smart parking. Smarter decisions.
             </div>

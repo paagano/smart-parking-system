@@ -4,6 +4,10 @@ from app.api.endpoints.auth import (
     router as auth_router,
 )
 
+from app.api.endpoints.ai_chat import (
+    router as ai_chat_router,
+)
+
 from app.api.endpoints.users import (
     router as users_router,
 )
@@ -86,6 +90,15 @@ router = APIRouter()
 
 router.include_router(
     auth_router,
+)
+
+
+# ==========================================================
+# SmartPark AI
+# ==========================================================
+
+router.include_router(
+    ai_chat_router,
 )
 
 

@@ -68,7 +68,7 @@ const VEHICLE_TYPES = [
   {
     value: "CAR",
     label: "Car",
-    description: "Standard passenger car",
+    description: "Everyday passenger car",
   },
   {
     value: "SUV",
@@ -93,7 +93,7 @@ const VEHICLE_TYPES = [
   {
     value: "ANY",
     label: "Any",
-    description: "General vehicle classification",
+    description: "General vehicle type",
   },
 ] as const;
 
@@ -105,27 +105,27 @@ const PARKING_PROFILES = [
   {
     value: "STANDARD",
     label: "Standard",
-    description: "Normal parking requirements",
+    description: "Standard parking needs",
   },
   {
     value: "ELECTRIC",
     label: "Electric",
-    description: "Vehicle requiring EV charging facilities",
+    description: "Vehicle that needs EV charging",
   },
   {
     value: "ACCESSIBLE",
     label: "Accessible",
-    description: "Vehicle requiring accessible parking facilities",
+    description: "Vehicle that needs accessible parking",
   },
   {
     value: "VIP",
     label: "VIP",
-    description: "Vehicle associated with VIP parking privileges",
+    description: "Vehicle with VIP parking access",
   },
   {
     value: "COMMERCIAL",
     label: "Commercial",
-    description: "Commercial or business vehicle",
+    description: "Business or commercial vehicle",
   },
   {
     value: "EMERGENCY",
@@ -343,15 +343,15 @@ export default function EditVehicle() {
     const registration = form.registration_number.replace(/\s+/g, "").trim();
 
     if (!registration) {
-      return "Vehicle registration number is required.";
+      return "Vehicle registration is required.";
     }
 
     if (registration.length < 3) {
-      return "Vehicle registration number must contain at least 3 characters.";
+      return "Vehicle registration must contain at least 3 characters.";
     }
 
     if (registration.length > 20) {
-      return "Vehicle registration number cannot exceed 20 characters.";
+      return "Vehicle registration cannot exceed 20 characters.";
     }
 
     if (!form.plate_country.trim()) {
@@ -378,7 +378,7 @@ export default function EditVehicle() {
       const numericYear = Number(form.year);
 
       if (!Number.isInteger(numericYear)) {
-        return "Vehicle year must be a valid year.";
+        return "Please enter a valid vehicle year.";
       }
 
       if (numericYear < minimumYear || numericYear > currentYear + 1) {
@@ -492,12 +492,12 @@ export default function EditVehicle() {
             <Loader2 size={28} className="animate-spin" />
           </div>
 
-          <h2 className="mt-5 text-lg font-black text-slate-900">
+          <h2 className="mt-5 text-lg font-semibold text-slate-900">
             Loading vehicle
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Retrieving your vehicle information...
+            Getting your vehicle information ready...
           </p>
         </div>
       </div>
@@ -513,10 +513,10 @@ export default function EditVehicle() {
       <div className="mx-auto w-full max-w-3xl">
         <Link
           to="/vehicles"
-          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-emerald-600"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-emerald-600"
         >
           <ArrowLeft size={16} />
-          Back to My Vehicles
+          Back to my vehicles
         </Link>
 
         <div className="mt-6 rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm sm:p-12">
@@ -524,7 +524,7 @@ export default function EditVehicle() {
             <XCircle size={34} />
           </div>
 
-          <h1 className="mt-5 text-xl font-black text-slate-900">
+          <h1 className="mt-5 text-xl font-semibold text-slate-900">
             Unable to load vehicle
           </h1>
 
@@ -534,9 +534,9 @@ export default function EditVehicle() {
 
           <Link
             to="/vehicles"
-            className="mt-7 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
+            className="mt-7 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
           >
-            Return to My Vehicles
+            Return to my vehicles
           </Link>
         </div>
       </div>
@@ -550,17 +550,17 @@ export default function EditVehicle() {
   if (success) {
     return (
       <div className="mx-auto w-full max-w-3xl">
-        <div className="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-sm sm:p-12">
+        <div className="rounded-3xl border border-emerald-200 bg-white p-7 text-center shadow-sm sm:p-10">
           <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-emerald-50 text-emerald-600">
             <CheckCircle2 size={42} />
           </div>
 
-          <h1 className="mt-6 text-2xl font-black tracking-tight text-slate-900">
-            Vehicle Updated Successfully
+          <h1 className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">
+            Vehicle updated successfully
           </h1>
 
           <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">
-            Your vehicle details have been successfully updated.
+            Your vehicle details have been updated successfully.
           </p>
 
           <div className="mx-auto mt-7 max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left">
@@ -570,7 +570,7 @@ export default function EditVehicle() {
               </div>
 
               <div className="min-w-0">
-                <p className="text-lg font-black tracking-tight text-slate-900">
+                <p className="text-lg font-semibold tracking-tight text-slate-900">
                   {success.registration_number}
                 </p>
 
@@ -582,11 +582,11 @@ export default function EditVehicle() {
 
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-white p-3">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                   Type
                 </p>
 
-                <p className="mt-1 text-sm font-extrabold text-slate-800">
+                <p className="mt-1 text-sm font-semibold text-slate-800">
                   {VEHICLE_TYPES.find(
                     (item) => item.value === success.vehicle_type,
                   )?.label ?? success.vehicle_type}
@@ -594,18 +594,18 @@ export default function EditVehicle() {
               </div>
 
               <div className="rounded-xl bg-white p-3">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                   Status
                 </p>
 
-                <p className="mt-1 text-sm font-extrabold text-emerald-700">
+                <p className="mt-1 text-sm font-semibold text-emerald-700">
                   {success.is_active ? "Active" : "Inactive"}
                 </p>
               </div>
             </div>
 
             {success.is_default && (
-              <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2.5 text-xs font-bold text-amber-700">
+              <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2.5 text-xs font-medium text-amber-700">
                 <CheckCircle2 size={15} />
                 This is your default vehicle.
               </div>
@@ -615,17 +615,17 @@ export default function EditVehicle() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               to="/vehicles"
-              className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
+              className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
-              View My Vehicles
+              View my vehicles
             </Link>
 
             <button
               type="button"
               onClick={() => setSuccess(null)}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
             >
-              Continue Editing
+              Continue editing
             </button>
           </div>
         </div>
@@ -638,7 +638,7 @@ export default function EditVehicle() {
   // ========================================================
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-5 sm:space-y-6">
       {/* ====================================================
           HEADER
       ==================================================== */}
@@ -646,10 +646,10 @@ export default function EditVehicle() {
       <div>
         <Link
           to="/vehicles"
-          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-emerald-600"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-emerald-600"
         >
           <ArrowLeft size={16} />
-          Back to My Vehicles
+          Back to my vehicles
         </Link>
 
         <div className="mt-4 flex items-center gap-3">
@@ -658,12 +658,12 @@ export default function EditVehicle() {
           </div>
 
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
               Edit Vehicle
             </h1>
 
             <p className="mt-0.5 text-sm font-medium text-slate-500">
-              Update your SmartPark AI vehicle details.
+              Update the details of your vehicle.
             </p>
           </div>
         </div>
@@ -681,11 +681,11 @@ export default function EditVehicle() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                Editing vehicle
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Vehicle being edited
               </p>
 
-              <p className="mt-1 text-lg font-black tracking-wide text-slate-900">
+              <p className="mt-1 text-lg font-semibold tracking-wide text-slate-900">
                 {vehicle.registration_number}
               </p>
 
@@ -695,7 +695,7 @@ export default function EditVehicle() {
             </div>
 
             {vehicle.is_default && (
-              <span className="hidden items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-extrabold text-amber-700 sm:inline-flex">
+              <span className="hidden items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 sm:inline-flex">
                 <ShieldCheck size={14} />
                 Default
               </span>
@@ -717,7 +717,7 @@ export default function EditVehicle() {
             <XCircle size={20} className="mt-0.5 shrink-0 text-rose-600" />
 
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-extrabold text-rose-900">
+              <p className="text-sm font-semibold text-rose-900">
                 Unable to update vehicle
               </p>
 
@@ -745,14 +745,13 @@ export default function EditVehicle() {
           <Info size={19} className="mt-0.5 shrink-0 text-blue-600" />
 
           <div>
-            <p className="text-sm font-extrabold text-blue-900">
+            <p className="text-sm font-semibold text-blue-900">
               Registration number
             </p>
 
             <p className="mt-1 text-xs leading-5 text-blue-800">
-              Registration numbers are normalized by SmartPark AI. The backend
-              will convert the registration to uppercase and check that it is
-              not already registered to another vehicle.
+              This registration number will be checked against the database to
+              make sure it is not already linked to another vehicle.
             </p>
           </div>
         </div>
@@ -762,23 +761,27 @@ export default function EditVehicle() {
           FORM
       ==================================================== */}
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="space-y-5 sm:space-y-6"
+      >
         {/* ==================================================
             VEHICLE INFORMATION
         ================================================== */}
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-5">
-            <h2 className="text-base font-black text-slate-900">
+          <div className="border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
+            <h2 className="text-base font-semibold text-slate-900">
               Vehicle Information
             </h2>
 
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Update the basic information for this vehicle.
+              Update the basic details for this vehicle.
             </p>
           </div>
 
-          <div className="grid gap-5 p-6 md:grid-cols-2">
+          <div className="grid gap-4 p-5 sm:gap-5 sm:p-6 md:grid-cols-2">
             {/* ----------------------------------------------
                 Plate Country
             ---------------------------------------------- */}
@@ -786,7 +789,7 @@ export default function EditVehicle() {
             <div>
               <label
                 htmlFor="plate_country"
-                className="mb-2 block text-sm font-extrabold text-slate-800"
+                className="mb-2 block text-sm font-semibold text-slate-800"
               >
                 Plate Country
                 <span className="ml-1 text-rose-500">*</span>
@@ -805,7 +808,7 @@ export default function EditVehicle() {
                 }
                 maxLength={3}
                 autoComplete="country"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold uppercase text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium uppercase text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
 
               <p className="mt-1.5 text-xs text-slate-400">
@@ -820,7 +823,7 @@ export default function EditVehicle() {
             <div>
               <label
                 htmlFor="registration_number"
-                className="mb-2 block text-sm font-extrabold text-slate-800"
+                className="mb-2 block text-sm font-semibold text-slate-800"
               >
                 Registration Number
                 <span className="ml-1 text-rose-500">*</span>
@@ -837,7 +840,7 @@ export default function EditVehicle() {
                 maxLength={20}
                 autoComplete="off"
                 spellCheck={false}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-medium placeholder:tracking-normal placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-medium placeholder:tracking-normal placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
 
               <p className="mt-1.5 text-xs text-slate-400">Example: KDA123A</p>
@@ -850,7 +853,7 @@ export default function EditVehicle() {
             <div>
               <label
                 htmlFor="make"
-                className="mb-2 block text-sm font-extrabold text-slate-800"
+                className="mb-2 block text-sm font-semibold text-slate-800"
               >
                 Make
                 <span className="ml-1 text-rose-500">*</span>
@@ -875,7 +878,7 @@ export default function EditVehicle() {
             <div>
               <label
                 htmlFor="model"
-                className="mb-2 block text-sm font-extrabold text-slate-800"
+                className="mb-2 block text-sm font-semibold text-slate-800"
               >
                 Model
                 <span className="ml-1 text-rose-500">*</span>
@@ -900,7 +903,7 @@ export default function EditVehicle() {
             <div>
               <label
                 htmlFor="colour"
-                className="mb-2 block text-sm font-extrabold text-slate-800"
+                className="mb-2 block text-sm font-semibold text-slate-800"
               >
                 Colour
               </label>
@@ -926,7 +929,7 @@ export default function EditVehicle() {
             <div>
               <label
                 htmlFor="year"
-                className="mb-2 block text-sm font-extrabold text-slate-800"
+                className="mb-2 block text-sm font-semibold text-slate-800"
               >
                 Year
               </label>
@@ -954,7 +957,7 @@ export default function EditVehicle() {
             <div className="md:col-span-2">
               <label
                 htmlFor="nickname"
-                className="mb-2 block text-sm font-extrabold text-slate-800"
+                className="mb-2 block text-sm font-semibold text-slate-800"
               >
                 Vehicle Nickname
               </label>
@@ -982,17 +985,17 @@ export default function EditVehicle() {
         ================================================== */}
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-5">
-            <h2 className="text-base font-black text-slate-900">
+          <div className="border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
+            <h2 className="text-base font-semibold text-slate-900">
               Vehicle Type
             </h2>
 
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Select the classification that best describes this vehicle.
+              Choose the option that best describes this vehicle.
             </p>
           </div>
 
-          <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 p-5 sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
             {VEHICLE_TYPES.map((vehicleType) => {
               const selected = form.vehicle_type === vehicleType.value;
 
@@ -1017,7 +1020,7 @@ export default function EditVehicle() {
                     )}
                   </div>
 
-                  <p className="mt-4 text-sm font-black text-slate-900">
+                  <p className="mt-4 text-sm font-semibold text-slate-900">
                     {vehicleType.label}
                   </p>
 
@@ -1035,18 +1038,17 @@ export default function EditVehicle() {
         ================================================== */}
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-5">
-            <h2 className="text-base font-black text-slate-900">
+          <div className="border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
+            <h2 className="text-base font-semibold text-slate-900">
               Parking Profile
             </h2>
 
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              This profile is used for parking eligibility and future SmartPark
-              recommendations.
+              Choose any special parking needs that apply to this vehicle.
             </p>
           </div>
 
-          <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 p-5 sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
             {PARKING_PROFILES.map((profile) => {
               const selected = form.parking_profile === profile.value;
 
@@ -1062,7 +1064,7 @@ export default function EditVehicle() {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-black text-slate-900">
+                    <span className="text-sm font-semibold text-slate-900">
                       {profile.label}
                     </span>
 
@@ -1100,22 +1102,21 @@ export default function EditVehicle() {
               />
 
               <span className="min-w-0">
-                <span className="flex items-center gap-2 text-sm font-black text-slate-900">
+                <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                   Make this my default vehicle
                   <ShieldCheck size={16} className="text-emerald-600" />
                 </span>
 
                 <span className="mt-1 block text-xs leading-5 text-slate-500">
-                  Your default vehicle is automatically selected when creating a
-                  parking reservation.
+                  This vehicle will be selected automatically when you make a
+                  new parking booking.
                 </span>
               </span>
             </label>
 
             <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
-              <strong>Important:</strong> The current backend update
-              implementation sets the updated vehicle as the default vehicle
-              when the update is saved.
+              <strong>Important:</strong> When you save these changes, this
+              vehicle will become your default vehicle.
             </div>
           </div>
         </section>
@@ -1126,16 +1127,16 @@ export default function EditVehicle() {
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
           <div className="border-b border-slate-200 px-6 py-5">
-            <h2 className="text-base font-black text-slate-900">
-              Updated Vehicle Preview
+            <h2 className="text-base font-semibold text-slate-900">
+              Updated vehicle preview
             </h2>
 
             <p className="mt-1 text-xs text-slate-500">
-              Review the changes before saving.
+              Check the changes before saving.
             </p>
           </div>
 
-          <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 p-5 sm:p-6 sm:grid-cols-2 lg:grid-cols-4">
             <PreviewItem
               label="Registration"
               value={form.registration_number || "—"}
@@ -1169,7 +1170,7 @@ export default function EditVehicle() {
         <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <Link
             to="/vehicles"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
           >
             Cancel
           </Link>
@@ -1177,17 +1178,17 @@ export default function EditVehicle() {
           <button
             type="submit"
             disabled={isSubmitting || !vehicle || !vehicle.is_active}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-7 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? (
               <>
                 <Loader2 size={17} className="animate-spin" />
-                Saving Changes...
+                Saving changes...
               </>
             ) : (
               <>
                 <CheckCircle2 size={17} />
-                Save Changes
+                Save changes
               </>
             )}
           </button>
@@ -1204,11 +1205,11 @@ export default function EditVehicle() {
 function PreviewItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-white p-4">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
         {label}
       </p>
 
-      <p className="mt-1.5 text-sm font-black text-slate-900">{value}</p>
+      <p className="mt-1.5 text-sm font-semibold text-slate-900">{value}</p>
     </div>
   );
 }

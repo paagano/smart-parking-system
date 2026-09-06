@@ -60,54 +60,67 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="min-h-screen bg-[#071a2d] p-3 sm:p-4 lg:p-6">
+      <div className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-[0.98fr_1.02fr]">
         {/* ==================================================
             BRAND PANEL
         ================================================== */}
 
-        <div className="hidden lg:flex bg-[#071a2d] p-12 text-white">
-          <div className="m-auto max-w-md">
+        <div className="hidden bg-[#071f35] p-9 text-white lg:flex xl:p-11">
+          <div className="m-auto max-w-lg">
             <div className="flex items-center gap-3">
-              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-400 text-[#071a2d] shadow-lg shadow-emerald-950/20">
                 <LockKeyhole size={24} />
               </div>
 
               <div>
-                <div className="text-2xl font-black">
+                <div className="text-2xl font-extrabold tracking-tight">
                   SmartPark <span className="text-emerald-400">AI</span>
                 </div>
 
-                <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                <div className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
                   Smart parking. Smarter journeys.
                 </div>
               </div>
             </div>
 
-            <h1 className="mt-12 text-4xl font-black leading-tight">
-              Recover your account securely.
-            </h1>
+            <div className="mt-16">
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">
+                Account recovery
+              </div>
 
-            <p className="mt-5 text-lg leading-8 text-slate-300">
-              Enter your registered email address and we will send you a secure
-              link to create a new password.
-            </p>
+              <h1 className="mt-4 text-4xl font-black leading-[1.08] xl:text-5xl">
+                Get back to
+                <br />
+                <span className="text-emerald-400">parking smarter.</span>
+              </h1>
 
-            <div className="mt-10 space-y-4">
-              <div className="flex items-center gap-3 text-sm text-slate-300">
+              <p className="mt-5 max-w-lg text-base leading-7 text-slate-300">
+                Forgot your password? No problem. We’ll help you securely regain
+                access to your SmartPark AI account.
+              </p>
+            </div>
+
+            <div className="mt-9 space-y-3">
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-slate-300">
                 <CheckCircle2 size={18} className="text-emerald-400" />
                 Secure password-reset link
               </div>
 
-              <div className="flex items-center gap-3 text-sm text-slate-300">
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-slate-300">
                 <CheckCircle2 size={18} className="text-emerald-400" />
                 Link expires after one hour
               </div>
 
-              <div className="flex items-center gap-3 text-sm text-slate-300">
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-slate-300">
                 <CheckCircle2 size={18} className="text-emerald-400" />
                 Existing sessions are invalidated
               </div>
+            </div>
+
+            <div className="mt-10 flex items-center gap-3 text-xs text-slate-500">
+              <span className="h-px w-10 bg-white/10" />
+              Secure access to your SmartPark account
             </div>
           </div>
         </div>
@@ -116,45 +129,50 @@ export default function ForgotPassword() {
             FORM
         ================================================== */}
 
-        <div className="flex items-center justify-center bg-slate-50 px-5 py-10">
-          <div className="w-full max-w-md">
-            <div className="mb-8 lg:hidden">
+        <div className="flex items-center justify-center bg-slate-50 px-5 py-7 sm:px-8 sm:py-8">
+          <div className="w-full max-w-[440px]">
+            <div className="mb-6 lg:hidden">
               <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-600 text-white">
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-600 text-white shadow-sm">
                   <LockKeyhole size={21} />
                 </div>
 
-                <div className="text-xl font-black text-slate-900">
+                <div className="text-xl font-extrabold tracking-tight text-slate-900">
                   SmartPark <span className="text-emerald-600">AI</span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-xl sm:p-9">
+            <div className="rounded-[1.75rem] border border-slate-200/90 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.10)] sm:p-8">
               {!success ? (
                 <>
-                  <div className="mb-8">
-                    <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
+                  <div className="mb-6">
+                    <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
                       <Mail size={25} />
                     </div>
 
-                    <h2 className="text-3xl font-black text-slate-900">
+                    <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-500">
+                      <LockKeyhole size={13} className="text-emerald-600" />
+                      Secure password recovery
+                    </div>
+
+                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-950">
                       Forgot password?
                     </h2>
 
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Enter your email address and we will send you a secure
+                      Enter your email address and we’ll send you a secure
                       password-reset link.
                     </p>
                   </div>
 
                   {error && (
-                    <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+                    <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-5 font-medium text-rose-700">
                       {error}
                     </div>
                   )}
 
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                  <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                       <label
                         htmlFor="email"
@@ -177,7 +195,7 @@ export default function ForgotPassword() {
                           placeholder="you@example.com"
                           autoComplete="email"
                           disabled={loading}
-                          className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:bg-slate-100"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50/40 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 disabled:bg-slate-100"
                         />
                       </div>
                     </div>
@@ -185,21 +203,30 @@ export default function ForgotPassword() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-900/10 transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                     >
                       {loading ? "Sending..." : "Send Reset Link"}
 
                       {!loading && <ArrowRight size={17} />}
                     </button>
                   </form>
+
+                  <div className="mt-5 flex items-center justify-center gap-2 text-[11px] font-medium text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Your account information remains secure
+                  </div>
                 </>
               ) : (
                 <div className="text-center">
-                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60">
                     <CheckCircle2 size={31} />
                   </div>
 
-                  <h2 className="mt-6 text-2xl font-black text-slate-900">
+                  <div className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-emerald-600">
+                    Reset link sent
+                  </div>
+
+                  <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950">
                     Check your email
                   </h2>
 
@@ -214,7 +241,7 @@ export default function ForgotPassword() {
 
                   <Link
                     to="/login"
-                    className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+                    className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/30 hover:text-emerald-700"
                   >
                     <ArrowLeft size={16} />
                     Back to Login
@@ -224,7 +251,7 @@ export default function ForgotPassword() {
             </div>
 
             {!success && (
-              <div className="mt-6 text-center">
+              <div className="mt-5 text-center">
                 <Link
                   to="/login"
                   className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-emerald-700"

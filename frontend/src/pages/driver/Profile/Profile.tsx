@@ -479,7 +479,7 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <div>
           <div className="h-8 w-40 animate-pulse rounded bg-slate-200" />
           <div className="mt-2 h-4 w-80 animate-pulse rounded bg-slate-200" />
@@ -499,19 +499,19 @@ export default function Profile() {
 
   if (error && !user) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             Profile
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            View your SmartPark account information.
+            View your account information.
           </p>
         </div>
 
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
-          <p className="font-extrabold">Unable to load your profile</p>
+          <p className="font-semibold">Unable to load your profile</p>
 
           <p className="mt-1">{error}</p>
         </div>
@@ -526,7 +526,7 @@ export default function Profile() {
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* ====================================================
           HEADER
       ==================================================== */}
@@ -539,12 +539,13 @@ export default function Profile() {
             </div>
 
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
                 My Profile
               </h1>
 
               <p className="mt-1 text-sm text-slate-500">
-                View your SmartPark account information and membership details.
+                Manage your personal information, profile photo and account
+                verification.
               </p>
             </div>
           </div>
@@ -553,7 +554,7 @@ export default function Profile() {
             <button
               type="button"
               onClick={startEditing}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md"
             >
               <User size={16} />
               Edit Profile
@@ -570,7 +571,7 @@ export default function Profile() {
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
           <div className="flex items-center gap-2">
             <CheckCircle2 size={18} />
-            <p className="font-bold">{saveSuccess}</p>
+            <p className="font-medium">{saveSuccess}</p>
           </div>
         </div>
       )}
@@ -585,7 +586,7 @@ export default function Profile() {
             <X size={18} className="mt-0.5 shrink-0" />
 
             <div>
-              <p className="font-extrabold">Unable to update your profile</p>
+              <p className="font-semibold">Unable to update your profile</p>
 
               <p className="mt-1">{saveError}</p>
             </div>
@@ -602,7 +603,7 @@ export default function Profile() {
             PROFILE CARD
         ================================================== */}
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col items-center text-center">
             {/* ==================================================
                 PROFILE PICTURE
@@ -613,10 +614,10 @@ export default function Profile() {
                 <img
                   src={user.profile_picture_url}
                   alt={`${fullName}'s profile`}
-                  className="h-28 w-28 rounded-full object-cover ring-8 ring-slate-100"
+                  className="h-24 w-24 rounded-full object-cover ring-8 ring-slate-100"
                 />
               ) : (
-                <div className="grid h-28 w-28 place-items-center rounded-full bg-slate-900 text-2xl font-extrabold text-white ring-8 ring-slate-100">
+                <div className="grid h-24 w-24 place-items-center rounded-full bg-slate-900 text-xl font-semibold text-white ring-8 ring-slate-100">
                   {initials || "U"}
                 </div>
               )}
@@ -649,7 +650,7 @@ export default function Profile() {
                     disabled={
                       saving || profilePictureSaving || verificationSending
                     }
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Camera size={16} />
                     {profilePictureSaving
@@ -666,7 +667,7 @@ export default function Profile() {
                       disabled={
                         saving || profilePictureSaving || verificationSending
                       }
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-extrabold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 size={16} />
                       Remove Photo
@@ -686,20 +687,20 @@ export default function Profile() {
               </div>
             )}
 
-            <h2 className="mt-5 text-xl font-extrabold text-slate-900">
+            <h2 className="mt-5 text-lg font-semibold text-slate-900">
               {fullName}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">{user?.email ?? "—"}</p>
 
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
                 <ShieldCheck size={14} />
                 {formatRole(user?.role)}
               </span>
 
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
                   user?.is_active
                     ? "bg-blue-50 text-blue-700"
                     : "bg-rose-50 text-rose-700"
@@ -713,10 +714,10 @@ export default function Profile() {
 
           <div className="mt-7 border-t border-slate-100 pt-5">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-slate-500">Verification</span>
+              <span className="text-sm text-slate-500">Email Verification:</span>
 
               <span
-                className={`text-sm font-extrabold ${
+                className={`text-sm font-semibold ${
                   user?.is_verified ? "text-emerald-600" : "text-amber-600"
                 }`}
               >
@@ -734,13 +735,13 @@ export default function Profile() {
                     />
 
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-extrabold text-amber-900">
+                      <p className="text-sm font-semibold text-amber-900">
                         Verify your email address
                       </p>
 
                       <p className="mt-1 text-xs leading-5 text-amber-800">
-                        We will send a secure verification link to{" "}
-                        <span className="font-bold">
+                        We'll send a secure verification link to{" "}
+                        <span className="font-medium">
                           {user?.email ?? "your email address"}
                         </span>
                         .
@@ -750,7 +751,7 @@ export default function Profile() {
                         type="button"
                         onClick={() => void handleResendVerification()}
                         disabled={verificationSending}
-                        className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-xs font-extrabold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Mail size={14} />
                         {verificationSending
@@ -770,9 +771,9 @@ export default function Profile() {
             )}
 
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm text-slate-500">Member since</span>
+              <span className="text-sm text-slate-500">Member Since:</span>
 
-              <span className="text-sm font-extrabold text-slate-800">
+              <span className="text-sm font-semibold text-slate-800">
                 {formatDate(user?.created_at)}
               </span>
             </div>
@@ -783,18 +784,18 @@ export default function Profile() {
             PERSONAL INFORMATION
         ================================================== */}
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:col-span-2">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
-              Personal Information
+            <p className="text-xs font-medium uppercase tracking-widest text-emerald-600">
+              Personal information
             </p>
 
-            <h2 className="mt-1 text-lg font-extrabold text-slate-900">
-              Account details
+            <h2 className="mt-1 text-lg font-semibold text-slate-900">
+              Personal Details
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Information associated with your authenticated SmartPark account.
+              Your personal information linked to this account.
             </p>
           </div>
 
@@ -810,7 +811,7 @@ export default function Profile() {
                 <div>
                   <label
                     htmlFor="profile-first-name"
-                    className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500"
+                    className="mb-2 block text-xs font-medium uppercase tracking-widest text-slate-500"
                   >
                     First name
                   </label>
@@ -840,7 +841,7 @@ export default function Profile() {
                 <div>
                   <label
                     htmlFor="profile-last-name"
-                    className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500"
+                    className="mb-2 block text-xs font-medium uppercase tracking-widest text-slate-500"
                   >
                     Last name
                   </label>
@@ -870,7 +871,7 @@ export default function Profile() {
                 <div>
                   <label
                     htmlFor="profile-email"
-                    className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500"
+                    className="mb-2 block text-xs font-medium uppercase tracking-widest text-slate-500"
                   >
                     Email address
                   </label>
@@ -891,7 +892,7 @@ export default function Profile() {
                   </div>
 
                   <p className="mt-1.5 text-xs text-slate-400">
-                    Email address cannot be changed here.
+                    Your email address cannot be changed here.
                   </p>
                 </div>
 
@@ -900,7 +901,7 @@ export default function Profile() {
                 <div>
                   <label
                     htmlFor="profile-phone"
-                    className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500"
+                    className="mb-2 block text-xs font-medium uppercase tracking-widest text-slate-500"
                   >
                     Phone number
                   </label>
@@ -935,7 +936,7 @@ export default function Profile() {
                   type="button"
                   onClick={cancelEditing}
                   disabled={saving || profilePictureSaving}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <X size={16} />
                   Cancel
@@ -945,11 +946,11 @@ export default function Profile() {
                   type="button"
                   onClick={() => void saveProfile()}
                   disabled={saving || profilePictureSaving}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Save size={16} />
 
-                  {saving ? "Saving..." : "Save Changes"}
+                  {saving ? "Saving..." : "Save changes"}
                 </button>
               </div>
             </>
@@ -995,11 +996,11 @@ export default function Profile() {
               />
 
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
                   Account created
                 </p>
 
-                <p className="mt-1 text-sm font-bold text-slate-700">
+                <p className="mt-1 text-sm font-medium text-slate-700">
                   {formatDate(user?.created_at)}
                 </p>
               </div>
@@ -1012,7 +1013,7 @@ export default function Profile() {
           ACCOUNT STATUS
       ==================================================== */}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
@@ -1020,20 +1021,20 @@ export default function Profile() {
             </div>
 
             <div>
-              <h2 className="text-lg font-extrabold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900">
                 Account & Security
               </h2>
 
               <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                Manage your notification, display and account-security
-                preferences from Settings.
+                Manage your notification, display and security preferences from
+                Settings.
               </p>
             </div>
           </div>
 
           <Link
             to="/settings"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
           >
             Open Settings
             <ArrowRight size={16} />
@@ -1050,12 +1051,12 @@ export default function Profile() {
           <User size={19} className="mt-0.5 shrink-0 text-blue-600" />
 
           <div>
-            <p className="font-extrabold text-blue-900">Profile information</p>
+            <p className="font-semibold text-blue-900">Profile Information</p>
 
             <p className="mt-1 text-sm leading-6 text-blue-800">
               Your profile information is retrieved from the authenticated
               SmartPark account. You can update your name and phone number using
-              the Edit Profile option above.
+              the Edit profile option above.
             </p>
           </div>
         </div>
@@ -1078,16 +1079,16 @@ function ProfileField({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
       <div className="flex items-center gap-2 text-slate-400">
         {icon}
 
-        <span className="text-xs font-bold uppercase tracking-widest">
+        <span className="text-xs font-medium uppercase tracking-widest">
           {label}
         </span>
       </div>
 
-      <p className="mt-2 break-words text-sm font-extrabold text-slate-800">
+      <p className="mt-2 break-words text-sm font-semibold text-slate-800">
         {value}
       </p>
     </div>

@@ -12,7 +12,7 @@ import {
 
 import { useAuth } from "./AuthContext";
 
-import { getDefaultRoute } from "./role";
+import { getDefaultRoute } from "./Role";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -92,28 +92,28 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#071a2d] p-4 grid place-items-center">
-      <div className="grid w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-2xl lg:grid-cols-2">
+    <div className="min-h-screen bg-[#071a2d] p-4 sm:p-6 lg:p-8 grid place-items-center">
+      <div className="grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] lg:grid-cols-[1.02fr_0.98fr]">
         {/* ==================================================
                     BRAND PANEL
                 ================================================== */}
 
-        <div className="hidden min-h-[680px] bg-[#0a2740] p-12 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="hidden min-h-[680px] bg-[#071f35] p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-12">
           <div>
-            <div className="flex items-center gap-3 font-extrabold text-xl">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400 text-[#071a2d]">
+            <div className="flex items-center gap-3 text-xl font-extrabold tracking-tight">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400 text-[#071a2d] shadow-lg shadow-emerald-950/20">
                 <ParkingCircle />
               </span>
               SmartPark
               <span className="text-emerald-400">AI</span>
             </div>
 
-            <div className="mt-28 max-w-lg">
-              <div className="text-emerald-300 text-xs font-bold uppercase tracking-[.2em]">
+            <div className="mt-24 max-w-xl">
+              <div className="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">
                 AI-powered parking intelligence
               </div>
 
-              <h1 className="mt-4 text-5xl font-black leading-tight">
+              <h1 className="mt-4 text-4xl font-black leading-[1.08] xl:text-5xl">
                 Find a space.
                 <br />
                 Plan ahead.
@@ -121,9 +121,9 @@ export default function Login() {
                 <span className="text-emerald-400">Park smarter.</span>
               </h1>
 
-              <p className="mt-6 leading-7 text-slate-300">
+              <p className="mt-6 max-w-lg text-sm leading-7 text-slate-300 xl:text-base">
                 Real-time availability, reservations and predictive occupancy
-                intelligence for Nairobi.
+                intelligence for smart cities.
               </p>
             </div>
           </div>
@@ -133,19 +133,19 @@ export default function Login() {
               ================================================== */}
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
               <b className="text-2xl">42</b>
 
               <div className="text-xs text-slate-400 mt-1">Facilities</div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
               <b className="text-2xl">2,840</b>
 
               <div className="text-xs text-slate-400 mt-1">Spaces</div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
               <b className="text-2xl">AI</b>
 
               <div className="text-xs text-slate-400 mt-1">Prediction</div>
@@ -157,17 +157,17 @@ export default function Login() {
                     LOGIN PANEL
             ================================================== */}
 
-        <div className="p-8 sm:p-14 grid place-items-center">
-          <div className="w-full max-w-md">
+        <div className="grid place-items-center p-7 sm:p-12 lg:p-14">
+          <div className="w-full max-w-[430px]">
             <div className="text-xs font-bold uppercase tracking-[.2em] text-emerald-600">
               SmartPark AI
             </div>
 
-            <h2 className="mt-2 text-3xl font-black text-slate-900">
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
               Welcome Back!
             </h2>
 
-            <p className="mt-3 text-sm leading-6 text-slate-500">
+            <p className="mt-2 text-sm leading-6 text-slate-500">
               Sign in to access your SmartPark AI account.
             </p>
 
@@ -176,7 +176,7 @@ export default function Login() {
                 ================================================== */}
 
             {error && (
-              <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm leading-5 text-rose-700">
                 {error}
               </div>
             )}
@@ -185,7 +185,7 @@ export default function Login() {
                             FORM
                         ================================================== */}
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit} className="mt-7 space-y-5">
               {/* EMAIL */}
 
               <div>
@@ -210,7 +210,7 @@ export default function Login() {
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="you@example.com"
                     disabled={isSubmitting}
-                    className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/40 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-100"
                   />
                 </div>
               </div>
@@ -241,11 +241,11 @@ export default function Login() {
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Enter your password"
                     disabled={isSubmitting}
-                    className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/40 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-100"
                   />
                 </div>
 
-                <div className="mt-2 flex justify-end">
+                <div className="mt-2.5 flex justify-end">
                   <Link
                     to="/forgot-password"
                     className="text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
@@ -262,7 +262,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-[#071a2d] px-5 py-3.5 font-bold text-white transition hover:bg-[#0a2740] disabled:cursor-not-allowed disabled:opacity-60"
+                className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-[#071a2d] px-5 py-3.5 font-bold text-white shadow-lg shadow-slate-900/10 transition hover:-translate-y-0.5 hover:bg-[#0a2740] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 {isSubmitting ? (
                   <>
@@ -281,11 +281,16 @@ export default function Login() {
               </button>
             </form>
 
+            <div className="mt-5 flex items-center justify-center gap-2 text-[11px] font-medium text-slate-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Secure access to your SmartPark account
+            </div>
+
             {/* ==================================================
                             REGISTRATION
                 ================================================== */}
 
-            <div className="mt-6 text-center">
+            <div className="mt-7 border-t border-slate-100 pt-6 text-center">
               <p className="text-sm text-slate-500">
                 Don't have an account?{" "}
                 <Link
@@ -301,7 +306,7 @@ export default function Login() {
                             FOOTER
                         ================================================== */}
 
-            <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400">
+            <div className="mt-7 flex items-center justify-center gap-2 text-xs text-slate-400">
               <CarFront size={14} />
               Smart parking. Smarter decisions.
             </div>

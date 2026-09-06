@@ -566,10 +566,10 @@ export default function CreateReservation() {
       return [];
     }
 
-    return facilityBays.filter((bay) => bay.zone_id === parkingZoneId);
+    return facilityBays.filter((space) => space.zone_id === parkingZoneId);
   }, [facilityBays, parkingZoneId]);
 
-  // Clear selected bay when facility changes.
+  // Clear selected space when facility changes.
 
   useEffect(() => {
     setParkingZoneId("");
@@ -612,7 +612,7 @@ export default function CreateReservation() {
   );
 
   const selectedBay = useMemo(
-    () => bays.find((bay) => bay.id === parkingBayId) ?? null,
+    () => bays.find((space) => space.id === parkingBayId) ?? null,
     [bays, parkingBayId],
   );
 
@@ -709,10 +709,10 @@ export default function CreateReservation() {
   }, [reservedFrom, reservedUntil, periodValidation]);
 
   // ========================================================
-  // Existing active reservations for selected bay
+  // Existing active reservations for selected space
   // ========================================================
 
-  const [bayReservations, setBayReservations] = useState<
+  const [spaceReservations, setBayReservations] = useState<
     ActiveBayReservation[]
   >([]);
 
@@ -733,14 +733,14 @@ export default function CreateReservation() {
         const response = await api.get<{
           items: ActiveBayReservation[];
           total: number;
-        }>(`/parking-reservations/parking-bay/${parkingBayId}/active`);
+        }>(`/parking-reservations/parking-space/${parkingBayId}/active`);
 
         if (!cancelled) {
           setBayReservations(response.data.items);
         }
       } catch (err) {
         console.error(
-          "[SmartPark Create Reservation] Failed to check bay availability:",
+          "[SmartPark Create Reservation] Failed to check space availability:",
           err,
         );
 
@@ -761,7 +761,7 @@ export default function CreateReservation() {
     };
   }, [parkingBayId, reservedFrom, reservedUntil, periodValidation]);
 
-  const bayConflict = useMemo(() => {
+  const spaceConflict = useMemo(() => {
     if (periodValidation || !reservedFrom || !reservedUntil) {
       return false;
     }
@@ -769,10 +769,10 @@ export default function CreateReservation() {
     const from = new Date(reservedFrom);
     const until = new Date(reservedUntil);
 
-    return bayReservations.some((reservation) =>
+    return spaceReservations.some((reservation) =>
       isReservationActiveForPeriod(reservation, from, until),
     );
-  }, [bayReservations, reservedFrom, reservedUntil, periodValidation]);
+  }, [spaceReservations, reservedFrom, reservedUntil, periodValidation]);
 
   // ========================================================
   // Step validation
@@ -792,7 +792,7 @@ export default function CreateReservation() {
     }
 
     if (parkingBayId === "") {
-      return "Please select a parking bay.";
+      return "Please select a parking space.";
     }
 
     if (periodValidation) {
@@ -800,11 +800,11 @@ export default function CreateReservation() {
     }
 
     if (checkingBayAvailability) {
-      return "Please wait while we check parking bay availability.";
+      return "Please wait while we check parking space availability.";
     }
 
-    if (bayConflict) {
-      return "This parking bay is already reserved for part of the selected period. Please choose another bay or time.";
+    if (spaceConflict) {
+      return "This parking space is already booked for part of the selected time. Please choose another space or time.";
     }
 
     return null;
@@ -813,7 +813,7 @@ export default function CreateReservation() {
   const validateStepThree = (): string | null => {
     if (vehicleMode === "REGISTERED") {
       if (vehicleId === "") {
-        return "Please select a registered vehicle or choose Borrowed / Unregistered Vehicle.";
+        return "Please select a registered vehicle or choose Borrowed or Unregistered Vehicle.";
       }
 
       return null;
@@ -1022,7 +1022,7 @@ export default function CreateReservation() {
       markReservationConfirmed(response.data);
 
       /*
-       * The backend payment service automatically confirms a
+       * The payment service automatically confirms a
        * reservation when the reservation payment succeeds.
        *
        * We therefore deliberately DO NOT call:
@@ -1032,8 +1032,8 @@ export default function CreateReservation() {
        * here.
        *
        * For M-PESA, the POST normally returns PENDING because the
-       * STK Push is asynchronous. The payment status polling effect
-       * below re-reads the payment from the backend until the
+       * M-PESA confirmation can take a moment. The payment status polling effect
+       * below re-reads the payment from the payment service until the
        * Safaricom callback changes it to SUCCESSFUL/FAILED/CANCELLED.
        */
     } catch (err: any) {
@@ -1174,7 +1174,7 @@ export default function CreateReservation() {
         <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <div className="flex items-center justify-center gap-3 py-16 text-slate-500">
             <RefreshCw className="animate-spin" size={20} />
-            Loading reservation options...
+            Getting your booking options ready...
           </div>
         </div>
       </div>
@@ -1200,7 +1200,7 @@ export default function CreateReservation() {
               return (
                 <div key={label} className="text-center">
                   <div
-                    className={`mx-auto grid h-9 w-9 place-items-center rounded-full text-xs font-black ${
+                    className={`mx-auto grid h-9 w-9 place-items-center rounded-full text-xs font-semibold ${
                       completed
                         ? "bg-emerald-600 text-white"
                         : active
@@ -1212,7 +1212,7 @@ export default function CreateReservation() {
                   </div>
 
                   <p
-                    className={`mt-2 hidden text-xs font-bold sm:block ${
+                    className={`mt-2 hidden text-xs font-medium sm:block ${
                       active ? "text-emerald-700" : "text-slate-500"
                     }`}
                   >
@@ -1234,7 +1234,7 @@ export default function CreateReservation() {
           <AlertCircle className="mt-0.5 shrink-0 text-rose-600" size={20} />
 
           <div>
-            <p className="font-bold">Something needs your attention</p>
+            <p className="font-medium">Something needs your attention</p>
 
             <p className="mt-1 text-sm">{error}</p>
           </div>
@@ -1251,7 +1251,7 @@ export default function CreateReservation() {
             <ShieldCheck className="mt-0.5 shrink-0 text-amber-600" size={22} />
 
             <div className="min-w-0 flex-1">
-              <p className="font-extrabold">Reservation not yet confirmed</p>
+              <p className="font-semibold">Reservation not yet confirmed</p>
               <p className="mt-1 text-sm leading-5 text-slate-600">
                 Your reservation is awaiting payment. It will only be confirmed
                 after successful payment.
@@ -1260,7 +1260,7 @@ export default function CreateReservation() {
               <button
                 type="button"
                 onClick={handlePayLaterAcknowledged}
-                className="mt-4 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+                className="mt-4 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
               >
                 Understood
               </button>
@@ -1281,8 +1281,8 @@ export default function CreateReservation() {
 
           {step === 1 && (
             <StepContainer
-              title="Select a Parking Facility"
-              description="Select where you would like to park."
+              title="Choose a Parking Facility"
+              description="Choose where you would like to park."
             >
               <div className="mb-5">
                 <label className="relative block">
@@ -1297,7 +1297,7 @@ export default function CreateReservation() {
                     type="search"
                     value={facilitySearch}
                     onChange={(event) => setFacilitySearch(event.target.value)}
-                    placeholder="Search by facility name, code or location..."
+                    placeholder="Search by parking location, area or city..."
                     className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                   />
                 </label>
@@ -1310,14 +1310,14 @@ export default function CreateReservation() {
                             ? "facility"
                             : "facilities"
                         } found`
-                      : `${facilities.length} facilities available`}
+                      : `${facilities.length} parking locations available`}
                   </p>
 
                   {facilitySearch && (
                     <button
                       type="button"
                       onClick={() => setFacilitySearch("")}
-                      className="text-xs font-bold text-emerald-700 hover:text-emerald-800"
+                      className="text-xs font-medium text-emerald-700 hover:text-emerald-800"
                     >
                       Clear search
                     </button>
@@ -1356,16 +1356,14 @@ export default function CreateReservation() {
 
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="font-extrabold">
-                                {facility.name}
-                              </h3>
+                              <h3 className="font-semibold">{facility.name}</h3>
 
-                              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
                                 {facility.code}
                               </span>
                             </div>
 
-                            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-400">
+                            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
                               {facility.facility_type}
                             </p>
 
@@ -1376,7 +1374,7 @@ export default function CreateReservation() {
 
                             {userLocation &&
                               getFacilityCoordinates(facility) && (
-                                <p className="mt-1 text-xs font-bold text-emerald-600">
+                                <p className="mt-1 text-xs font-medium text-emerald-600">
                                   {formatDistance(
                                     calculateDistanceKm(
                                       userLocation.latitude,
@@ -1403,19 +1401,19 @@ export default function CreateReservation() {
                       {selected && (
                         <div className="mt-5 flex items-center justify-between gap-4 border-t border-emerald-200 pt-4">
                           <div>
-                            <p className="text-sm font-extrabold text-emerald-900">
-                              Facility selected
+                            <p className="text-sm font-semibold text-emerald-900">
+                              Parking location selected
                             </p>
                             <p className="mt-0.5 text-xs text-emerald-700">
-                              Continue to choose your time, zone and parking
-                              bay.
+                              Continue to choose your time, parking area and
+                              space.
                             </p>
                           </div>
 
                           <button
                             type="button"
                             onClick={nextStep}
-                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700"
                           >
                             Continue
                             <ArrowRight size={16} />
@@ -1441,8 +1439,8 @@ export default function CreateReservation() {
 
           {step === 2 && (
             <StepContainer
-              title="Choose your time, parking zone and bay"
-              description="Select the reservation period, parking zone or level, and an available bay."
+              title="Choose your time, parking zone and space"
+              description="Choose when you want to park, then select an available space."
             >
               <div className="grid gap-5 md:grid-cols-2">
                 <Field label="Reserved from">
@@ -1474,10 +1472,10 @@ export default function CreateReservation() {
                     </div>
 
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[.14em] text-emerald-700">
+                      <p className="text-xs font-medium uppercase tracking-[.14em] text-emerald-700">
                         Duration
                       </p>
-                      <p className="mt-0.5 text-base font-extrabold text-slate-900">
+                      <p className="mt-0.5 text-base font-semibold text-slate-900">
                         {reservationDuration}
                       </p>
                     </div>
@@ -1495,11 +1493,11 @@ export default function CreateReservation() {
 
               <div className="mt-8">
                 <div className="mb-3">
-                  <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-600">
+                  <p className="text-xs font-medium uppercase tracking-[.16em] text-emerald-600">
                     Step 2A
                   </p>
-                  <h3 className="mt-1 text-lg font-extrabold">
-                    Select a parking zone / level
+                  <h3 className="mt-1 text-lg font-semibold">
+                    Choose a parking area / level
                   </h3>
                   <p className="mt-1 text-sm text-slate-500">
                     {selectedFacility?.name ?? "Selected facility"} · Choose the
@@ -1512,10 +1510,10 @@ export default function CreateReservation() {
                     {facilityZones.map((zone) => {
                       const selected = zone.id === parkingZoneId;
                       const availableBays = bays.filter(
-                        (bay) =>
-                          bay.zone_id === zone.id &&
-                          bay.is_active !== false &&
-                          bay.is_reservable !== false,
+                        (space) =>
+                          space.zone_id === zone.id &&
+                          space.is_active !== false &&
+                          space.is_reservable !== false,
                       ).length;
 
                       return (
@@ -1545,19 +1543,20 @@ export default function CreateReservation() {
 
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <h4 className="font-extrabold">{zone.name}</h4>
-                                <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                <h4 className="font-semibold">{zone.name}</h4>
+                                <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
                                   {zone.code}
                                 </span>
                               </div>
 
-                              <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-400">
+                              <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
                                 {zone.zone_type.replace(/_/g, " ")}
                               </p>
 
                               <p className="mt-2 text-xs font-semibold text-slate-500">
                                 {availableBays}{" "}
-                                {availableBays === 1 ? "bay" : "bays"} available
+                                {availableBays === 1 ? "space" : "spaces"}{" "}
+                                available
                               </p>
                             </div>
 
@@ -1573,23 +1572,23 @@ export default function CreateReservation() {
                     })}
                   </div>
                 ) : (
-                  <EmptyState message="No parking zones or levels are configured for this facility." />
+                  <EmptyState message="No parking areas or levels are currently available at this location." />
                 )}
               </div>
 
               <div className="mt-8">
                 <div className="mb-3 flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-600">
+                    <p className="text-xs font-medium uppercase tracking-[.16em] text-emerald-600">
                       Step 2B
                     </p>
-                    <h3 className="mt-1 text-lg font-extrabold">
-                      Choose an available parking bay
+                    <h3 className="mt-1 text-lg font-semibold">
+                      Choose an available parking space
                     </h3>
                     <p className="mt-1 text-sm text-slate-500">
                       {selectedZone
                         ? `${selectedZone.name} · ${selectedZone.code}`
-                        : "Select a parking zone / level first."}
+                        : "Choose a parking area / level first."}
                     </p>
                   </div>
 
@@ -1608,21 +1607,21 @@ export default function CreateReservation() {
                       size={30}
                     />
                     <p className="mt-3 text-sm font-semibold text-slate-600">
-                      Select a parking zone / level above to see its bays.
+                      Choose a parking area / level above to see its spaces.
                     </p>
                   </div>
                 ) : zoneBays.length > 0 ? (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {zoneBays.map((bay) => {
-                      const selected = bay.id === parkingBayId;
+                    {zoneBays.map((space) => {
+                      const selected = space.id === parkingBayId;
                       const occupiedByReservation =
-                        bay.id === parkingBayId && bayConflict;
+                        space.id === parkingBayId && spaceConflict;
 
                       return (
                         <button
-                          key={bay.id}
+                          key={space.id}
                           type="button"
-                          onClick={() => setParkingBayId(bay.id)}
+                          onClick={() => setParkingBayId(space.id)}
                           className={`rounded-2xl border p-4 text-left transition ${
                             selected
                               ? occupiedByReservation
@@ -1646,11 +1645,11 @@ export default function CreateReservation() {
                               </div>
 
                               <div>
-                                <p className="font-extrabold">
-                                  {bay.bay_number}
+                                <p className="font-semibold">
+                                  {space.space_number}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                  {bay.code} · Available
+                                  {space.code} · Available
                                 </p>
                               </div>
                             </div>
@@ -1671,14 +1670,14 @@ export default function CreateReservation() {
                     })}
                   </div>
                 ) : (
-                  <EmptyState message="No active reservable parking bays are available in this zone." />
+                  <EmptyState message="No parking spaces are currently available in this area." />
                 )}
               </div>
 
-              {bayConflict && (
+              {spaceConflict && (
                 <InlineWarning>
-                  This bay is already reserved during part of your selected
-                  period. Please choose another bay or adjust the time.
+                  This parking space is already booked for part of your selected
+                  time. Please choose another space or adjust the time.
                 </InlineWarning>
               )}
 
@@ -1729,7 +1728,7 @@ export default function CreateReservation() {
                       <Car size={21} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-extrabold">My registered vehicle</h3>
+                      <h3 className="font-semibold">My registered vehicle</h3>
                       <p className="mt-1 text-xs leading-5 text-slate-500">
                         Choose a vehicle already registered to your SmartPark
                         account.
@@ -1767,8 +1766,8 @@ export default function CreateReservation() {
                       <Car size={21} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-extrabold">
-                        Borrowed / Unregistered Vehicle
+                      <h3 className="font-semibold">
+                        Borrowed or Unregistered Vehicle
                       </h3>
                       <p className="mt-1 text-xs leading-5 text-slate-500">
                         Use a borrowed, hired, company, visitor or other vehicle
@@ -1815,12 +1814,12 @@ export default function CreateReservation() {
 
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-extrabold">
+                                <h3 className="font-semibold">
                                   {vehicle.registration_number}
                                 </h3>
 
                                 {vehicle.is_default && (
-                                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-emerald-700">
                                     Default
                                   </span>
                                 )}
@@ -1830,7 +1829,7 @@ export default function CreateReservation() {
                                 {vehicle.make} {vehicle.model}
                               </p>
 
-                              <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-400">
+                              <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
                                 {formatVehicleType(vehicle.vehicle_type)}
                                 {vehicle.colour ? ` · ${vehicle.colour}` : ""}
                               </p>
@@ -1852,11 +1851,11 @@ export default function CreateReservation() {
                     <div className="flex items-start gap-3">
                       <Car className="mt-0.5 text-amber-600" size={21} />
                       <div>
-                        <h3 className="font-extrabold text-amber-900">
+                        <h3 className="font-semibold text-amber-900">
                           No registered vehicle
                         </h3>
                         <p className="mt-1 text-sm text-amber-800">
-                          You can switch to Borrowed / Unregistered Vehicle
+                          You can switch to Borrowed or Unregistered Vehicle
                           above and continue without registering the vehicle.
                         </p>
                       </div>
@@ -1866,8 +1865,8 @@ export default function CreateReservation() {
               ) : (
                 <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
                   <div className="mb-5">
-                    <h3 className="font-extrabold text-slate-900">
-                      Borrowed / Unregistered Vehicle Details
+                    <h3 className="font-semibold text-slate-900">
+                      Borrowed or Unregistered Vehicle Details
                     </h3>
                     <p className="mt-1 text-sm text-slate-500">
                       Enter the vehicle details exactly as they appear on the
@@ -1876,7 +1875,7 @@ export default function CreateReservation() {
                   </div>
 
                   <div className="grid gap-5 md:grid-cols-2">
-                    <Field label="Vehicle registration number">
+                    <Field label="Vehicle registration">
                       <input
                         type="text"
                         value={borrowedRegistration}
@@ -1892,7 +1891,7 @@ export default function CreateReservation() {
                       />
                     </Field>
 
-                    <Field label="Vehicle type">
+                    <Field label="Type of vehicle">
                       <select
                         value={borrowedVehicleType}
                         onChange={(event) =>
@@ -1952,8 +1951,8 @@ export default function CreateReservation() {
 
                 <ReviewRow
                   icon={<MapPin size={18} />}
-                  label="Parking bay"
-                  value={selectedBay?.bay_number ?? "Not selected"}
+                  label="Parking space"
+                  value={selectedBay?.space_number ?? "Not selected"}
                 />
 
                 <ReviewRow
@@ -1990,7 +1989,7 @@ export default function CreateReservation() {
               </div>
 
               <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
                   Important
                 </p>
 
@@ -2004,7 +2003,7 @@ export default function CreateReservation() {
                 <button
                   type="button"
                   onClick={previousStep}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-300"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
                 >
                   <ArrowLeft size={16} />
                   Back
@@ -2014,7 +2013,7 @@ export default function CreateReservation() {
                   type="button"
                   onClick={createReservation}
                   disabled={submittingReservation}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submittingReservation ? (
                     <>
@@ -2059,7 +2058,7 @@ export default function CreateReservation() {
                       />
 
                       <div>
-                        <h3 className="font-extrabold text-emerald-900">
+                        <h3 className="font-semibold text-emerald-900">
                           Reservation created
                         </h3>
 
@@ -2077,11 +2076,11 @@ export default function CreateReservation() {
                   <div className="mt-6 rounded-2xl bg-slate-50 p-6">
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
                           Amount payable
                         </p>
 
-                        <p className="mt-2 text-3xl font-black text-slate-900">
+                        <p className="mt-2 text-3xl font-semibold text-slate-900">
                           {formatMoney(
                             createdReservation.estimated_amount,
                             createdReservation.currency,
@@ -2094,7 +2093,7 @@ export default function CreateReservation() {
                   </div>
 
                   <div className="mt-6">
-                    <h3 className="font-extrabold">Select payment method</h3>
+                    <h3 className="font-semibold">Select payment method</h3>
 
                     <div className="mt-3 grid gap-3">
                       {PAYMENT_OPTIONS.map((option) => {
@@ -2137,7 +2136,7 @@ export default function CreateReservation() {
                               </div>
 
                               <div>
-                                <p className="font-extrabold">{option.label}</p>
+                                <p className="font-semibold">{option.label}</p>
 
                                 <p className="mt-1 text-xs text-slate-500">
                                   {option.description}
@@ -2159,7 +2158,7 @@ export default function CreateReservation() {
                     {paymentMethod === "MPESA" && (
                       <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
                         <div className="mb-4">
-                          <h4 className="font-extrabold text-slate-900">
+                          <h4 className="font-semibold text-slate-900">
                             M-PESA Payment
                           </h4>
                           <p className="mt-1 text-sm text-slate-600">
@@ -2210,7 +2209,7 @@ export default function CreateReservation() {
 
                         {useRegisteredMpesaPhone ? (
                           <p className="mt-2 text-xs text-slate-500">
-                            The STK Push will be sent to your registered
+                            A payment request will be sent to your registered
                             SmartPark phone number.
                           </p>
                         ) : (
@@ -2227,12 +2226,12 @@ export default function CreateReservation() {
                     type="button"
                     onClick={processPayment}
                     disabled={processingPayment}
-                    className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {processingPayment ? (
                       <>
                         <RefreshCw size={17} className="animate-spin" />
-                        Processing payment...
+                        Completing payment...
                       </>
                     ) : (
                       <>
@@ -2250,7 +2249,7 @@ export default function CreateReservation() {
                     type="button"
                     onClick={handlePayLater}
                     disabled={processingPayment || payLaterToastVisible}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-medium text-slate-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Clock3 size={17} />
                     Pay Later
@@ -2285,7 +2284,7 @@ export default function CreateReservation() {
                       )}
 
                       <div>
-                        <h3 className="text-lg font-extrabold">
+                        <h3 className="text-lg font-semibold">
                           {paymentSuccessful
                             ? "Payment successful"
                             : paymentPending
@@ -2317,7 +2316,7 @@ export default function CreateReservation() {
                       />
 
                       <DetailItem
-                        label="Transaction"
+                        label="Payment reference"
                         value={payment.transaction_number}
                       />
 
@@ -2331,7 +2330,7 @@ export default function CreateReservation() {
 
                       {payment.receipt_number && (
                         <DetailItem
-                          label="Receipt"
+                          label="Receipt number"
                           value={payment.receipt_number}
                         />
                       )}
@@ -2346,12 +2345,12 @@ export default function CreateReservation() {
                           size={18}
                         />
                         <div>
-                          <p className="text-sm font-extrabold text-amber-900">
+                          <p className="text-sm font-semibold text-amber-900">
                             Waiting for payment confirmation
                           </p>
                           <p className="mt-1 text-xs leading-5 text-amber-800">
-                            We are checking the payment status automatically.
-                            You do not need to refresh the page.
+                            We're checking your payment automatically. You do
+                            not need to refresh the page.
                           </p>
                         </div>
                       </div>
@@ -2363,7 +2362,7 @@ export default function CreateReservation() {
                       <button
                         type="button"
                         onClick={() => navigate("/reservations")}
-                        className="flex-1 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+                        className="flex-1 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white hover:bg-emerald-700"
                       >
                         View My Reservations
                       </button>
@@ -2374,7 +2373,7 @@ export default function CreateReservation() {
                           setPayment(null);
                           setError(null);
                         }}
-                        className="flex-1 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+                        className="flex-1 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white hover:bg-emerald-700"
                       >
                         Try Payment Again
                       </button>
@@ -2382,7 +2381,7 @@ export default function CreateReservation() {
 
                     <Link
                       to="/dashboard"
-                      className="flex-1 rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-700 hover:border-emerald-300"
+                      className="flex-1 rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-medium text-slate-700 hover:border-emerald-300"
                     >
                       Return to Dashboard
                     </Link>
@@ -2394,7 +2393,7 @@ export default function CreateReservation() {
                 <button
                   type="button"
                   onClick={() => setStep(4)}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-800"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
                 >
                   <ArrowLeft size={16} />
                   Back to review
@@ -2409,7 +2408,7 @@ export default function CreateReservation() {
         ================================================== */}
 
         <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <h2 className="font-extrabold">Reservation Summary</h2>
+          <h2 className="font-semibold">Reservation Summary</h2>
 
           <div className="mt-5 space-y-4">
             <SummaryItem
@@ -2427,8 +2426,8 @@ export default function CreateReservation() {
             />
 
             <SummaryItem
-              label="Parking bay"
-              value={selectedBay?.bay_number ?? "Not selected"}
+              label="Parking space"
+              value={selectedBay?.space_number ?? "Not selected"}
             />
 
             <SummaryItem
@@ -2461,11 +2460,11 @@ export default function CreateReservation() {
 
           {createdReservation && (
             <div className="mt-5 border-t border-slate-100 pt-5">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                Reservation amount
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Amount to pay
               </p>
 
-              <p className="mt-2 text-2xl font-black">
+              <p className="mt-2 text-2xl font-semibold">
                 {formatMoney(
                   createdReservation.estimated_amount,
                   createdReservation.currency,
@@ -2473,7 +2472,7 @@ export default function CreateReservation() {
               </p>
 
               <p className="mt-1 text-xs text-slate-500">
-                Calculated by the SmartPark AI pricing service.
+                Provided by SmartPark's pricing system.
               </p>
             </div>
           )}
@@ -2505,17 +2504,17 @@ function PageHeading() {
     <div>
       <Link
         to="/reservations"
-        className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-emerald-700"
+        className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-emerald-700"
       >
         <ArrowLeft size={16} />
         Back to Reservations
       </Link>
 
-      <div className="mt-4 text-xs font-bold uppercase tracking-[.2em] text-emerald-600">
+      <div className="mt-4 text-xs font-medium uppercase tracking-[.2em] text-emerald-600">
         SmartPark AI
       </div>
 
-      <h1 className="mt-2 text-3xl font-black tracking-tight">
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight">
         Create Reservation
       </h1>
 
@@ -2543,7 +2542,7 @@ function StepContainer({
   return (
     <>
       <div>
-        <h2 className="text-2xl font-black">{title}</h2>
+        <h2 className="text-2xl font-semibold">{title}</h2>
 
         <p className="mt-2 text-sm text-slate-500">{description}</p>
       </div>
@@ -2570,7 +2569,7 @@ function StepActions({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-300"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
         >
           <ArrowLeft size={16} />
           Back
@@ -2582,7 +2581,7 @@ function StepActions({
       <button
         type="button"
         onClick={onNext}
-        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white hover:bg-emerald-700"
       >
         Continue
         <ArrowRight size={16} />
@@ -2604,7 +2603,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-bold text-slate-700">
+      <span className="mb-2 block text-sm font-medium text-slate-700">
         {label}
       </span>
 
@@ -2645,11 +2644,11 @@ function ReviewRow({
       </div>
 
       <div className="min-w-0">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
           {label}
         </p>
 
-        <p className="mt-1 text-sm font-bold text-slate-800">{value}</p>
+        <p className="mt-1 text-sm font-medium text-slate-800">{value}</p>
       </div>
     </div>
   );
@@ -2662,11 +2661,11 @@ function ReviewRow({
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
         {label}
       </p>
 
-      <p className="mt-1 text-sm font-bold text-slate-700">{value}</p>
+      <p className="mt-1 text-sm font-medium text-slate-700">{value}</p>
     </div>
   );
 }
@@ -2678,11 +2677,11 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
         {label}
       </p>
 
-      <p className="mt-1 text-sm font-extrabold text-slate-800">{value}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
     </div>
   );
 }

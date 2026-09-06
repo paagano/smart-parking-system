@@ -839,7 +839,7 @@ export default function Notifications() {
           <div className="h-10 w-24 animate-pulse rounded-xl bg-slate-200" />
         </div>
 
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           {[1, 2, 3].map((item) => (
             <div
               key={item}
@@ -863,7 +863,7 @@ export default function Notifications() {
           HEADER
       ==================================================== */}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="flex items-center gap-3">
           <div
             className={`grid h-12 w-12 place-items-center rounded-2xl ${
@@ -876,12 +876,12 @@ export default function Notifications() {
           </div>
 
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Notifications
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Stay up to date with your SmartPark activity.
+              Keep track of important updates about your SmartPark activity.
             </p>
           </div>
         </div>
@@ -924,7 +924,7 @@ export default function Notifications() {
           <AlertCircle size={18} className="mt-0.5 shrink-0" />
 
           <div className="flex-1">
-            <p className="font-bold">Notification request failed</p>
+            <p className="font-bold">We couldn’t load your notifications</p>
 
             <p className="mt-1">{error}</p>
           </div>
@@ -943,7 +943,7 @@ export default function Notifications() {
           SUMMARY
       ==================================================== */}
 
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         <SummaryCard
           label="Total Notifications"
           value={pageTotalCount}
@@ -1008,11 +1008,11 @@ export default function Notifications() {
           NOTIFICATION LIST
       ==================================================== */}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <div>
             <h2 className="text-lg font-extrabold text-slate-900">
-              Notification Centre
+              Your Notifications
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
@@ -1023,7 +1023,7 @@ export default function Notifications() {
 
           <div className="hidden items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 sm:flex">
             <ShieldCheck size={14} />
-            Secure notifications
+            Private & secure
           </div>
         </div>
 
@@ -1037,14 +1037,14 @@ export default function Notifications() {
               {filter === "UNREAD"
                 ? "You're all caught up"
                 : filter === "READ"
-                  ? "No read notifications"
+                  ? "No read notifications yet"
                   : "No notifications yet"}
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
               {filter === "UNREAD"
                 ? "There are no unread notifications requiring your attention."
-                : "SmartPark notifications will appear here when there is activity on your account."}
+                : "New updates about bookings, payments and other SmartPark activity will appear here."}
             </p>
           </div>
         ) : (
@@ -1061,7 +1061,7 @@ export default function Notifications() {
               return (
                 <div
                   key={notification.id}
-                  className={`group flex items-start gap-4 p-5 transition ${
+                  className={`group flex items-start gap-4 border-l-2 p-4 transition sm:p-5 ${
                     read
                       ? "bg-white hover:bg-slate-50"
                       : "bg-emerald-50/30 hover:bg-emerald-50/60"
@@ -1240,25 +1240,25 @@ export default function Notifications() {
             }
           }}
         >
-          <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div className="w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl">
             {/* Modal Header */}
 
-            <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
-              <div className="flex items-center gap-3">
+            <div className="flex items-start justify-between gap-5 border-b border-slate-100 px-6 py-4 sm:px-7">
+              <div className="flex min-w-0 items-center gap-3">
                 <div
-                  className={`grid h-10 w-10 place-items-center rounded-xl ${
+                  className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${
                     toneClasses(getTone(selectedNotification)).icon
                   }`}
                 >
                   {notificationIcon(getTone(selectedNotification))}
                 </div>
 
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
-                    Notification
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-600">
+                    Notification details
                   </p>
 
-                  <h2 className="mt-1 text-lg font-extrabold text-slate-900">
+                  <h2 className="mt-1 line-clamp-2 text-base font-extrabold leading-5 text-slate-900 sm:text-lg">
                     {notificationTitle(selectedNotification)}
                   </h2>
                 </div>
@@ -1267,7 +1267,8 @@ export default function Notifications() {
               <button
                 type="button"
                 onClick={() => setSelectedNotification(null)}
-                className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50"
+                aria-label="Close notification details"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
               >
                 <X size={18} />
               </button>
@@ -1275,59 +1276,78 @@ export default function Notifications() {
 
             {/* Modal Body */}
 
-            <div className="p-6">
-              <div className="rounded-2xl bg-slate-50 p-5">
-                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                  {notificationMessage(selectedNotification)}
-                </p>
-              </div>
+            <div className="p-5 sm:p-6">
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.85fr)] md:items-start">
+                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Message
+                    </p>
 
-              <div className="mt-5 overflow-hidden rounded-xl border border-slate-200">
-                <DetailRow
-                  label="Type"
-                  value={formatLabel(notificationType(selectedNotification))}
-                />
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                        toneClasses(getTone(selectedNotification)).badge
+                      }`}
+                    >
+                      {formatLabel(notificationType(selectedNotification))}
+                    </span>
+                  </div>
 
-                <DetailRow
-                  label="Channel"
-                  value={
-                    selectedNotification.channel
-                      ? formatLabel(selectedNotification.channel)
-                      : "—"
-                  }
-                />
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                    {notificationMessage(selectedNotification)}
+                  </p>
+                </div>
 
-                <DetailRow
-                  label="Status"
-                  value={
-                    isNotificationRead(selectedNotification) ? "Read" : "Unread"
-                  }
-                />
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <div className="border-b border-slate-100 bg-white px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Notification information
+                    </p>
+                  </div>
 
-                <DetailRow
-                  label="Received"
-                  value={formatDate(selectedNotification.created_at)}
-                />
-
-                {selectedNotification.reference_type && (
                   <DetailRow
-                    label="Reference Type"
-                    value={formatLabel(selectedNotification.reference_type)}
+                    label="Channel"
+                    value={
+                      selectedNotification.channel
+                        ? formatLabel(selectedNotification.channel)
+                        : "—"
+                    }
                   />
-                )}
 
-                {selectedNotification.reference_id !== undefined &&
-                  selectedNotification.reference_id !== null && (
+                  <DetailRow
+                    label="Status"
+                    value={
+                      isNotificationRead(selectedNotification)
+                        ? "Read"
+                        : "Unread"
+                    }
+                  />
+
+                  <DetailRow
+                    label="Received"
+                    value={formatDate(selectedNotification.created_at)}
+                  />
+
+                  {selectedNotification.reference_type && (
                     <DetailRow
-                      label="Reference"
-                      value={String(selectedNotification.reference_id)}
+                      label="Reference Type"
+                      value={formatLabel(selectedNotification.reference_type)}
                     />
                   )}
+
+                  {selectedNotification.reference_id !== undefined &&
+                    selectedNotification.reference_id !== null && (
+                      <DetailRow
+                        label="Reference"
+                        value={String(selectedNotification.reference_id)}
+                      />
+                    )}
+                </div>
               </div>
 
               {/* Modal Actions */}
 
-              <div className="mt-6 flex gap-3">
+              <div className="mt-5 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
                 {!isNotificationRead(selectedNotification) && (
                   <button
                     type="button"
@@ -1335,18 +1355,18 @@ export default function Notifications() {
                     disabled={
                       String(processingId) === String(selectedNotification.id)
                     }
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-w-36 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {String(processingId) ===
                     String(selectedNotification.id) ? (
                       <>
                         <RefreshCw size={16} className="animate-spin" />
-                        Updating...
+                        Saving...
                       </>
                     ) : (
                       <>
                         <Check size={16} />
-                        Mark as Read
+                        Mark as read
                       </>
                     )}
                   </button>
@@ -1358,7 +1378,7 @@ export default function Notifications() {
                   disabled={
                     String(processingId) === String(selectedNotification.id)
                   }
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 px-4 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Trash2 size={16} />
                   Delete
@@ -1367,7 +1387,7 @@ export default function Notifications() {
                 <button
                   type="button"
                   onClick={() => setSelectedNotification(null)}
-                  className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
                 >
                   Close
                 </button>
@@ -1398,7 +1418,7 @@ function SummaryCard({
   iconClass: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-slate-400">

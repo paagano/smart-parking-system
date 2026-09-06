@@ -384,43 +384,46 @@ export default function Parking() {
       {/* ====================================================
           Page Header
       ==================================================== */}
+      <section className="rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-sm sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              SmartPark AI
+            </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="text-xs font-bold uppercase tracking-[.2em] text-emerald-600">
-            SmartPark AI
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+              Find Parking Near You
+            </h1>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              Browse live parking facilities and check availability before you
+              arrive.
+            </p>
           </div>
 
-          <h1 className="mt-2 text-3xl font-black tracking-tight">
-            Find Parking Near You
-          </h1>
-
-          <p className="mt-2 max-w-2xl text-slate-500">
-            Browse live parking facilities connected to the SmartPark AI
-            backend.
-          </p>
+          <button
+            type="button"
+            onClick={() => void loadFacilities(true)}
+            disabled={isRefreshing}
+            className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 lg:self-auto"
+          >
+            <RefreshCw
+              size={15}
+              className={isRefreshing ? "animate-spin" : ""}
+            />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => void loadFacilities(true)}
-          disabled={isRefreshing}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
-
-          {isRefreshing ? "Refreshing..." : "Refresh"}
-        </button>
-      </div>
+      </section>
 
       {/* ====================================================
           Search
       ==================================================== */}
-
-      <div className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
         <div className="relative">
           <Search
-            className="absolute left-4 top-3.5 text-slate-400"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
             size={18}
           />
 
@@ -429,27 +432,26 @@ export default function Parking() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search facility, code, area or city..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 pl-11 text-sm outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-2 focus:ring-emerald-100"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-11 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-2 focus:ring-emerald-100"
           />
 
           {query && (
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="absolute right-3 top-2.5 rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
               aria-label="Clear search"
             >
               <XCircle size={18} />
             </button>
           )}
         </div>
-      </div>
+      </section>
 
       {/* ====================================================
           Live Summary
       ==================================================== */}
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           label="Facilities"
           value={facilities.length}
@@ -482,27 +484,29 @@ export default function Parking() {
       {/* ====================================================
           Error
       ==================================================== */}
-
       {error && (
-        <div className="flex flex-col gap-4 rounded-2xl border border-rose-200 bg-rose-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 shrink-0 text-rose-600" size={20} />
+        <div className="flex flex-col gap-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-600">
+              <AlertCircle size={18} />
+            </span>
 
-            <div>
-              <p className="font-bold text-rose-800">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-rose-800">
                 Unable to load parking facilities
               </p>
 
-              <p className="mt-1 text-sm text-rose-700">{error}</p>
+              <p className="mt-1 text-xs leading-5 text-rose-700">{error}</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => void loadFacilities(true)}
-            className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-rose-700"
+            disabled={isRefreshing}
+            className="shrink-0 self-start rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
           >
-            Try again
+            {isRefreshing ? "Refreshing..." : "Try again"}
           </button>
         </div>
       )}
@@ -510,33 +514,41 @@ export default function Parking() {
       {/* ====================================================
           Facility List
       ==================================================== */}
+      <section className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6">
+        <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">
+              Parking Facilities
+            </h2>
 
-      <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-        <div className="mb-5">
-          <h2 className="font-extrabold">Parking Facilities</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Live facility data from SmartPark AI
+            </p>
+          </div>
 
-          <p className="mt-1 text-xs text-slate-500">
-            Live facility master data from SmartPark AI
-          </p>
+          {!isLoading && (
+            <p className="text-xs text-slate-400">
+              {filteredFacilities.length}{" "}
+              {filteredFacilities.length === 1 ? "facility" : "facilities"}
+            </p>
+          )}
         </div>
 
         {/* Loading */}
-
         {isLoading && (
           <div className="space-y-3">
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="animate-pulse rounded-2xl border border-slate-200 p-5"
+                className="animate-pulse rounded-2xl border border-slate-200 p-4 sm:p-5"
               >
-                <div className="h-5 w-1/3 rounded bg-slate-200" />
-
-                <div className="mt-3 h-4 w-2/3 rounded bg-slate-100" />
+                <div className="h-4 w-1/3 rounded bg-slate-200" />
+                <div className="mt-3 h-3 w-2/3 rounded bg-slate-100" />
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <div className="h-12 rounded-xl bg-slate-100" />
-                  <div className="h-12 rounded-xl bg-slate-100" />
-                  <div className="h-12 rounded-xl bg-slate-100" />
+                  <div className="h-11 rounded-xl bg-slate-100" />
+                  <div className="h-11 rounded-xl bg-slate-100" />
+                  <div className="h-11 rounded-xl bg-slate-100" />
                 </div>
               </div>
             ))}
@@ -544,14 +556,17 @@ export default function Parking() {
         )}
 
         {/* Empty */}
-
         {!isLoading && !error && filteredFacilities.length === 0 && (
-          <div className="rounded-2xl bg-slate-50 p-10 text-center">
-            <Search className="mx-auto text-slate-400" size={34} />
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
+            <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-white text-slate-400 ring-1 ring-slate-200">
+              <Search size={22} />
+            </span>
 
-            <h3 className="mt-4 font-extrabold">No parking facilities found</h3>
+            <h3 className="mt-4 text-sm font-semibold text-slate-800">
+              No parking facilities found
+            </h3>
 
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-slate-500">
               {query
                 ? "Try a different facility name, code or location."
                 : "The SmartPark AI backend currently has no facilities available."}
@@ -561,7 +576,7 @@ export default function Parking() {
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="mt-4 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700"
+                className="mt-4 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/25"
               >
                 Clear search
               </button>
@@ -570,12 +585,10 @@ export default function Parking() {
         )}
 
         {/* Facilities */}
-
         {!isLoading && filteredFacilities.length > 0 && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredFacilities.map((facility) => {
               const open = isFacilityOpen(facility);
-
               const location = buildLocation(facility);
 
               const availability = availabilityByFacility.get(facility.id) ?? {
@@ -597,13 +610,6 @@ export default function Parking() {
                   : availability.available <= 2
                     ? "bg-amber-50 text-amber-700"
                     : "bg-emerald-50 text-emerald-700";
-
-              // ======================================================
-              // SURGICAL FIX:
-              // Restore the facility distance display using the same
-              // Haversine calculation already used for proximity
-              // sorting above.
-              // ======================================================
 
               let facilityDistanceKm: number | null = null;
 
@@ -645,39 +651,33 @@ export default function Parking() {
               return (
                 <article
                   key={facility.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-emerald-300 hover:shadow-md"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 transition duration-200 hover:border-emerald-200 hover:shadow-sm sm:p-5"
                 >
                   {/* Top */}
-
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
-                        <ParkingCircle size={23} />
-                      </div>
+                    <div className="flex min-w-0 items-start gap-3.5">
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+                        <ParkingCircle size={21} />
+                      </span>
 
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-extrabold">
+                          <h3 className="min-w-0 text-base font-semibold text-slate-900 sm:text-[17px]">
                             {facility.name}
                           </h3>
 
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500">
                             {facility.code}
                           </span>
                         </div>
 
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-xs text-slate-500">
                           {formatFacilityType(facility.facility_type)}
                         </p>
 
-                        {/* ==================================================
-                            RESTORED DISTANCE
-                            Example: 7.2 KM
-                        ================================================== */}
-
                         {facilityDistanceKm !== null && (
-                          <p className="mt-1 text-xs font-bold text-emerald-600">
-                            {facilityDistanceKm.toFixed(1)} KM away
+                          <p className="mt-1 text-xs font-medium text-emerald-700">
+                            {facilityDistanceKm.toFixed(1)} km away
                           </p>
                         )}
                       </div>
@@ -685,22 +685,21 @@ export default function Parking() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${availabilityClass}`}
+                        className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-medium ${availabilityClass}`}
                       >
-                        <span className="h-2 w-2 rounded-full bg-current opacity-70" />
-
+                        <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
                         {availabilityLabel}
                       </span>
 
                       <span
-                        className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${
+                        className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-medium ${
                           open
                             ? "bg-emerald-50 text-emerald-700"
                             : "bg-slate-100 text-slate-600"
                         }`}
                       >
                         <span
-                          className={`h-2 w-2 rounded-full ${
+                          className={`h-1.5 w-1.5 rounded-full ${
                             open ? "bg-emerald-500" : "bg-slate-400"
                           }`}
                         />
@@ -715,8 +714,7 @@ export default function Parking() {
                   </div>
 
                   {/* Details */}
-
-                  <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="mt-4 grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
                     <InfoItem
                       Icon={MapPin}
                       label="Location"
@@ -755,23 +753,21 @@ export default function Parking() {
                   </div>
 
                   {/* Description */}
-
                   {facility.description && (
-                    <p className="mt-4 text-sm leading-6 text-slate-600">
+                    <p className="mt-4 max-w-4xl text-xs leading-5 text-slate-600 sm:text-sm">
                       {facility.description}
                     </p>
                   )}
 
                   {/* Actions */}
-
-                  <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-4">
+                  <div className="mt-4 flex flex-col gap-2.5 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap sm:items-center">
                     <a
                       href={`/reservations/create?facilityId=${encodeURIComponent(
                         String(facility.id),
                       )}&facilityName=${encodeURIComponent(facility.name)}`}
-                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/25"
                     >
-                      <CalendarPlus size={16} />
+                      <CalendarPlus size={15} />
                       Make a Reservation
                     </a>
 
@@ -783,15 +779,15 @@ export default function Parking() {
                           href={`https://www.google.com/maps/dir/?api=1&destination=${facility.latitude},${facility.longitude}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
                         >
-                          <Navigation size={16} />
+                          <Navigation size={15} />
                           Navigate to Facility
                         </a>
                       )}
 
-                    <span className="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-600">
-                      <ParkingCircle size={15} />
+                    <span className="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-50 px-3.5 py-2.5 text-[11px] font-medium text-slate-600">
+                      <ParkingCircle size={14} />
 
                       {hasAvailabilityData
                         ? `${availability.available} of ${availability.total} bays available`
@@ -809,8 +805,6 @@ export default function Parking() {
 }
 
 // ==========================================================
-// Summary Card
-// ==========================================================
 
 function SummaryCard({
   label,
@@ -827,22 +821,24 @@ function SummaryCard({
   }>;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
-        <Icon size={19} />
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-emerald-200">
+      <div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+        <Icon size={18} />
       </div>
 
-      <div className="mt-4 text-2xl font-black">{value}</div>
+      <div className="mt-4 text-xl font-semibold tracking-tight text-slate-900">
+        {value}
+      </div>
 
-      <div className="mt-1 text-sm text-slate-500">{label}</div>
+      <div className="mt-1 text-xs font-medium text-slate-500">{label}</div>
 
-      <div className="mt-3 text-xs font-semibold text-emerald-600">{note}</div>
+      <div className="mt-2.5 text-[11px] leading-4 text-emerald-700">
+        {note}
+      </div>
     </div>
   );
 }
 
-// ==========================================================
-// Availability Item
 // ==========================================================
 
 function AvailabilityItem({
@@ -859,9 +855,9 @@ function AvailabilityItem({
   const occupancyPercent = total > 0 ? Math.round((occupied / total) * 100) : 0;
 
   return (
-    <div className="rounded-xl bg-slate-50 p-4">
-      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-        <ParkingCircle size={15} />
+    <div className="rounded-xl bg-slate-50 p-3.5">
+      <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+        <ParkingCircle size={14} />
         Live availability
       </div>
 
@@ -869,21 +865,21 @@ function AvailabilityItem({
         <>
           <div className="mt-2 flex items-end justify-between gap-3">
             <div>
-              <p className="text-lg font-black text-slate-800">
+              <p className="text-sm font-semibold text-slate-800">
                 {available} available
               </p>
 
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-[11px] text-slate-500">
                 {occupied} occupied of {total}
               </p>
             </div>
 
-            <span className="text-xs font-bold text-emerald-600">
+            <span className="text-[11px] font-medium text-emerald-600">
               {occupancyPercent}% occupied
             </span>
           </div>
 
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all"
               style={{ width: `${occupancyPercent}%` }}
@@ -891,7 +887,7 @@ function AvailabilityItem({
           </div>
         </>
       ) : (
-        <p className="mt-2 text-sm font-semibold text-slate-500">
+        <p className="mt-2 text-xs font-medium text-slate-500">
           Live availability data unavailable
         </p>
       )}
@@ -899,8 +895,6 @@ function AvailabilityItem({
   );
 }
 
-// ==========================================================
-// Info Item
 // ==========================================================
 
 function InfoItem({
@@ -916,13 +910,15 @@ function InfoItem({
   value: string;
 }) {
   return (
-    <div className="rounded-xl bg-slate-50 p-4">
-      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-        <Icon size={15} />
+    <div className="min-w-0 rounded-xl bg-slate-50 p-3.5">
+      <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+        <Icon size={14} />
         {label}
       </div>
 
-      <p className="mt-2 text-sm font-semibold text-slate-700">{value}</p>
+      <p className="mt-2 break-words text-xs font-medium leading-5 text-slate-700">
+        {value}
+      </p>
     </div>
   );
 }

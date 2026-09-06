@@ -286,7 +286,7 @@ export default function Settings() {
   // ========================================================
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* ====================================================
           HEADER
       ==================================================== */}
@@ -299,12 +299,13 @@ export default function Settings() {
             </div>
 
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
                 Settings
               </h1>
 
               <p className="mt-1 text-sm text-slate-500">
-                Manage your SmartPark account and personal preferences.
+                Manage your notifications, display preferences and account
+                security.
               </p>
             </div>
           </div>
@@ -313,10 +314,10 @@ export default function Settings() {
         <button
           type="button"
           onClick={savePreferences}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
         >
           <Save size={16} />
-          Save Preferences
+          Save preferences
         </button>
       </div>
 
@@ -339,8 +340,8 @@ export default function Settings() {
       ==================================================== */}
 
       <SettingsSection
-        title="Notification Preferences"
-        description="Choose which SmartPark activity notifications you want to receive."
+        title="Notifications"
+        description="Choose the SmartPark updates you would like to receive."
         icon={<Bell size={21} />}
         expanded={expandedSection === "notifications"}
         onToggle={() =>
@@ -350,36 +351,36 @@ export default function Settings() {
         }
       >
         <PreferenceRow
-          title="Parking session updates"
-          description="Check-in, session completion and vehicle exit activity."
+          title="Parking activity updates"
+          description="Arrival, parking and vehicle exit updates."
           enabled={notificationPreferences.parkingSession}
           onToggle={() => toggleNotification("parkingSession")}
         />
 
         <PreferenceRow
-          title="Payment notifications"
-          description="Successful payments, payment status and wallet activity."
+          title="Payment updates"
+          description="Payment confirmations, status updates and wallet activity."
           enabled={notificationPreferences.payment}
           onToggle={() => toggleNotification("payment")}
         />
 
         <PreferenceRow
-          title="Reservation notifications"
-          description="Reservation creation, confirmation, cancellation and expiry."
+          title="Booking updates"
+          description="Booking creation, confirmation, cancellation and expiry."
           enabled={notificationPreferences.reservations}
           onToggle={() => toggleNotification("reservations")}
         />
 
         <PreferenceRow
           title="Loyalty programme"
-          description="Points, rewards and loyalty account activity."
+          description="Points, rewards and loyalty activity."
           enabled={notificationPreferences.loyalty}
           onToggle={() => toggleNotification("loyalty")}
         />
 
         <PreferenceRow
-          title="System notifications"
-          description="Important SmartPark service and account notifications."
+          title="System updates"
+          description="Important service and account updates."
           enabled={notificationPreferences.system}
           onToggle={() => toggleNotification("system")}
         />
@@ -391,7 +392,7 @@ export default function Settings() {
 
       <SettingsSection
         title="Display & Preferences"
-        description="Personalise how information is presented in your driver portal."
+        description="Choose how information is displayed in your driver portal."
         icon={<Palette size={21} />}
         expanded={expandedSection === "display"}
         onToggle={() =>
@@ -402,7 +403,7 @@ export default function Settings() {
       >
         <PreferenceRow
           title="Compact mode"
-          description="Use a more compact layout when viewing parking information and lists."
+          description="Use a more compact layout for parking information and lists."
           enabled={displayPreferences.compactMode}
           onToggle={() =>
             setDisplayPreferences((current) => ({
@@ -414,7 +415,7 @@ export default function Settings() {
 
         <PreferenceRow
           title="24-hour time"
-          description="Display times using the 24-hour clock format."
+          description="Show times using the 24-hour clock format."
           enabled={displayPreferences.use24HourTime}
           onToggle={() =>
             setDisplayPreferences((current) => ({
@@ -434,7 +435,7 @@ export default function Settings() {
           <PreferenceInfo
             icon={<Moon size={18} />}
             title="Dark interface"
-            description="Can be added when the portal theme preference is connected."
+            description="Available when the portal theme setting is enabled."
           />
         </div>
       </SettingsSection>
@@ -445,7 +446,7 @@ export default function Settings() {
 
       <SettingsSection
         title="Security"
-        description="Account security and authentication settings."
+        description="Manage your password and account security."
         icon={<LockKeyhole size={21} />}
         expanded={expandedSection === "security"}
         onToggle={() =>
@@ -462,13 +463,13 @@ export default function Settings() {
               </div>
 
               <div>
-                <h3 className="font-extrabold text-slate-800">
-                  Password & Authentication
+                <h3 className="font-semibold text-slate-800">
+                  Password & security
                 </h3>
 
                 <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                  Keep your SmartPark account secure by regularly updating your
-                  password.
+                  Keep your account secure by updating your password when
+                  needed.
                 </p>
               </div>
             </div>
@@ -481,10 +482,10 @@ export default function Settings() {
                   setPasswordSuccess(null);
                   setShowChangePasswordForm(true);
                 }}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-slate-800"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 <LockKeyhole size={16} />
-                Change Password
+                Change password
               </button>
             )}
           </div>
@@ -493,7 +494,7 @@ export default function Settings() {
             <div className="mt-5 border-t border-slate-200 pt-5">
               {passwordError && (
                 <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                  <p className="font-bold">Unable to change password</p>
+                  <p className="font-medium">Unable to change your password</p>
                   <p className="mt-1">{passwordError}</p>
                 </div>
               )}
@@ -544,7 +545,7 @@ export default function Settings() {
               </div>
 
               <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                   Password requirements
                 </p>
 
@@ -585,7 +586,7 @@ export default function Settings() {
                   type="button"
                   onClick={cancelChangePassword}
                   disabled={changingPassword}
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -594,26 +595,25 @@ export default function Settings() {
                   type="button"
                   onClick={() => void handleChangePassword()}
                   disabled={changingPassword}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {changingPassword ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Updating Password...
+                      Updating password...
                     </>
                   ) : (
                     <>
                       <LockKeyhole size={16} />
-                      Update Password
+                      Update password
                     </>
                   )}
                 </button>
               </div>
 
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                For security, you will be signed out after successfully changing
-                your password and will need to sign in again with your new
-                password.
+                For security, you will be signed out after changing your
+                password and will need to sign in again.
               </p>
             </div>
           )}
@@ -627,14 +627,13 @@ export default function Settings() {
             />
 
             <div>
-              <h3 className="font-extrabold text-emerald-800">
-                Account protection
+              <h3 className="font-semibold text-emerald-800">
+                Your account is protected
               </h3>
 
               <p className="mt-1 text-sm leading-6 text-emerald-700">
-                Only your authenticated SmartPark account can access your driver
-                data, parking sessions, payments, vehicles and loyalty
-                information.
+                Your authenticated account protects access to your parking,
+                payments, vehicles and loyalty information.
               </p>
             </div>
           </div>
@@ -649,10 +648,10 @@ export default function Settings() {
         <button
           type="button"
           onClick={savePreferences}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
         >
           <Save size={17} />
-          Save Preferences
+          Save preferences
         </button>
       </div>
     </div>
@@ -679,11 +678,11 @@ function SettingsSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-4 p-6 text-left transition hover:bg-slate-50"
+        className="flex w-full items-center justify-between gap-4 p-5 text-left transition hover:bg-slate-50 sm:p-6"
         aria-expanded={expanded}
       >
         <div className="flex min-w-0 items-start gap-4">
@@ -692,7 +691,7 @@ function SettingsSection({
           </div>
 
           <div className="min-w-0">
-            <h2 className="text-lg font-extrabold text-slate-900">{title}</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
 
             <p className="mt-1 text-sm text-slate-500">{description}</p>
           </div>
@@ -707,7 +706,7 @@ function SettingsSection({
       </button>
 
       {expanded && (
-        <div className="border-t border-slate-100 p-6">{children}</div>
+        <div className="border-t border-slate-100 p-5 sm:p-6">{children}</div>
       )}
     </section>
   );
@@ -731,7 +730,7 @@ function PreferenceRow({
   return (
     <div className="flex items-start justify-between gap-5 border-b border-slate-100 py-5 last:border-b-0 last:pb-0 first:pt-0">
       <div className="min-w-0">
-        <h3 className="font-extrabold text-slate-800">{title}</h3>
+        <h3 className="font-semibold text-slate-800">{title}</h3>
 
         <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
           {description}
@@ -780,7 +779,7 @@ function PasswordField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-extrabold text-slate-700">
+      <label className="mb-2 block text-sm font-semibold text-slate-700">
         {label}
       </label>
 
@@ -852,7 +851,7 @@ function PreferenceInfo({
       </div>
 
       <div>
-        <h3 className="text-sm font-extrabold text-slate-800">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
 
         <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
       </div>

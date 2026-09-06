@@ -44,6 +44,20 @@ from app.api.dependencies.storage import (
     ProfilePictureStorageServiceDep,
 )
 
+from app.services.ai.chat_service import (
+    SmartParkChatService,
+)
+
+from app.services.ai.smartpark_ai_tools import (
+    SmartParkAITools,
+)
+from app.ml.production.observation_repository import (
+    OccupancyObservationRepository,
+)
+from app.ml.production.service import (
+    ProductionForecastService,
+)
+
 from app.services.auth_service import (
     AuthService,
 )
@@ -88,6 +102,95 @@ def get_email_service() -> EmailService:
     """
 
     return EmailService()
+
+
+# ==========================================================
+# SmartPark AI Tools
+# ==========================================================
+
+
+def get_smartpark_ai_tools(
+    db: DbSession,
+    reservation_repository: ParkingReservationRepositoryDep,
+    parking_bay_repository: ParkingBayRepositoryDep,
+    parking_session_service: ParkingSessionServiceDep,
+    pricing_service: PricingServiceDep,
+    vehicle_repository: VehicleRepositoryDep,
+    notification_service: NotificationServiceDep,
+) -> SmartParkAITools:
+    """
+    Return a SmartParkAITools instance using the current
+    asynchronous database session and fully configured reservation
+    dependencies.
+    """
+
+    reservation_service = ParkingReservationService(
+        repository=reservation_repository,
+        parking_bay_repository=parking_bay_repository,
+        pricing_service=pricing_service,
+        parking_session_service=parking_session_service,
+        vehicle_repository=vehicle_repository,
+        notification_service=notification_service,
+    )
+
+    # ----------------------------------------------------------
+    # Production occupancy forecasting
+    # ----------------------------------------------------------
+    #
+    # Reuse the existing production forecasting service contract.
+    # The observation repository is adapted to the ML service's
+    # observation-provider interface exactly as the existing
+    # forecasting API does.
+    # ----------------------------------------------------------
+
+    observation_repository = OccupancyObservationRepository(
+        db,
+    )
+
+    async def observation_provider(
+        facility_id: int,
+        prediction_timestamp,
+        lookback_minutes: int,
+    ):
+        return await observation_repository.get_observations_for_forecast(
+            facility_id=facility_id,
+            prediction_timestamp=prediction_timestamp,
+            lookback_minutes=lookback_minutes,
+        )
+
+    forecast_service = ProductionForecastService(
+        observation_provider=observation_provider,
+    )
+
+    return SmartParkAITools(
+        db=db,
+        reservation_service=reservation_service,
+        vehicle_repository=vehicle_repository,
+        forecast_service=forecast_service,
+    )
+
+SmartParkAIToolsDep = Annotated[
+    SmartParkAITools,
+    Depends(get_smartpark_ai_tools),
+]
+
+
+# ==========================================================
+# SmartPark AI Chat Service
+# ==========================================================
+
+
+def get_smartpark_chat_service(
+    tools: SmartParkAIToolsDep,
+) -> SmartParkChatService:
+    """
+    Return a SmartParkChatService instance with the
+    SmartPark AI database tools injected.
+    """
+
+    return SmartParkChatService(
+        tools=tools,
+    )
 
 
 # ==========================================================
@@ -172,18 +275,23 @@ def get_parking_session_service(
 def get_parking_reservation_service(
     repository: ParkingReservationRepositoryDep,
     parking_bay_repository: ParkingBayRepositoryDep,
+    pricing_service: PricingServiceDep,
     parking_session_service: ParkingSessionServiceDep,
+    vehicle_repository: VehicleRepositoryDep,
+    notification_service: NotificationServiceDep,
 ) -> ParkingReservationService:
     """
-    Return a ParkingReservationService instance.
+    Return a fully configured ParkingReservationService instance.
     """
 
     return ParkingReservationService(
         repository=repository,
         parking_bay_repository=parking_bay_repository,
+        pricing_service=pricing_service,
         parking_session_service=parking_session_service,
+        vehicle_repository=vehicle_repository,
+        notification_service=notification_service,
     )
-
 
 # ==========================================================
 # Payment Service
@@ -260,25 +368,42 @@ AuthServiceDep = Annotated[
     Depends(get_auth_service),
 ]
 
+
+SmartParkAIToolsDep = Annotated[
+    SmartParkAITools,
+    Depends(get_smartpark_ai_tools),
+]
+
+
+SmartParkChatServiceDep = Annotated[
+    SmartParkChatService,
+    Depends(get_smartpark_chat_service),
+]
+
+
 ParkingFacilityServiceDep = Annotated[
     ParkingFacilityService,
     Depends(get_parking_facility_service),
 ]
+
 
 ParkingSessionServiceDep = Annotated[
     ParkingSessionService,
     Depends(get_parking_session_service),
 ]
 
+
 ParkingReservationServiceDep = Annotated[
     ParkingReservationService,
     Depends(get_parking_reservation_service),
 ]
 
+
 PaymentServiceDep = Annotated[
     PaymentService,
     Depends(get_payment_service),
 ]
+
 
 VehicleServiceDep = Annotated[
     VehicleService,

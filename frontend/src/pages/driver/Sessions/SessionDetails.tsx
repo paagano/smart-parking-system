@@ -141,19 +141,19 @@ function getErrorMessage(error: any): string {
       return "Your session has expired. Please sign in again.";
 
     case 403:
-      return "You are not authorized to view this parking session.";
+      return "You are not authorized to view these parking details.";
 
     case 404:
-      return "The requested parking session could not be found.";
+      return "The requested parking details could not be found.";
 
     case 409:
-      return "The parking session could not be processed because of a conflict.";
+      return "These parking details could not be processed because of a conflict.";
 
     case 422:
-      return "Some of the parking session information is invalid.";
+      return "Some of the parking information is invalid.";
 
     default:
-      return "Unable to load the parking session. Please try again.";
+      return "Unable to load your parking details right now. Please try again.";
   }
 }
 
@@ -488,7 +488,7 @@ function formatDuration(minutes: number | null): string {
 function StatusBadge({ status }: { status: SessionStatus }) {
   if (status === "ACTIVE") {
     return (
-      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3 py-1.5 text-xs font-bold text-emerald-300 ring-1 ring-emerald-300/20">
+      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 ring-1 ring-emerald-300/20">
         <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
         ACTIVE
       </span>
@@ -497,7 +497,7 @@ function StatusBadge({ status }: { status: SessionStatus }) {
 
   if (status === "CHECKOUT_PENDING") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
         <Clock3 size={13} />
         EXIT VERIFICATION
       </span>
@@ -506,7 +506,7 @@ function StatusBadge({ status }: { status: SessionStatus }) {
 
   if (status === "COMPLETED") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-slate-200 ring-1 ring-white/10">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-200 ring-1 ring-white/10">
         <CheckCircle2 size={14} />
         COMPLETED
       </span>
@@ -515,7 +515,7 @@ function StatusBadge({ status }: { status: SessionStatus }) {
 
   if (status === "CANCELLED") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-400/10 px-3 py-1.5 text-xs font-bold text-red-300 ring-1 ring-red-300/20">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-300 ring-1 ring-red-300/20">
         CANCELLED
       </span>
     );
@@ -523,7 +523,7 @@ function StatusBadge({ status }: { status: SessionStatus }) {
 
   if (status === "PENDING") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 ring-1 ring-amber-300/20">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-3 py-1.5 text-xs font-medium text-amber-300 ring-1 ring-amber-300/20">
         <Clock3 size={14} />
         PENDING
       </span>
@@ -531,7 +531,7 @@ function StatusBadge({ status }: { status: SessionStatus }) {
   }
 
   return (
-    <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-slate-300 ring-1 ring-white/10">
+    <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 ring-1 ring-white/10">
       {status}
     </span>
   );
@@ -555,7 +555,7 @@ function DetailRow({
       <span className="text-sm font-semibold text-slate-500">{label}</span>
 
       <span
-        className={`text-sm font-bold text-slate-800 sm:text-right ${
+        className={`text-sm font-medium text-slate-800 sm:text-right ${
           mono ? "font-mono" : ""
         }`}
       >
@@ -605,11 +605,11 @@ function TimelineItem({
       </div>
 
       <div className="pb-7">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
           {title}
         </div>
 
-        <div className="mt-1 text-sm font-black text-slate-900">{value}</div>
+        <div className="mt-1 text-sm font-semibold text-slate-900">{value}</div>
 
         <div className="mt-1 text-xs text-slate-500">{description}</div>
       </div>
@@ -649,7 +649,7 @@ export default function SessionDetails() {
   const loadSession = useCallback(
     async (manualRefresh = false) => {
       if (!sessionId) {
-        setError("No parking session was specified.");
+        setError("No parking session was selected.");
         setLoading(false);
         return;
       }
@@ -676,7 +676,7 @@ export default function SessionDetails() {
         const rawSession = payload?.data ?? payload;
 
         if (!rawSession || typeof rawSession !== "object") {
-          throw new Error("The backend returned an invalid parking session.");
+          throw new Error("We received incomplete parking information.");
         }
 
         /*
@@ -1039,7 +1039,7 @@ export default function SessionDetails() {
             <RefreshCw size={30} className="animate-spin" />
           </div>
 
-          <h2 className="mt-5 text-lg font-black text-slate-900">
+          <h2 className="mt-5 text-lg font-semibold text-slate-900">
             Loading parking session
           </h2>
 
@@ -1061,18 +1061,18 @@ export default function SessionDetails() {
         <button
           type="button"
           onClick={() => navigate("/sessions")}
-          className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 transition hover:text-emerald-600"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-emerald-600"
         >
           <ArrowLeft size={17} />
           Back to Sessions
         </button>
 
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center">
+        <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-center shadow-sm sm:p-8">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-red-500 shadow-sm">
             <AlertCircle size={27} />
           </div>
 
-          <h1 className="mt-5 text-xl font-black text-slate-900">
+          <h1 className="mt-5 text-xl font-semibold text-slate-900">
             Unable to load session
           </h1>
 
@@ -1084,7 +1084,7 @@ export default function SessionDetails() {
             <button
               type="button"
               onClick={() => void loadSession()}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-500"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-emerald-500"
             >
               <RefreshCw size={16} />
               Try Again
@@ -1093,7 +1093,7 @@ export default function SessionDetails() {
             <button
               type="button"
               onClick={() => navigate("/sessions")}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Back to Sessions
             </button>
@@ -1114,14 +1114,14 @@ export default function SessionDetails() {
           <ParkingCircle size={30} />
         </div>
 
-        <h1 className="mt-5 text-xl font-black text-slate-900">
+        <h1 className="mt-5 text-xl font-semibold text-slate-900">
           Parking session not found
         </h1>
 
         <button
           type="button"
           onClick={() => navigate("/sessions")}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#071a2d] px-5 py-3 text-sm font-bold text-white"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#071a2d] px-5 py-3 text-sm font-medium text-white"
         >
           <ArrowLeft size={16} />
           Back to Sessions
@@ -1140,11 +1140,11 @@ export default function SessionDetails() {
           TOP NAVIGATION
       ================================================== */}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => navigate("/sessions")}
-          className="inline-flex w-fit items-center gap-2 text-sm font-bold text-slate-600 transition hover:text-emerald-600"
+          className="inline-flex w-fit items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-emerald-600"
         >
           <ArrowLeft size={17} />
           Back to Sessions
@@ -1154,7 +1154,7 @@ export default function SessionDetails() {
           type="button"
           onClick={() => void loadSession(true)}
           disabled={refreshing}
-          className="inline-flex w-fit items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-fit items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
           Refresh
@@ -1190,7 +1190,7 @@ export default function SessionDetails() {
           HERO
       ================================================== */}
 
-      <section className="overflow-hidden rounded-3xl bg-[#071a2d] text-white shadow-sm">
+      <section className="overflow-hidden rounded-3xl bg-[#071a2d] text-white shadow-md">
         <div className="p-6 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-start gap-4">
@@ -1199,11 +1199,11 @@ export default function SessionDetails() {
               </div>
 
               <div>
-                <div className="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">
+                <div className="text-[11px] font-semibold uppercase tracking-[.18em] text-emerald-300">
                   Parking Session
                 </div>
 
-                <h1 className="mt-2 text-2xl font-black sm:text-3xl">
+                <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
                   {session.session_number ?? `Session #${session.id}`}
                 </h1>
 
@@ -1220,11 +1220,11 @@ export default function SessionDetails() {
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
                 Facility
               </div>
 
-              <div className="mt-2 flex items-center gap-2 text-sm font-bold">
+              <div className="mt-2 flex items-center gap-2 text-sm font-medium">
                 <MapPin size={15} className="shrink-0 text-emerald-300" />
 
                 {facilityName}
@@ -1232,11 +1232,11 @@ export default function SessionDetails() {
             </div>
 
             <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
                 Vehicle
               </div>
 
-              <div className="mt-2 flex items-center gap-2 text-sm font-bold">
+              <div className="mt-2 flex items-center gap-2 text-sm font-medium">
                 <CarFront size={15} className="shrink-0 text-emerald-300" />
 
                 {vehicleRegistration}
@@ -1244,11 +1244,11 @@ export default function SessionDetails() {
             </div>
 
             <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
                 Duration
               </div>
 
-              <div className="mt-2 flex items-center gap-2 text-sm font-bold">
+              <div className="mt-2 flex items-center gap-2 text-sm font-medium">
                 <Timer size={15} className="shrink-0 text-emerald-300" />
 
                 {formatDuration(duration)}
@@ -1256,11 +1256,11 @@ export default function SessionDetails() {
             </div>
 
             <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
                 Parking Amount
               </div>
 
-              <div className="mt-2 flex items-center gap-2 text-sm font-bold">
+              <div className="mt-2 flex items-center gap-2 text-sm font-medium">
                 <CreditCard size={15} className="shrink-0 text-emerald-300" />
 
                 {formatCurrency(amount, currency)}
@@ -1274,7 +1274,7 @@ export default function SessionDetails() {
             <>
               <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-emerald-300/10 bg-emerald-400/5 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="text-sm font-bold text-white">
+                  <div className="text-sm font-medium text-white">
                     Your parking session is active
                   </div>
 
@@ -1286,7 +1286,7 @@ export default function SessionDetails() {
                 <button
                   type="button"
                   onClick={handleCheckOut}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-medium text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <>
                     Pay & Check Out
@@ -1313,26 +1313,26 @@ export default function SessionDetails() {
 
         <div className="lg:col-span-3">
           <Card
-            title="Session Timeline"
-            sub="Key events recorded during this parking session."
+            title="Parking Timeline"
+            sub="Key events from your parking visit."
           >
             <div className="p-6">
               <TimelineItem
-                title="Parking session started"
+                title="Parking started"
                 value={formatDateTime(checkInTime)}
                 description={
                   checkInTime
                     ? `Vehicle checked in at ${formatTime(checkInTime)}.`
-                    : "Check-in time is not available."
+                    : "Check-in time is not available yet."
                 }
                 icon={<Activity size={14} />}
                 completed={Boolean(checkInTime)}
               />
 
               <TimelineItem
-                title="Parking in progress"
+                title="Parking activity"
                 value={
-                  status === "ACTIVE" ? "Currently parked" : "Session completed"
+                  status === "ACTIVE" ? "Currently parked" : "Parking completed"
                 }
                 description={
                   status === "ACTIVE"
@@ -1344,26 +1344,26 @@ export default function SessionDetails() {
               />
 
               <TimelineItem
-                title="Payment successful / session completed"
+                title="Payment completed"
                 value={formatDateTime(session.payment_completed_at)}
                 description={
                   session.payment_completed_at
                     ? `Payment was successfully completed and the parking session ended at ${formatTime(session.payment_completed_at)}.`
                     : status === "ACTIVE"
-                      ? "Payment has not yet been completed."
-                      : "Payment completion time is not available."
+                      ? "Payment has not been completed yet."
+                      : "Payment completion time is not available yet."
                 }
                 icon={<CheckCircle2 size={14} />}
                 completed={Boolean(session.payment_completed_at)}
               />
 
               <TimelineItem
-                title="Vehicle exited"
+                title="Parking ended"
                 value={formatDateTime(checkOutTime)}
                 description={
                   checkOutTime
                     ? `Vehicle exited the premises at ${formatTime(checkOutTime)}.`
-                    : "Vehicle has not yet left the premises."
+                    : "You have not left the parking location yet."
                 }
                 icon={<LogOut size={14} />}
                 completed={Boolean(checkOutTime)}
@@ -1377,12 +1377,12 @@ export default function SessionDetails() {
 
         <div className="lg:col-span-2">
           <Card
-            title="Session Summary"
-            sub="A quick overview of your parking session."
+            title="Parking Summary"
+            sub="A quick overview of your parking visit."
           >
             <div className="divide-y divide-slate-100">
               <DetailRow
-                label="Session Number"
+                label="Booking Number"
                 value={session.session_number ?? `#${session.id}`}
                 mono
               />
@@ -1429,18 +1429,15 @@ export default function SessionDetails() {
           PARKING LOCATION
       ================================================== */}
 
-      <Card
-        title="Parking Location"
-        sub="Where this parking session took place."
-      >
+      <Card title="Parking Location" sub="Where you parked.">
         <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <MapPin size={15} />
               Facility
             </div>
 
-            <div className="mt-2 text-sm font-black text-slate-900">
+            <div className="mt-2 text-sm font-semibold text-slate-900">
               {facilityName}
             </div>
 
@@ -1451,35 +1448,35 @@ export default function SessionDetails() {
             )}
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <ParkingCircle size={15} />
               Zone
             </div>
 
-            <div className="mt-2 text-sm font-black text-slate-900">
+            <div className="mt-2 text-sm font-semibold text-slate-900">
               {zoneName}
             </div>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <ParkingCircle size={15} />
               Parking Bay
             </div>
 
-            <div className="mt-2 text-sm font-black text-slate-900">
+            <div className="mt-2 text-sm font-semibold text-slate-900">
               {bayName}
             </div>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
               <Clock3 size={15} />
               Check-in
             </div>
 
-            <div className="mt-2 text-sm font-black text-slate-900">
+            <div className="mt-2 text-sm font-semibold text-slate-900">
               {formatDateTime(checkInTime)}
             </div>
           </div>
@@ -1492,7 +1489,7 @@ export default function SessionDetails() {
 
       <Card
         title="Vehicle Information"
-        sub="Vehicle associated with this parking session."
+        sub="Vehicle used for this parking visit."
       >
         <div className="grid gap-0 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
           <div className="flex items-center gap-4 p-6">
@@ -1501,11 +1498,11 @@ export default function SessionDetails() {
             </div>
 
             <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
                 Registration
               </div>
 
-              <div className="mt-1 font-black text-slate-900">
+              <div className="mt-1 font-semibold text-slate-900">
                 {vehicleRegistration}
               </div>
             </div>
@@ -1517,11 +1514,11 @@ export default function SessionDetails() {
             </div>
 
             <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
                 Vehicle Type
               </div>
 
-              <div className="mt-1 font-black text-slate-900">
+              <div className="mt-1 font-semibold text-slate-900">
                 {String(vehicleType)
                   .replace(/_/g, " ")
                   .replace(/\b\w/g, (letter) => letter.toUpperCase())}
@@ -1536,26 +1533,26 @@ export default function SessionDetails() {
       ================================================== */}
 
       <Card
-        title="Parking Charges"
-        sub="Financial information associated with this session."
+        title="Payment Summary"
+        sub="Payment information for this parking visit."
       >
         <div className="grid gap-4 p-6 sm:grid-cols-3">
           <div className="rounded-2xl bg-emerald-50 p-5">
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+            <div className="text-xs font-medium uppercase tracking-wider text-emerald-700">
               Total Amount
             </div>
 
-            <div className="mt-2 text-2xl font-black text-slate-950">
+            <div className="mt-2 text-2xl font-semibold text-slate-950">
               {formatCurrency(amount, currency)}
             </div>
           </div>
 
           <div className="rounded-2xl bg-slate-50 p-5">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
               Payment Method
             </div>
 
-            <div className="mt-2 flex items-center gap-2 text-sm font-black text-slate-900">
+            <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
               <CreditCard size={16} className="text-slate-400" />
 
               {session.payment_method
@@ -1567,11 +1564,11 @@ export default function SessionDetails() {
           </div>
 
           <div className="rounded-2xl bg-slate-50 p-5">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
               Payment Status
             </div>
 
-            <div className="mt-2 flex items-center gap-2 text-sm font-black text-slate-900">
+            <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
               <CheckCircle2
                 size={16}
                 className={
@@ -1597,8 +1594,8 @@ export default function SessionDetails() {
 
       {session.notes && (
         <Card
-          title="Session Notes"
-          sub="Additional information recorded for this session."
+          title="Parking Notes"
+          sub="Additional information about this parking visit."
         >
           <div className="flex items-start gap-4 p-6">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-500">
@@ -1616,18 +1613,18 @@ export default function SessionDetails() {
 
       {(session.reservation_id || session.reservation_number) && (
         <Card
-          title="Reservation Reference"
-          sub="Reservation associated with this parking session."
+          title="Booking Reference"
+          sub="Booking linked to this parking visit."
         >
           <div className="grid gap-0 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
             <DetailRow
-              label="Reservation ID"
+              label="Booking ID"
               value={session.reservation_id ?? "—"}
               mono
             />
 
             <DetailRow
-              label="Reservation Number"
+              label="Booking Number"
               value={session.reservation_number ?? "—"}
               mono
             />

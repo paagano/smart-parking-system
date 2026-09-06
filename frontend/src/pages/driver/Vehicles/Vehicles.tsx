@@ -140,7 +140,7 @@ export default function Vehicles() {
       return err.message;
     }
 
-    return "An unexpected error occurred while processing the vehicle.";
+    return "Something went wrong while processing this vehicle.";
   };
 
   const formatVehicleType = (vehicleType: string | null | undefined) => {
@@ -230,7 +230,7 @@ export default function Vehicles() {
 
         setError(
           extractErrorMessage(err) ||
-            "Unable to load your vehicles from the SmartPark AI backend.",
+            "Unable to load your vehicles right now. Please try again.",
         );
       } finally {
         setLoading(false);
@@ -383,7 +383,7 @@ export default function Vehicles() {
   );
 
   // ========================================================
-  // Set Default Vehicle
+  // Set as default Vehicle
   // ========================================================
 
   const setDefaultVehicle = async (vehicle: Vehicle) => {
@@ -492,7 +492,7 @@ export default function Vehicles() {
   };
 
   // ========================================================
-  // Delete Vehicle
+  // Delete vehicle
   // ========================================================
 
   /**
@@ -608,7 +608,7 @@ export default function Vehicles() {
   // ========================================================
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* ====================================================
           PAGE HEADER
       ==================================================== */}
@@ -616,7 +616,7 @@ export default function Vehicles() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <Page
           title="My Vehicles"
-          text="Manage the vehicles you use for SmartPark AI parking reservations."
+          text="Manage the vehicles you use for parking, bookings and everyday visits."
         />
 
         <div className="flex flex-wrap gap-3">
@@ -624,22 +624,22 @@ export default function Vehicles() {
             type="button"
             onClick={() => void handleRefresh()}
             disabled={loading || isRefreshing}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCw
               size={16}
               className={isRefreshing ? "animate-spin" : ""}
             />
 
-            {isRefreshing ? "Refreshing..." : "Refresh"}
+            {isRefreshing ? "Refreshing..." : "Refresh vehicles"}
           </button>
 
           <Link
             to="/vehicles/create"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md"
           >
             <Plus size={17} />
-            Add Vehicle
+            Add vehicle
           </Link>
         </div>
       </div>
@@ -655,7 +655,7 @@ export default function Vehicles() {
               <CheckCircle2 size={25} />
             </div>
 
-            <h3 className="mt-3 text-base font-extrabold text-slate-900">
+            <h3 className="mt-3 text-base font-semibold text-slate-900">
               Success
             </h3>
 
@@ -674,8 +674,8 @@ export default function Vehicles() {
             <XCircle size={19} className="mt-0.5 shrink-0 text-rose-600" />
 
             <div className="min-w-0">
-              <p className="text-sm font-extrabold text-rose-900">
-                Unable to complete request
+              <p className="text-sm font-semibold text-rose-900">
+                Unable to complete this request
               </p>
 
               <p className="mt-1 text-sm leading-6 text-rose-800">{error}</p>
@@ -684,7 +684,7 @@ export default function Vehicles() {
             <button
               type="button"
               onClick={() => setError(null)}
-              className="ml-auto shrink-0 text-xs font-bold text-rose-700 hover:text-rose-900"
+              className="ml-auto shrink-0 text-xs font-medium text-rose-700 hover:text-rose-900"
             >
               Dismiss
             </button>
@@ -700,21 +700,21 @@ export default function Vehicles() {
         <Metric
           label="Total Vehicles"
           value={loading ? "…" : String(vehicles.length)}
-          note="Registered to your profile"
+          note="Saved to your profile"
           Icon={CarFront}
         />
 
         <Metric
           label="Active"
           value={loading ? "…" : String(activeVehicles)}
-          note="Available for reservations"
+          note="Ready for bookings"
           Icon={CheckCircle2}
         />
 
         <Metric
           label="Inactive"
           value={loading ? "…" : String(inactiveVehicles)}
-          note="Retained for history"
+          note="Kept for your records"
           Icon={CircleDot}
         />
 
@@ -730,7 +730,7 @@ export default function Vehicles() {
           note={
             defaultVehicle
               ? `${defaultVehicle.make} ${defaultVehicle.model}`
-              : "Select an active vehicle"
+              : "Choose an active vehicle"
           }
           Icon={Star}
         />
@@ -742,13 +742,13 @@ export default function Vehicles() {
 
       <Card
         title="Your Vehicles"
-        sub="Active and historical vehicles associated with your SmartPark AI account."
+        sub="Your active vehicles and vehicles kept for your records."
       >
         {/* ==================================================
             SEARCH / FILTER BAR
         ================================================== */}
 
-        <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative min-w-0 flex-1">
             <Search
               size={18}
@@ -759,7 +759,7 @@ export default function Vehicles() {
               type="search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search registration, make, model, type, colour, profile..."
+              placeholder="Search registration, make, model, type or colour..."
               aria-label="Search vehicles"
               className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
             />
@@ -768,7 +768,7 @@ export default function Vehicles() {
           <button
             type="button"
             onClick={() => setShowInactive((current) => !current)}
-            className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold transition ${
+            className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition ${
               showInactive
                 ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 : "border-emerald-200 bg-emerald-50 text-emerald-700"
@@ -780,14 +780,16 @@ export default function Vehicles() {
               <ToggleLeft size={18} />
             )}
 
-            {showInactive ? "Showing inactive" : "Active vehicles only"}
+            {showInactive
+              ? "Inactive vehicles included"
+              : "Active vehicles only"}
           </button>
 
           {searchTerm.trim() && (
             <button
               type="button"
               onClick={() => setSearchTerm("")}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
             >
               Clear
             </button>
@@ -829,7 +831,7 @@ export default function Vehicles() {
                   <div className="h-6 w-20 rounded-full bg-slate-200" />
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="h-16 rounded-xl bg-slate-100" />
                   <div className="h-16 rounded-xl bg-slate-100" />
                   <div className="h-16 rounded-xl bg-slate-100" />
@@ -850,21 +852,20 @@ export default function Vehicles() {
               <CarFront size={31} />
             </div>
 
-            <h3 className="mt-5 text-lg font-extrabold text-slate-900">
-              No vehicles registered
+            <h3 className="mt-5 text-lg font-semibold text-slate-900">
+              No vehicles added yet
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Add your first vehicle to make parking reservations faster and
-              easier.
+              Add your first vehicle to make parking bookings faster and easier.
             </p>
 
             <Link
               to="/vehicles/create"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
               <Plus size={17} />
-              Add Your First Vehicle
+              Add your first vehicle
             </Link>
           </div>
         ) : filteredVehicles.length === 0 ? (
@@ -877,21 +878,21 @@ export default function Vehicles() {
               <Search size={30} />
             </div>
 
-            <h3 className="mt-5 text-lg font-extrabold text-slate-900">
+            <h3 className="mt-5 text-lg font-semibold text-slate-900">
               No matching vehicles
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Try another registration number, make, model, vehicle type, colour
-              or parking profile.
+              Try another registration number, make, model, vehicle type or
+              colour.
             </p>
 
             <button
               type="button"
               onClick={() => setSearchTerm("")}
-              className="mt-6 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
+              className="mt-6 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
-              Clear Search
+              Clear search
             </button>
           </div>
         ) : (
@@ -918,7 +919,7 @@ export default function Vehicles() {
 
                   {vehicle.is_default && vehicle.is_active && (
                     <div className="absolute right-0 top-0">
-                      <div className="rounded-bl-xl bg-amber-400 px-3 py-1.5 text-[11px] font-black text-amber-950">
+                      <div className="rounded-bl-xl bg-amber-400 px-3 py-1.5 text-[11px] font-semibold text-amber-950">
                         DEFAULT
                       </div>
                     </div>
@@ -942,7 +943,7 @@ export default function Vehicles() {
 
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="truncate text-lg font-black tracking-tight text-slate-900">
+                          <h3 className="truncate text-lg font-semibold tracking-tight text-slate-900">
                             {vehicle.registration_number}
                           </h3>
 
@@ -966,7 +967,7 @@ export default function Vehicles() {
                       ======================================== */}
 
                     <span
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-extrabold ${
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
                         vehicle.is_active
                           ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
                           : "bg-slate-200 text-slate-600 ring-1 ring-slate-300"
@@ -986,63 +987,63 @@ export default function Vehicles() {
                         VEHICLE DETAILS
                     ======================================== */}
 
-                  <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-slate-50 p-3.5">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                        Make & Model
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        Make & model
                       </p>
 
-                      <p className="mt-1 text-sm font-extrabold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
                         {vehicle.make || "—"} {vehicle.model || ""}
                       </p>
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-3.5">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                         Type
                       </p>
 
-                      <p className="mt-1 text-sm font-extrabold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
                         {formatVehicleType(vehicle.vehicle_type)}
                       </p>
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-3.5">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                         Colour
                       </p>
 
-                      <p className="mt-1 text-sm font-extrabold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
                         {vehicle.colour || "—"}
                       </p>
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-3.5">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                         Year
                       </p>
 
-                      <p className="mt-1 text-sm font-extrabold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
                         {vehicle.year ?? "—"}
                       </p>
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-3.5">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                        Plate Country
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        Plate country
                       </p>
 
-                      <p className="mt-1 text-sm font-extrabold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
                         {vehicle.plate_country || "—"}
                       </p>
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-3.5">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                        Parking Profile
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        Parking profile
                       </p>
 
-                      <p className="mt-1 text-sm font-extrabold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
                         {formatParkingProfile(vehicle.parking_profile)}
                       </p>
                     </div>
@@ -1060,8 +1061,7 @@ export default function Vehicles() {
                       />
 
                       <p className="text-xs leading-5 text-emerald-800">
-                        This vehicle is available for new SmartPark AI
-                        reservations.
+                        This vehicle is ready to use for new parking bookings.
                       </p>
                     </div>
                   )}
@@ -1079,8 +1079,8 @@ export default function Vehicles() {
 
                       <p className="text-xs leading-5 text-slate-600">
                         This vehicle is inactive and cannot currently be used
-                        for new reservations. Its record is retained for
-                        historical parking records.
+                        for new bookings. Its record is kept for your parking
+                        history.
                       </p>
                     </div>
                   )}
@@ -1099,7 +1099,7 @@ export default function Vehicles() {
                         type="button"
                         onClick={() => navigate(`/vehicles/${vehicle.id}/edit`)}
                         disabled={isProcessing}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Edit3 size={15} />
                         Edit
@@ -1115,14 +1115,14 @@ export default function Vehicles() {
                         type="button"
                         onClick={() => void setDefaultVehicle(vehicle)}
                         disabled={isProcessing}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-700 transition hover:border-amber-300 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isProcessing ? (
                           <RefreshCw size={15} className="animate-spin" />
                         ) : (
                           <Star size={15} />
                         )}
-                        Set Default
+                        Set as default
                       </button>
                     )}
 
@@ -1131,9 +1131,9 @@ export default function Vehicles() {
                       ---------------------------------------- */}
 
                     {vehicle.is_active && vehicle.is_default && (
-                      <div className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-700">
+                      <div className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-700">
                         <Star size={15} className="fill-current" />
-                        Default Vehicle
+                        Default vehicle
                       </div>
                     )}
 
@@ -1146,7 +1146,7 @@ export default function Vehicles() {
                         type="button"
                         onClick={() => void deactivateVehicle(vehicle)}
                         disabled={isProcessing}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isProcessing ? (
                           <RefreshCw size={15} className="animate-spin" />
@@ -1166,7 +1166,7 @@ export default function Vehicles() {
                         type="button"
                         onClick={() => void activateVehicle(vehicle)}
                         disabled={isProcessing}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isProcessing ? (
                           <RefreshCw size={15} className="animate-spin" />
@@ -1186,14 +1186,14 @@ export default function Vehicles() {
                       onClick={() => void deleteVehicle(vehicle)}
                       disabled={isProcessing}
                       title="Remove this vehicle because you no longer own it"
-                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:border-red-400 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition hover:border-red-400 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isProcessing ? (
                         <RefreshCw size={15} className="animate-spin" />
                       ) : (
                         <Trash2 size={15} />
                       )}
-                      Delete Vehicle
+                      Delete vehicle
                     </button>
                   </div>
 
@@ -1225,15 +1225,15 @@ export default function Vehicles() {
               />
 
               <div>
-                <p className="text-sm font-extrabold text-slate-800">
-                  Vehicle Management
+                <p className="text-sm font-semibold text-slate-800">
+                  Vehicle management
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-600">
                   Your default vehicle is automatically preferred when creating
                   a new parking reservation. Deactivate a vehicle when you still
                   own it but it is temporarily unavailable, such as when it is
-                  under repair. Use Delete Vehicle only when you no longer own
+                  under repair. Use Delete vehicle only when you no longer own
                   it.
                 </p>
               </div>

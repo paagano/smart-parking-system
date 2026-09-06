@@ -120,7 +120,7 @@ export default function ActiveReservations() {
         }
 
         // ------------------------------------------------------
-        // Active Parking Sessions
+        // Current Parking Sessions
         // ------------------------------------------------------
 
         if (activeSessionResult.status === "fulfilled") {
@@ -149,7 +149,7 @@ export default function ActiveReservations() {
         }
 
         // ------------------------------------------------------
-        // Zones
+        // Parking Areas
         // ------------------------------------------------------
 
         if (zoneResult.status === "fulfilled") {
@@ -170,11 +170,11 @@ export default function ActiveReservations() {
 
         if (failures.includes("active reservations")) {
           setError(
-            "Unable to load your active parking session from the SmartPark AI backend.",
+            "Unable to load your current parking details right now. Please try again.",
           );
         } else if (failures.length > 0) {
           setError(
-            `Active reservation loaded, but some parking details could not be resolved: ${failures.join(
+            `Your booking is available, but some parking details could not be loaded: ${failures.join(
               ", ",
             )}.`,
           );
@@ -187,7 +187,7 @@ export default function ActiveReservations() {
         setError(
           err instanceof Error
             ? err.message
-            : "Unable to load your active reservation from the SmartPark AI backend.",
+            : "Unable to load your current parking details right now. Please try again.",
         );
       } finally {
         if (!cancelled) {
@@ -239,7 +239,7 @@ export default function ActiveReservations() {
   );
 
   // ==========================================================
-  // Reservation Hierarchy Helpers
+  // Booking Hierarchy Helpers
   // ==========================================================
 
   const getBay = (reservation: ParkingReservation) => {
@@ -267,16 +267,15 @@ export default function ActiveReservations() {
 
     return (
       activeSessions.find((session) => {
-        const sessionWithReservation = session as ParkingSession & {
+        const sessionWithBooking = session as ParkingSession & {
           reservation_id?: number | null;
         };
 
         // Reservation-created parking sessions carry the exact
         // reservation ID. Prefer this authoritative relationship.
         if (
-          sessionWithReservation.reservation_id != null &&
-          Number(sessionWithReservation.reservation_id) ===
-            Number(reservation.id)
+          sessionWithBooking.reservation_id != null &&
+          Number(sessionWithBooking.reservation_id) === Number(reservation.id)
         ) {
           return true;
         }
@@ -386,7 +385,7 @@ export default function ActiveReservations() {
   // ==========================================================
 
   const getStatus = (_reservation: ParkingReservation) => ({
-    label: "Checked In",
+    label: "Currently parked",
     className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
   });
 
@@ -450,7 +449,7 @@ export default function ActiveReservations() {
   ]);
 
   // ==========================================================
-  // Refresh
+  // Refresh parking
   // ==========================================================
 
   const refresh = async () => {
@@ -502,32 +501,33 @@ export default function ActiveReservations() {
 
       {/* <Page
         title="Active Reservations"
-        text="View your ongoing parking session and current reservation details."
+        text="View your parking session and booking details while your vehicle is on site."
       /> */}
 
       {/* ======================================================
           PAGE CONTENT
       ====================================================== */}
 
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* ====================================================
             HEADER
         ==================================================== */}
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <div className="flex items-center gap-2">
               <Activity className="text-blue-600" size={22} />
 
-              <h2 className="text-xl font-extrabold text-slate-900">
-                Active Parking
+              <h2 className="text-2xl font-extrabold tracking-tight text-slate-950">
+                Current Parking
               </h2>
             </div>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500">
               {/* Your currently active parking reservation and ongoing parking
               session. */}
-              View your ongoing parking session and current reservation details.
+              View your parking session and booking details while your vehicle
+              is on site.
             </p>
           </div>
 
@@ -535,14 +535,14 @@ export default function ActiveReservations() {
             type="button"
             onClick={() => void refresh()}
             disabled={isRefreshing || loading}
-            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
           >
             <RefreshCw
               size={16}
               className={isRefreshing ? "animate-spin" : ""}
             />
 
-            {isRefreshing ? "Refreshing..." : "Refresh"}
+            {isRefreshing ? "Refreshing..." : "Refresh bookings"}
           </button>
         </div>
 
@@ -554,19 +554,19 @@ export default function ActiveReservations() {
           <Metric
             label="Active"
             value={loading ? "…" : String(checkedInReservations.length)}
-            note="Ongoing parking"
+            note="Currently parked"
             Icon={Activity}
           />
 
           <Metric
-            label="Checked In"
+            label="Checked in"
             value={loading ? "…" : String(checkedInReservations.length)}
-            note="Currently on site"
+            note="Vehicle on site"
             Icon={CheckCircle2}
           />
 
           <Metric
-            label="Latest Check-In"
+            label="Latest Check-in"
             value={
               loading
                 ? "…"
@@ -583,7 +583,7 @@ export default function ActiveReservations() {
                     checkedInReservations[0].checked_in_at ??
                       getActiveSession(checkedInReservations[0])?.entry_time,
                   )
-                : "No active session"
+                : "No active parking"
             }
             Icon={Clock3}
           />
@@ -594,12 +594,12 @@ export default function ActiveReservations() {
         ==================================================== */}
 
         {error && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-800 shadow-sm">
             <div className="flex items-start gap-3">
               <Clock3 size={18} className="mt-0.5 shrink-0" />
 
               <div>
-                <b className="font-bold">Live data warning</b>
+                <b className="font-medium">Live data warning</b>
 
                 <p className="mt-1">{error}</p>
               </div>
@@ -612,20 +612,18 @@ export default function ActiveReservations() {
         ==================================================== */}
 
         <Card
-          title="My Current Checked-In Reservations"
+          title="Currently Parked"
           sub={
             lastUpdated
-              ? `Live data • Last updated ${formatDateTime(
-                  lastUpdated.toISOString(),
-                )}`
-              : "Live active reservation data from SmartPark AI"
+              ? `Updated ${formatDateTime(lastUpdated.toISOString())}`
+              : "Your current parking details"
           }
         >
           {/* ==================================================
               SEARCH
           ================================================== */}
 
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative min-w-0 flex-1">
               <Search
                 size={18}
@@ -636,9 +634,9 @@ export default function ActiveReservations() {
                 type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search reservation, vehicle, facility, bay or date..."
-                aria-label="Search active reservations"
-                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Search booking, vehicle, location, space or date..."
+                aria-label="Search current parking"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm font-medium outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-50"
               />
             </div>
 
@@ -655,7 +653,7 @@ export default function ActiveReservations() {
 
           {searchTerm.trim() && !loading && (
             <p className="mb-4 text-xs font-semibold text-slate-500">
-              Showing {visibleReservations.length} matching active reservation
+              Showing {visibleReservations.length} matching booking
               {visibleReservations.length === 1 ? "" : "s"}.
             </p>
           )}
@@ -683,7 +681,7 @@ export default function ActiveReservations() {
                     <div className="h-7 w-24 rounded-full bg-slate-200" />
                   </div>
 
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
                     <div className="h-16 rounded-xl bg-slate-100" />
 
                     <div className="h-16 rounded-xl bg-slate-100" />
@@ -698,12 +696,12 @@ export default function ActiveReservations() {
                NO ACTIVE RESERVATIONS
             ================================================== */
 
-            <div className="rounded-2xl bg-slate-50 px-6 py-12 text-center">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-6 py-10 text-center sm:py-12">
               <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-slate-400 shadow-sm ring-1 ring-slate-200">
                 <ParkingCircle size={28} />
               </div>
 
-              <h3 className="mt-4 text-lg font-extrabold text-slate-900">
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">
                 No active parking session
               </h3>
 
@@ -717,13 +715,13 @@ export default function ActiveReservations() {
                NO SEARCH MATCHES
             ================================================== */
 
-            <div className="rounded-2xl bg-slate-50 px-6 py-12 text-center">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-6 py-10 text-center sm:py-12">
               <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-slate-400 shadow-sm ring-1 ring-slate-200">
                 <Search size={28} />
               </div>
 
-              <h3 className="mt-4 text-lg font-extrabold text-slate-900">
-                No matching active reservation
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                No matching booking
               </h3>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
@@ -734,7 +732,7 @@ export default function ActiveReservations() {
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="mt-5 rounded-xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-blue-700"
+                className="mt-5 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
               >
                 Clear search
               </button>
@@ -757,29 +755,29 @@ export default function ActiveReservations() {
                 return (
                   <article
                     key={reservation.id}
-                    className="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm transition hover:border-blue-300"
+                    className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-md sm:p-6"
                   >
                     {/* ==========================================
                           ACTIVE SESSION BANNER
                       ========================================== */}
 
-                    <div className="mb-5 flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-100 text-blue-600">
+                    <div className="mb-4 flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-600">
                         <Activity size={20} />
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-extrabold text-blue-900">
+                        <p className="text-sm font-semibold text-emerald-900">
                           Parking session active
                         </p>
 
-                        <p className="mt-0.5 text-xs text-blue-700">
+                        <p className="mt-0.5 text-xs text-emerald-700">
                           Your vehicle is currently checked in.
                         </p>
                       </div>
 
                       <span
-                        className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-extrabold ${status.className}`}
+                        className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
                       >
                         {status.label}
                       </span>
@@ -797,13 +795,13 @@ export default function ActiveReservations() {
                           </div>
 
                           <div className="min-w-0">
-                            <h3 className="truncate text-base font-extrabold text-slate-900">
-                              {facility?.name ?? "Parking Facility"}
+                            <h3 className="truncate text-base font-semibold text-slate-900">
+                              {facility?.name ?? "Parking Location"}
                             </h3>
 
                             <p className="mt-0.5 text-xs text-slate-500">
                               Reservation{" "}
-                              <span className="font-bold text-slate-700">
+                              <span className="font-medium text-slate-700">
                                 {reservation.reservation_number}
                               </span>
                             </p>
@@ -812,7 +810,7 @@ export default function ActiveReservations() {
                       </div>
 
                       <span
-                        className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-extrabold ${status.className}`}
+                        className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
                       >
                         {status.label}
                       </span>
@@ -822,39 +820,39 @@ export default function ActiveReservations() {
                           LOCATION
                       ========================================== */}
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-xl bg-slate-50 p-4">
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <MapPin size={15} />
-                          Facility
+                          Parking Location
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
-                          {facility?.name ?? "Parking Facility"}
+                        <p className="mt-1.5 text-sm font-bold text-slate-900">
+                          {facility?.name ?? "Parking Location"}
                         </p>
                       </div>
 
-                      <div className="rounded-xl bg-slate-50 p-4">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <ParkingCircle size={15} />
-                          Zone
+                          Parking Area
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-1.5 text-sm font-bold text-slate-900">
                           {zone?.name ?? "—"}
                         </p>
                       </div>
 
-                      <div className="rounded-xl bg-slate-50 p-4">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <ParkingCircle size={15} />
-                          Parking Bay
+                          Parking Space
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-1.5 text-sm font-bold text-slate-900">
                           {bay?.bay_number ??
                             bay?.code ??
-                            `Bay #${reservation.parking_bay_id}`}
+                            `Space #${reservation.parking_bay_id}`}
                         </p>
                       </div>
                     </div>
@@ -864,35 +862,35 @@ export default function ActiveReservations() {
                       ========================================== */}
 
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-xl bg-slate-50 p-4">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <CarFront size={15} />
                           Vehicle
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-1.5 text-sm font-bold text-slate-900">
                           {reservation.vehicle_registration || "Not specified"}
                         </p>
 
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
                           {reservation.vehicle_type || "Vehicle"}
                         </p>
                       </div>
 
-                      <div className="rounded-xl bg-slate-50 p-4">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <CheckCircle2 size={15} />
-                          Checked In
+                          Checked in
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-1.5 text-sm font-bold text-slate-900">
                           {formatDateTime(
                             reservation.checked_in_at ??
                               getActiveSession(reservation)?.entry_time,
                           )}
                         </p>
 
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
                           Vehicle currently on site
                         </p>
                       </div>
@@ -903,24 +901,24 @@ export default function ActiveReservations() {
                       ========================================== */}
 
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-xl bg-slate-50 p-4">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <CalendarClock size={15} />
-                          Reserved From
+                          Started
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-1.5 text-sm font-bold text-slate-900">
                           {formatDateTime(reservation.reserved_from)}
                         </p>
                       </div>
 
-                      <div className="rounded-xl bg-slate-50 p-4">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <Clock3 size={15} />
-                          Reserved Until
+                          Ends
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-1.5 text-sm font-bold text-slate-900">
                           {formatDateTime(reservation.reserved_until)}
                         </p>
                       </div>
@@ -933,10 +931,10 @@ export default function ActiveReservations() {
                     <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <span className="text-xs text-slate-500">
-                          Reservation Amount
+                          Booking Amount
                         </span>
 
-                        <p className="mt-0.5 text-base font-extrabold text-slate-900">
+                        <p className="mt-0.5 text-base font-semibold text-slate-900">
                           {formatAmount(
                             reservation.estimated_amount,
                             reservation.currency || "KES",
@@ -946,10 +944,10 @@ export default function ActiveReservations() {
 
                       <div className="text-left sm:text-right">
                         <span className="text-xs text-slate-500">
-                          Session Status
+                          Parking Status
                         </span>
 
-                        <p className="mt-0.5 text-sm font-extrabold text-blue-700">
+                        <p className="mt-0.5 text-sm font-semibold text-emerald-700">
                           Ongoing
                         </p>
                       </div>
@@ -975,18 +973,16 @@ export default function ActiveReservations() {
                           INFORMATION
                       ========================================== */}
 
-                    <div className="mt-4 flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
                       <Activity
                         size={17}
                         className="mt-0.5 shrink-0 text-blue-600"
                       />
 
                       <p className="text-xs leading-5 text-slate-600">
-                        Your parking session is currently active. Once the
-                        payment is completed and vehicle is checked out, the
-                        reservation will automatically move to
-                        <b className="ml-1 text-slate-800">COMPLETED </b>
-                         and will no longer appear under Active Reservations.
+                        Your parking session is currently active. When your
+                        vehicle leaves, your booking will automatically move to
+                        your parking history.
                       </p>
                     </div>
                   </article>

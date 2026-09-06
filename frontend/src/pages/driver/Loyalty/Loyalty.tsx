@@ -454,7 +454,7 @@ export default function Loyalty() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div>
             <div className="h-8 w-64 animate-pulse rounded bg-slate-200" />
@@ -463,7 +463,7 @@ export default function Loyalty() {
           <div className="h-10 w-24 animate-pulse rounded-xl bg-slate-200" />
         </div>
 
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           {[1, 2, 3].map((item) => (
             <div
               key={item}
@@ -482,7 +482,7 @@ export default function Loyalty() {
   // --------------------------------------------------------
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -492,12 +492,13 @@ export default function Loyalty() {
           </div>
 
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-              Loyalty Programme
+            <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+              SmartPark Rewards
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Earn points, unlock rewards and get more from SmartPark.
+              Earn points through your parking activity and turn them into
+              valuable rewards.
             </p>
           </div>
         </div>
@@ -538,23 +539,23 @@ export default function Loyalty() {
 
       <div className="grid gap-5 md:grid-cols-3">
         <MetricCard
-          label="Available Points"
+          label="Points Available"
           value={points(currentBalance)}
-          helper="Ready to redeem"
+          helper="Ready to use on rewards"
           icon={<Coins size={22} />}
           iconClass="text-emerald-600 bg-emerald-50"
         />
 
         <MetricCard
-          label="Lifetime Points"
+          label="Lifetime Points Earned"
           value={points(currentLifetimePoints)}
-          helper="Total points earned"
+          helper="All-time points earned"
           icon={<Zap size={22} />}
           iconClass="text-blue-600 bg-blue-50"
         />
 
         <MetricCard
-          label="Current Tier"
+          label="Your Tier"
           value={label(currentTier)}
           helper={tierDescription(currentTier)}
           icon={<TierIcon size={22} />}
@@ -564,7 +565,7 @@ export default function Loyalty() {
 
       {/* Tabs */}
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
         <div className="flex min-w-max gap-1">
           <TabButton
             active={tab === "overview"}
@@ -582,13 +583,13 @@ export default function Loyalty() {
             active={tab === "redemptions"}
             onClick={() => setTab("redemptions")}
             icon={<Award size={16} />}
-            text="My Rewards"
+            text="Claimed Rewards"
           />
           <TabButton
             active={tab === "activity"}
             onClick={() => setTab("activity")}
             icon={<History size={16} />}
-            text="Points Activity"
+            text="Points History"
           />
         </div>
       </div>
@@ -599,7 +600,7 @@ export default function Loyalty() {
         <div className="space-y-6">
           {/* Tier progress */}
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-violet-50 text-violet-600">
@@ -608,7 +609,7 @@ export default function Loyalty() {
 
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Your Current Loyalty Tier
+                    Your Rewards Level
                   </p>
 
                   <h2 className="text-xl font-extrabold text-slate-900">
@@ -620,7 +621,7 @@ export default function Loyalty() {
               {progress.nextTier ? (
                 <div className="text-left sm:text-right">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Next Tier
+                    Next Level
                   </p>
                   <p className="font-extrabold text-slate-900">
                     {label(progress.nextTier)}
@@ -628,7 +629,7 @@ export default function Loyalty() {
                 </div>
               ) : (
                 <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                  Highest Tier
+                  Top Tier
                 </span>
               )}
             </div>
@@ -641,7 +642,7 @@ export default function Loyalty() {
 
                 {progress.nextTier && (
                   <span className="font-bold text-slate-700">
-                    {points(progress.remaining)} points to{" "}
+                    {points(progress.remaining)} points to reach{" "}
                     {label(progress.nextTier)}
                   </span>
                 )}
@@ -697,7 +698,7 @@ export default function Loyalty() {
           <div className="grid gap-5 md:grid-cols-2">
             <StatCard
               title="Points Earned"
-              helper="From the available loyalty history"
+              helper="From your recorded loyalty activity"
               value={`+${points(earnedPoints)}`}
               icon={<Zap size={20} />}
               className="text-emerald-600 bg-emerald-50"
@@ -705,7 +706,7 @@ export default function Loyalty() {
 
             <StatCard
               title="Points Redeemed"
-              helper="Used for loyalty rewards"
+              helper="Used to claim rewards"
               value={`-${points(redeemedPoints)}`}
               icon={<Gift size={20} />}
               className="text-amber-600 bg-amber-50"
@@ -714,14 +715,14 @@ export default function Loyalty() {
 
           {/* Featured rewards */}
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-extrabold text-slate-900">
-                  Available Rewards
+                  Rewards You Can Claim
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Rewards currently eligible for your loyalty tier.
+                  These rewards are currently available to you.
                 </p>
               </div>
 
@@ -738,8 +739,8 @@ export default function Loyalty() {
             {eligibleRewards.length === 0 ? (
               <EmptyState
                 icon={<Gift size={30} />}
-                title="No eligible rewards"
-                text="Keep earning points and check again later."
+                title="No rewards available yet"
+                text="Keep earning points and check back when new rewards become available."
               />
             ) : (
               <div className="mt-5 grid gap-4 md:grid-cols-3">
@@ -765,26 +766,26 @@ export default function Loyalty() {
       {/* Rewards */}
 
       {tab === "rewards" && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-xl font-extrabold text-slate-900">
-                Rewards Catalogue
+                Reward Catalogue
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Redeem your SmartPark loyalty points.
+                Use your points to claim rewards.
               </p>
             </div>
 
             <div className="rounded-xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-              {points(currentBalance)} points available
+              {points(currentBalance)} points ready to use
             </div>
           </div>
 
           {eligibleRewards.length === 0 ? (
             <EmptyState
               icon={<Gift size={36} />}
-              title="No eligible rewards"
+              title="No rewards available yet"
               text="There are currently no rewards available for your tier."
             />
           ) : (
@@ -808,18 +809,18 @@ export default function Loyalty() {
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 p-6">
             <h2 className="text-xl font-extrabold text-slate-900">
-              My Rewards
+              Claimed Rewards
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Rewards you have redeemed using loyalty points.
+              Rewards you have already claimed with your points.
             </p>
           </div>
 
           {redemptions.length === 0 ? (
             <EmptyState
               icon={<Award size={36} />}
-              title="No redeemed rewards"
-              text="Your redeemed rewards will appear here."
+              title="No rewards claimed yet"
+              text="Rewards you claim will appear here."
             />
           ) : (
             <div className="divide-y divide-slate-100">
@@ -838,7 +839,7 @@ export default function Loyalty() {
                         <h3 className="font-extrabold text-slate-900">
                           {redemption.reward?.name ??
                             redemption.description ??
-                            "Loyalty Reward"}
+                            "Reward"}
                         </h3>
 
                         <p className="mt-1 text-xs text-slate-500">
@@ -882,18 +883,18 @@ export default function Loyalty() {
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 p-6">
             <h2 className="text-xl font-extrabold text-slate-900">
-              Points Activity
+              Points History
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Your loyalty point transaction history.
+              A record of points earned and used.
             </p>
           </div>
 
           {history.length === 0 ? (
             <EmptyState
               icon={<History size={36} />}
-              title="No points activity"
-              text="Your loyalty transactions will appear here."
+              title="No points activity yet"
+              text="Your points activity will appear here."
             />
           ) : (
             <div className="divide-y divide-slate-100">
@@ -977,11 +978,11 @@ export default function Loyalty() {
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
-                  Loyalty Reward
+                  Reward
                 </p>
 
                 <h2 className="mt-1 text-xl font-extrabold text-slate-900">
-                  {success ? "Reward Redeemed" : "Redeem Reward"}
+                  {success ? "Reward Claimed" : "Claim Reward"}
                 </h2>
               </div>
 
@@ -1003,11 +1004,11 @@ export default function Loyalty() {
                   </div>
 
                   <h3 className="mt-4 text-xl font-extrabold text-slate-900">
-                    Successfully Redeemed
+                    Reward claimed successfully
                   </h3>
 
                   <p className="mt-2 text-sm text-slate-500">
-                    Your loyalty reward has been redeemed successfully.
+                    Your reward has been added to your claimed rewards.
                   </p>
 
                   <div className="mt-5 rounded-xl bg-slate-50 p-4 text-left">
@@ -1031,7 +1032,7 @@ export default function Loyalty() {
 
                     <div className="mt-3 flex justify-between gap-4 border-t border-slate-200 pt-3">
                       <span className="text-sm text-slate-500">
-                        Remaining Points
+                        Points Remaining
                       </span>
                       <span className="text-sm font-extrabold text-emerald-600">
                         {points(success.remainingPoints)}
@@ -1062,7 +1063,7 @@ export default function Loyalty() {
 
                         <p className="mt-1 text-sm text-slate-600">
                           {selectedReward.description ??
-                            "Redeem your loyalty points for this reward."}
+                            "Use your points to claim this reward."}
                         </p>
                       </div>
                     </div>
@@ -1070,12 +1071,12 @@ export default function Loyalty() {
 
                   <div className="mt-5 space-y-3">
                     <SummaryRow
-                      label="Reward Cost"
+                      label="Points Required"
                       value={`${points(selectedReward.points_cost)} points`}
                     />
 
                     <SummaryRow
-                      label="Your Balance"
+                      label="Your Points"
                       value={`${points(currentBalance)} points`}
                       valueClass="text-emerald-600"
                     />
@@ -1095,7 +1096,7 @@ export default function Loyalty() {
                       {points(
                         toNumber(selectedReward.points_cost) - currentBalance,
                       )}{" "}
-                      more points to redeem this reward.
+                      more points before you can claim this reward.
                     </div>
                   )}
 
@@ -1121,12 +1122,12 @@ export default function Loyalty() {
                       {redeeming ? (
                         <>
                           <RefreshCw size={16} className="animate-spin" />
-                          Redeeming...
+                          Claiming...
                         </>
                       ) : (
                         <>
                           <Gift size={16} />
-                          Redeem Reward
+                          Claim Reward
                         </>
                       )}
                     </button>
@@ -1159,7 +1160,7 @@ function MetricCard({
   iconClass: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
@@ -1256,7 +1257,7 @@ function RewardCard({
   const canRedeem = balance >= cost;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
       <div className="bg-gradient-to-br from-emerald-50 to-white p-5">
         <div className="grid h-12 w-12 place-items-center rounded-xl bg-white text-emerald-600 shadow-sm">
           <Gift size={22} />
@@ -1296,7 +1297,7 @@ function RewardCard({
         {reward.minimum_tier && (
           <div className="mt-3 flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-              Minimum Tier
+              Minimum Level
             </span>
 
             <span className="font-bold text-slate-700">
@@ -1308,7 +1309,7 @@ function RewardCard({
         {reward.valid_until && (
           <div className="mt-3 flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-              Valid Until
+              Available Until
             </span>
 
             <span className="font-bold text-slate-700">
@@ -1346,11 +1347,11 @@ function RecentActivity({
       <div className="flex items-center justify-between border-b border-slate-100 p-6">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">
-            Recent Points Activity
+            Recent Activity
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Your latest loyalty transactions.
+            Your latest points activity.
           </p>
         </div>
 
@@ -1368,7 +1369,7 @@ function RecentActivity({
         <div className="p-8 text-center">
           <Clock3 size={30} className="mx-auto text-slate-300" />
           <p className="mt-3 text-sm font-bold text-slate-600">
-            No recent activity
+            No recent activity yet
           </p>
         </div>
       ) : (

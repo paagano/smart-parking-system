@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuth } from "./AuthContext";
-import { normalizeRole, type Role } from "./role";
+import { normalizeRole, type Role } from "./Role";
 
 // ==========================================================
 // Frontend Roles
@@ -19,8 +19,6 @@ import { normalizeRole, type Role } from "./role";
 // The conversion from backend -> frontend happens here so
 // the rest of the frontend has one consistent role model.
 // ==========================================================
-
-
 
 // ==========================================================
 // Props

@@ -96,11 +96,11 @@ export default function ReservationHistory() {
 
         if (failures.includes("reservations")) {
           setError(
-            "Unable to load your reservation history from the SmartPark AI backend.",
+            "Unable to load your booking history right now. Please try again.",
           );
         } else if (failures.length > 0) {
           setError(
-            `Reservation history loaded, but some parking details could not be resolved: ${failures.join(
+            `Booking history loaded, but some parking details could not be displayed: ${failures.join(
               ", ",
             )}.`,
           );
@@ -113,7 +113,7 @@ export default function ReservationHistory() {
         setError(
           err instanceof Error
             ? err.message
-            : "Unable to load your reservation history from the SmartPark AI backend.",
+            : "Unable to load your booking history right now. Please try again.",
         );
       } finally {
         if (!cancelled) {
@@ -394,7 +394,7 @@ export default function ReservationHistory() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to refresh reservation history.",
+          : "Unable to refresh your booking history right now.",
       );
     } finally {
       setIsRefreshing(false);
@@ -402,29 +402,29 @@ export default function ReservationHistory() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <Page
-          title="Reservation History"
-          text="View your completed, cancelled and expired parking reservations."
+          title="Booking History"
+          text="Review your completed, cancelled and expired parking bookings."
         />
 
         <button
           type="button"
           onClick={() => void refresh()}
           disabled={isRefreshing || loading}
-          className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
         >
           <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
-          {isRefreshing ? "Refreshing..." : "Refresh"}
+          {isRefreshing ? "Refreshing..." : "Refresh bookings"}
         </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
-          label="History"
+          label="Bookings"
           value={loading ? "…" : String(historyReservations.length)}
-          note="Past reservations"
+          note="Past bookings"
           Icon={ParkingCircle}
         />
 
@@ -438,14 +438,14 @@ export default function ReservationHistory() {
         <Metric
           label="Cancelled"
           value={loading ? "…" : String(cancelledCount)}
-          note="Cancelled bookings"
+          note="Bookings you cancelled"
           Icon={XCircle}
         />
 
         <Metric
           label="Expired"
           value={loading ? "…" : String(expiredCount)}
-          note="Expired bookings"
+          note="Bookings that expired"
           Icon={Clock3}
         />
       </div>
@@ -455,7 +455,7 @@ export default function ReservationHistory() {
           <div className="flex items-start gap-3">
             <Activity size={18} className="mt-0.5 shrink-0" />
             <div>
-              <b className="font-bold">Live data warning</b>
+              <b className="font-medium">Data update notice</b>
               <p className="mt-1">{error}</p>
             </div>
           </div>
@@ -463,16 +463,14 @@ export default function ReservationHistory() {
       )}
 
       <Card
-        title="Reservation History"
+        title="Booking History"
         sub={
           lastUpdated
-            ? `Live data • Last updated ${formatDateTime(
-                lastUpdated.toISOString(),
-              )}`
-            : "Historical reservation data from SmartPark AI"
+            ? `Updated ${formatDateTime(lastUpdated.toISOString())}`
+            : "Your past parking bookings"
         }
       >
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search
               size={18}
@@ -483,8 +481,8 @@ export default function ReservationHistory() {
               type="search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search reservation, vehicle, facility, bay, status or date..."
-              aria-label="Search reservation history"
+              placeholder="Search by booking number, vehicle, location, space, status or date..."
+              aria-label="Search booking history"
               className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
             />
           </div>
@@ -493,7 +491,7 @@ export default function ReservationHistory() {
             <button
               type="button"
               onClick={() => setSearchTerm("")}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
             >
               Clear
             </button>
@@ -502,7 +500,7 @@ export default function ReservationHistory() {
 
         {searchTerm.trim() && !loading && (
           <p className="mb-4 text-xs font-semibold text-slate-500">
-            Showing {visibleReservations.length} matching historical reservation
+            Showing {visibleReservations.length} matching past booking
             {visibleReservations.length === 1 ? "" : "s"}.
           </p>
         )}
@@ -537,13 +535,12 @@ export default function ReservationHistory() {
               <ParkingCircle size={28} />
             </div>
 
-            <h3 className="mt-4 text-lg font-extrabold text-slate-900">
-              No reservation history
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">
+              No booking history
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Your completed, cancelled or expired reservations will appear
-              here.
+              Your completed, cancelled or expired bookings will appear here.
             </p>
           </div>
         ) : visibleReservations.length === 0 ? (
@@ -552,8 +549,8 @@ export default function ReservationHistory() {
               <Search size={28} />
             </div>
 
-            <h3 className="mt-4 text-lg font-extrabold text-slate-900">
-              No matching reservations
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">
+              No matching bookings
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
@@ -564,7 +561,7 @@ export default function ReservationHistory() {
             <button
               type="button"
               onClick={() => setSearchTerm("")}
-              className="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
+              className="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
               Clear search
             </button>
@@ -580,7 +577,7 @@ export default function ReservationHistory() {
               return (
                 <article
                   key={reservation.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-slate-300 hover:shadow-sm"
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-md sm:p-6"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
@@ -590,13 +587,13 @@ export default function ReservationHistory() {
                         </div>
 
                         <div className="min-w-0">
-                          <h3 className="truncate text-base font-extrabold text-slate-900">
-                            {facility?.name ?? "Parking Facility"}
+                          <h3 className="truncate text-base font-semibold text-slate-900">
+                            {facility?.name ?? "Parking Location"}
                           </h3>
 
                           <p className="mt-0.5 text-xs text-slate-500">
-                            Reservation{" "}
-                            <span className="font-bold text-slate-700">
+                            Booking{" "}
+                            <span className="font-medium text-slate-700">
                               {reservation.reservation_number}
                             </span>
                           </p>
@@ -605,7 +602,7 @@ export default function ReservationHistory() {
                     </div>
 
                     <span
-                      className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-extrabold ${status.className}`}
+                      className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
                     >
                       {status.label}
                     </span>
@@ -615,10 +612,10 @@ export default function ReservationHistory() {
                     <div className="rounded-xl bg-slate-50 p-4">
                       <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                         <CalendarClock size={15} />
-                        Reservation Date
+                        Booking Date
                       </div>
 
-                      <p className="mt-2 text-sm font-extrabold text-slate-900">
+                      <p className="mt-2 text-sm font-semibold text-slate-900">
                         {formatDate(reservation.reserved_from)}
                       </p>
                     </div>
@@ -629,7 +626,7 @@ export default function ReservationHistory() {
                         Time
                       </div>
 
-                      <p className="mt-2 text-sm font-extrabold text-slate-900">
+                      <p className="mt-2 text-sm font-semibold text-slate-900">
                         {formatTime(reservation.reserved_from)} –{" "}
                         {formatTime(reservation.reserved_until)}
                       </p>
@@ -638,13 +635,13 @@ export default function ReservationHistory() {
                     <div className="rounded-xl bg-slate-50 p-4">
                       <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                         <ParkingCircle size={15} />
-                        Parking Bay
+                        Parking Space
                       </div>
 
-                      <p className="mt-2 text-sm font-extrabold text-slate-900">
+                      <p className="mt-2 text-sm font-semibold text-slate-900">
                         {bay?.bay_number ??
                           bay?.code ??
-                          `Bay #${reservation.parking_bay_id}`}
+                          `Space #${reservation.parking_bay_id}`}
                       </p>
 
                       {zone && (
@@ -660,7 +657,7 @@ export default function ReservationHistory() {
                         Vehicle
                       </div>
 
-                      <p className="mt-2 text-sm font-extrabold text-slate-900">
+                      <p className="mt-2 text-sm font-semibold text-slate-900">
                         {reservation.vehicle_registration || "Not specified"}
                       </p>
 
@@ -673,10 +670,10 @@ export default function ReservationHistory() {
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-xl bg-slate-50 p-4">
                       <span className="text-xs text-slate-500">
-                        Estimated amount
+                        Booking amount
                       </span>
 
-                      <p className="mt-0.5 text-base font-extrabold text-slate-900">
+                      <p className="mt-0.5 text-base font-semibold text-slate-900">
                         {formatAmount(
                           reservation.estimated_amount,
                           reservation.currency || "KES",
@@ -685,11 +682,9 @@ export default function ReservationHistory() {
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-4">
-                      <span className="text-xs text-slate-500">
-                        Historical event
-                      </span>
+                      <span className="text-xs text-slate-500">Outcome</span>
 
-                      <p className="mt-0.5 text-sm font-extrabold text-slate-900">
+                      <p className="mt-0.5 text-sm font-semibold text-slate-900">
                         {reservation.completed_at
                           ? `Completed ${formatDateTime(
                               reservation.completed_at,
@@ -702,7 +697,7 @@ export default function ReservationHistory() {
                               ? `Expired ${formatDateTime(
                                   reservation.reserved_until,
                                 )}`
-                              : `Reservation ended ${formatDateTime(
+                              : `Booking ended ${formatDateTime(
                                   reservation.reserved_until,
                                 )}`}
                       </p>

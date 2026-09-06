@@ -133,16 +133,16 @@ function getErrorMessage(error: any): string {
       return "You are not authorized to make this payment.";
 
     case 404:
-      return "The parking session or backend pricing service could not be found.";
+      return "We could not find the parking details or current amount. Please refresh and try again.";
 
     case 409:
-      return "This parking session cannot currently be paid.";
+      return "This parking payment cannot be completed right now.";
 
     case 422:
-      return "The payment information supplied is invalid.";
+      return "Some payment information is invalid. Please check it and try again.";
 
     default:
-      return "Unable to prepare or complete the parking payment.";
+      return "We could not prepare or complete your payment. Please try again.";
   }
 }
 
@@ -277,8 +277,8 @@ function CheckoutDetail({
       <span
         className={`break-all text-sm sm:text-right ${
           emphasis
-            ? "font-black text-slate-900"
-            : "font-extrabold text-slate-700"
+            ? "font-semibold text-slate-900"
+            : "font-medium text-slate-700"
         } ${mono ? "font-mono text-xs" : ""}`}
       >
         {value ?? "—"}
@@ -417,7 +417,7 @@ export default function SessionPayment() {
   const loadSessionAndQuote = useCallback(
     async (manual = false) => {
       if (!sessionId) {
-        setError("No parking session was specified.");
+        setError("No parking session was selected.");
         setLoading(false);
         return;
       }
@@ -781,9 +781,7 @@ export default function SessionPayment() {
     if (!user?.id) {
       setStatus("FAILED");
 
-      setMessage(
-        "Authenticated customer information is missing. Please sign in again.",
-      );
+      setMessage("Your account details are unavailable. Please sign in again.");
 
       return;
     }
@@ -796,7 +794,7 @@ export default function SessionPayment() {
       setStatus("FAILED");
 
       setMessage(
-        "The backend did not return a payable amount for this parking session. Please refresh and try again.",
+        "We could not confirm the current parking amount. Please refresh and try again.",
       );
 
       return;
@@ -812,9 +810,7 @@ export default function SessionPayment() {
     if (loyaltyPointsToRedeem > availableLoyaltyPoints) {
       setStatus("FAILED");
 
-      setMessage(
-        "You do not have enough loyalty points for the selected redemption amount.",
-      );
+      setMessage("You do not have enough loyalty points for that amount.");
 
       return;
     }
@@ -823,7 +819,7 @@ export default function SessionPayment() {
       setStatus("FAILED");
 
       setMessage(
-        "The selected loyalty points cannot exceed the parking amount due.",
+        "The loyalty points used cannot be more than the parking amount due.",
       );
 
       return;
@@ -953,9 +949,7 @@ export default function SessionPayment() {
       } else if (["FAILED", "CANCELLED"].includes(nextStatus)) {
         setProcessing(false);
 
-        setMessage(
-          "Payment was not completed. Your parking session remains active.",
-        );
+        setMessage("Payment was not completed. Your parking remains active.");
       } else {
         setMessage(
           (remainingAmount ?? 0) <= 0
@@ -1038,9 +1032,7 @@ export default function SessionPayment() {
         if (["FAILED", "CANCELLED"].includes(nextStatus)) {
           setProcessing(false);
 
-          setMessage(
-            "Payment was not completed. Your parking session remains active.",
-          );
+          setMessage("Payment was not completed. Your parking remains active.");
 
           return;
         }
@@ -1049,7 +1041,7 @@ export default function SessionPayment() {
           setProcessing(false);
 
           setMessage(
-            "We could not confirm the payment within the expected time. Please check Payment History before retrying.",
+            "We could not confirm the payment yet. Please check Payment History before trying again.",
           );
         }
       } catch (err) {
@@ -1062,7 +1054,7 @@ export default function SessionPayment() {
           setProcessing(false);
 
           setMessage(
-            "Payment status could not be confirmed automatically. Please check Payment History before retrying.",
+            "We could not confirm the payment automatically. Please check Payment History before trying again.",
           );
         }
       }
@@ -1092,7 +1084,7 @@ export default function SessionPayment() {
             className="mx-auto animate-spin text-emerald-600"
           />
 
-          <h2 className="mt-4 text-lg font-black text-slate-900">
+          <h2 className="mt-4 text-lg font-semibold text-slate-900">
             Preparing checkout
           </h2>
 
@@ -1114,13 +1106,13 @@ export default function SessionPayment() {
           Header
       ====================================================== */}
 
-      <section className="overflow-hidden rounded-3xl bg-[#071a2d] text-white shadow-sm">
+      <section className="overflow-hidden rounded-3xl bg-[#071a2d] text-white shadow-md">
         <div className="p-6 sm:p-8">
           <button
             type="button"
-            onClick={() => navigate("/parking-sessions")}
+            onClick={() => navigate("/sessions")}
             disabled={processing}
-            className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-white disabled:opacity-50"
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white disabled:opacity-50"
           >
             <ArrowLeft size={16} />
             Back to Parking Sessions
@@ -1128,11 +1120,13 @@ export default function SessionPayment() {
 
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">
+              <div className="text-[11px] font-semibold uppercase tracking-[.18em] text-emerald-300">
                 SmartPark AI Checkout
               </div>
 
-              <h1 className="mt-3 text-3xl font-black">Pay & Check Out</h1>
+              <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+                Pay & Check Out
+              </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
                 Settle the parking charge for this active session. Loyalty
@@ -1142,11 +1136,11 @@ export default function SessionPayment() {
             </div>
 
             <div className="rounded-2xl bg-emerald-400/10 px-5 py-4 ring-1 ring-emerald-300/20">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
                 Parking Charge
               </div>
 
-              <div className="mt-1 text-2xl font-black">
+              <div className="mt-1 text-2xl font-semibold">
                 {money(session?.amount ?? null, session?.currency ?? "KES")}
               </div>
             </div>
@@ -1180,51 +1174,54 @@ export default function SessionPayment() {
               Session Summary
           ================================================== */}
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-3">
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 text-slate-600">
                 <CreditCard size={22} />
               </div>
 
               <div>
-                <h2 className="text-lg font-black text-slate-900">
+                <h2 className="text-lg font-semibold text-slate-900">
                   Parking Session
                 </h2>
 
                 <p className="text-xs font-semibold text-slate-400">
-                  Review the backend-calculated charge before payment.
+                  Kindly review the total calculated charge before payment.
                 </p>
               </div>
             </div>
 
             <div className="mt-6 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100">
               <CheckoutDetail
-                label="Session"
+                label="Booking"
                 value={session.sessionNumber ?? `#${session.id}`}
                 mono
               />
 
-              <CheckoutDetail label="Facility" value={session.facility} />
+              <CheckoutDetail
+                label="Parking Location"
+                value={session.facility}
+              />
 
-              <CheckoutDetail label="Parking Zone" value={session.zone} />
+              <CheckoutDetail label="Parking Area" value={session.zone} />
 
               <CheckoutDetail label="Vehicle" value={session.vehicle} />
 
-              <CheckoutDetail label="Parking Bay" value={session.bay} />
+              <CheckoutDetail label="Parking Space" value={session.bay} />
 
               <CheckoutDetail
-                label="Current Duration"
+                label="Time Parked"
                 value={formatDuration(liveDuration)}
               />
 
               <CheckoutDetail
-                label="Parking Charge"
+                label="Amount Due"
                 value={money(session.amount, session.currency)}
                 emphasis
               />
 
               <CheckoutDetail
-                label="Loyalty Redemption"
+                label="Loyalty Points Used"
                 value={
                   loyaltyPointsToRedeem > 0
                     ? `${loyaltyPointsToRedeem.toLocaleString(
@@ -1235,7 +1232,7 @@ export default function SessionPayment() {
               />
 
               <CheckoutDetail
-                label="Remaining Amount"
+                label="Amount to Pay"
                 value={money(remainingAmount, session.currency)}
                 emphasis
               />
@@ -1245,12 +1242,12 @@ export default function SessionPayment() {
                 Loyalty Summary
                 ================================================= */}
 
-            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
               <div className="flex items-start gap-3">
                 <Gift size={20} className="mt-0.5 shrink-0 text-emerald-600" />
 
                 <div className="min-w-0">
-                  <div className="font-black text-emerald-900">
+                  <div className="font-semibold text-emerald-900">
                     Loyalty Points
                   </div>
 
@@ -1282,8 +1279,8 @@ export default function SessionPayment() {
                 Important
                 ================================================= */}
 
-            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-              <div className="font-black">Important</div>
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <div className="font-semibold">Important</div>
 
               <p className="mt-1 leading-6">
                 After successful payment, proceed to the exit. You have{" "}
@@ -1297,10 +1294,10 @@ export default function SessionPayment() {
               Payment Panel
               ================================================== */}
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             {!successful && (
               <>
-                <h2 className="text-lg font-black text-slate-900">
+                <h2 className="text-lg font-semibold text-slate-900">
                   Choose Payment Method
                 </h2>
 
@@ -1313,7 +1310,7 @@ export default function SessionPayment() {
                     Loyalty Redemption
                     ============================================== */}
 
-                <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
                   <div className="flex items-start gap-3">
                     <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-emerald-600 shadow-sm">
                       <Gift size={20} />
@@ -1321,11 +1318,11 @@ export default function SessionPayment() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <h3 className="font-black text-emerald-900">
+                        <h3 className="font-semibold text-emerald-900">
                           Loyalty Points
                         </h3>
 
-                        <span className="text-xs font-bold text-emerald-700">
+                        <span className="text-xs font-medium text-emerald-700">
                           Balance:{" "}
                           {availableLoyaltyPoints.toLocaleString("en-KE")} pts
                         </span>
@@ -1357,7 +1354,7 @@ export default function SessionPayment() {
                           }
                           className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                         />
-                        <span className="text-sm font-bold text-emerald-900">
+                        <span className="text-sm font-medium text-emerald-900">
                           Use loyalty points for this payment
                         </span>
                       </label>
@@ -1365,7 +1362,7 @@ export default function SessionPayment() {
                   </div>
 
                   <div className="mt-4">
-                    <label className="block text-sm font-bold text-slate-700">
+                    <label className="block text-sm font-medium text-slate-700">
                       Points to Redeem{useLoyaltyPoints ? "" : " (optional)"}
                       <div className="mt-2 flex gap-2">
                         <input
@@ -1384,7 +1381,7 @@ export default function SessionPayment() {
                             availableLoyaltyPoints <= 0
                           }
                           placeholder="0"
-                          className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100"
+                          className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100"
                         />
 
                         <button
@@ -1396,7 +1393,7 @@ export default function SessionPayment() {
                             !useLoyaltyPoints ||
                             maximumRedeemablePoints <= 0
                           }
-                          className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-xs font-black text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           MAX
                         </button>
@@ -1405,7 +1402,7 @@ export default function SessionPayment() {
                           type="button"
                           onClick={clearLoyaltyPoints}
                           disabled={processing || loyaltyLoading}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           CLEAR
                         </button>
@@ -1419,31 +1416,31 @@ export default function SessionPayment() {
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-xl bg-white p-3 ring-1 ring-emerald-100">
-                      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                         Loyalty Value
                       </div>
 
-                      <div className="mt-1 text-lg font-black text-emerald-700">
+                      <div className="mt-1 text-lg font-semibold text-emerald-700">
                         {money(loyaltyValue, session.currency)}
                       </div>
                     </div>
 
                     <div className="rounded-xl bg-white p-3 ring-1 ring-emerald-100">
-                      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                         Remaining
                       </div>
 
-                      <div className="mt-1 text-lg font-black text-slate-900">
+                      <div className="mt-1 text-lg font-semibold text-slate-900">
                         {money(remainingAmount, session.currency)}
                       </div>
                     </div>
                   </div>
 
                   {loyaltyCoversFullAmount && (
-                    <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-3 text-sm font-bold text-emerald-800">
+                    <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-3 text-sm font-medium text-emerald-800">
                       {loyaltyPointsToRedeem > 0
-                        ? "✓ Your loyalty points cover the full parking charge. No additional monetary payment is required."
-                        : "✓ No monetary payment is required. This session is within the free parking grace period."}
+                        ? "✓ Your loyalty points cover the full parking charge. No additional payment is required."
+                        : "✓ No payment is required. Your parking is within the free parking grace period."}
                     </div>
                   )}
                 </div>
@@ -1452,7 +1449,7 @@ export default function SessionPayment() {
                     Payment Methods
                     ============================================== */}
 
-                <div className="mt-6 grid gap-3">
+                <div className="mt-5 grid gap-3">
                   {/* Wallet */}
 
                   <button
@@ -1476,7 +1473,7 @@ export default function SessionPayment() {
                     <div className="flex items-center gap-3">
                       <Wallet size={21} className="text-emerald-600" />
 
-                      <span className="font-extrabold text-slate-900">
+                      <span className="font-medium text-slate-900">
                         SmartPark Wallet
                       </span>
                     </div>
@@ -1509,9 +1506,7 @@ export default function SessionPayment() {
                     <div className="flex items-center gap-3">
                       <Smartphone size={21} className="text-emerald-600" />
 
-                      <span className="font-extrabold text-slate-900">
-                        M-PESA
-                      </span>
+                      <span className="font-medium text-slate-900">M-PESA</span>
                     </div>
 
                     <p className="mt-2 text-xs leading-5 text-slate-500">
@@ -1525,7 +1520,7 @@ export default function SessionPayment() {
                         ========================================== */}
 
                 {paymentMethod === "MPESA" && (
-                  <label className="mt-5 block text-sm font-bold text-slate-700">
+                  <label className="mt-5 block text-sm font-medium text-slate-700">
                     M-PESA Phone Number
                     <input
                       value={mpesaPhone}
@@ -1578,7 +1573,7 @@ export default function SessionPayment() {
                     loyaltyLoading ||
                     loyaltyPointsToRedeem > availableLoyaltyPoints
                   }
-                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {processing ? (
                     <RefreshCw size={17} className="animate-spin" />
@@ -1591,7 +1586,7 @@ export default function SessionPayment() {
                   )}
 
                   {processing
-                    ? "Processing Checkout..."
+                    ? "Completing payment..."
                     : session.amount === null
                       ? "Amount unavailable"
                       : (remainingAmount ?? 0) <= 0
@@ -1599,7 +1594,7 @@ export default function SessionPayment() {
                           ? `Redeem ${loyaltyPointsToRedeem.toLocaleString(
                               "en-KE",
                             )} Points & Complete Checkout`
-                          : "Complete Free Checkout"
+                          : "Complete Free Parking"
                         : `Pay ${money(remainingAmount, session.currency)}`}
                 </button>
 
@@ -1615,7 +1610,7 @@ export default function SessionPayment() {
                     void loadLoyaltyAccount();
                   }}
                   disabled={refreshing || processing}
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                 >
                   <RefreshCw
                     size={16}
@@ -1640,20 +1635,20 @@ export default function SessionPayment() {
                     />
 
                     <div>
-                      <h2 className="text-xl font-black text-emerald-900">
+                      <h2 className="text-xl font-semibold text-emerald-900">
                         Checkout successful
                       </h2>
 
                       <p className="mt-2 text-sm leading-6 text-emerald-800">
                         {(remainingAmount ?? 0) <= 0
                           ? loyaltyPointsToRedeem > 0
-                            ? "Your parking charge has been settled using loyalty points."
-                            : "Your parking charge was KES 0.00 under the grace period, so no monetary payment was required."
-                          : "Your parking charge has been settled successfully."}
+                            ? "Your parking charge has been covered using loyalty points."
+                            : "Your parking charge was KES 0.00 under the grace period, so no payment was required."
+                          : "Your parking charge has been paid successfully."}
                       </p>
 
                       {loyaltyPointsToRedeem > 0 && (
-                        <p className="mt-2 text-sm font-bold text-emerald-800">
+                        <p className="mt-2 text-sm font-medium text-emerald-800">
                           {loyaltyPointsToRedeem.toLocaleString("en-KE")}{" "}
                           loyalty points were redeemed.
                         </p>
@@ -1670,7 +1665,7 @@ export default function SessionPayment() {
                     />
 
                     <div>
-                      <h3 className="font-black text-slate-900">
+                      <h3 className="font-semibold text-slate-900">
                         Proceed to the exit
                       </h3>
 
@@ -1686,7 +1681,7 @@ export default function SessionPayment() {
                 <button
                   type="button"
                   onClick={() => navigate("/sessions")}
-                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white hover:bg-slate-800"
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800"
                 >
                   Return to Parking Sessions
                   <ArrowUpRight size={17} />

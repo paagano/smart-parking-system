@@ -49,14 +49,14 @@ export default function UpcomingReservations() {
   const [searchTerm, setSearchTerm] = useState("");
 
   // ==========================================================
-  // Manage Reservation Modal
+  // Manage Booking Modal
   // ==========================================================
 
   const [selectedReservation, setSelectedReservation] =
     useState<ParkingReservation | null>(null);
 
   // ==========================================================
-  // Update Reservation Modal
+  // Update Booking Modal
   // ==========================================================
 
   const [editingReservation, setEditingReservation] =
@@ -78,7 +78,7 @@ export default function UpcomingReservations() {
   const [editError, setEditError] = useState<string | null>(null);
 
   // ==========================================================
-  // Reservation processing
+  // Booking processing
   // ==========================================================
 
   const [processingReservationId, setProcessingReservationId] = useState<
@@ -169,11 +169,11 @@ export default function UpcomingReservations() {
 
         if (failures.includes("reservations")) {
           setError(
-            "Unable to load your upcoming reservations from the SmartPark AI backend.",
+            "Unable to load your upcoming bookings right now. Please try again.",
           );
         } else if (failures.length > 0) {
           setError(
-            `Upcoming reservations loaded, but some parking details could not be resolved: ${failures.join(
+            `Upcoming bookings loaded, but some parking details could not be shown: ${failures.join(
               ", ",
             )}.`,
           );
@@ -186,7 +186,7 @@ export default function UpcomingReservations() {
         setError(
           err instanceof Error
             ? err.message
-            : "Unable to load upcoming reservations from the SmartPark AI backend.",
+            : "Unable to load upcoming bookings right now. Please try again.",
         );
       } finally {
         if (!cancelled) {
@@ -337,7 +337,7 @@ export default function UpcomingReservations() {
   };
 
   // ==========================================================
-  // Reservation status
+  // Booking status
   // ==========================================================
 
   const getStatus = (reservation: ParkingReservation) => {
@@ -518,7 +518,7 @@ export default function UpcomingReservations() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to refresh upcoming reservations.",
+          : "Unable to refresh upcoming bookings right now.",
       );
     } finally {
       setIsRefreshing(false);
@@ -627,7 +627,7 @@ export default function UpcomingReservations() {
     if (!editingReservation) return;
 
     if (editBayId === "") {
-      setEditError("Please select a parking bay.");
+      setEditError("Please select a parking space.");
       return;
     }
 
@@ -645,17 +645,17 @@ export default function UpcomingReservations() {
     }
 
     if (until <= from) {
-      setEditError("Reservation end time must be later than the start time.");
+      setEditError("Booking end time must be later than the start time.");
       return;
     }
 
     if (from <= new Date()) {
-      setEditError("Reservation start time must be in the future.");
+      setEditError("Booking start time must be in the future.");
       return;
     }
 
     if (!editVehicleRegistration.trim()) {
-      setEditError("Please provide the vehicle registration number.");
+      setEditError("Please provide the vehicle registration.");
       return;
     }
 
@@ -685,12 +685,12 @@ export default function UpcomingReservations() {
       setLastUpdated(new Date());
 
       setSuccessToast(
-        `Reservation ${editingReservation.reservation_number} updated successfully.`,
+        `Booking ${editingReservation.reservation_number} updated successfully.`,
       );
 
       /*
        * Close update modal and immediately show the updated
-       * reservation in the Manage Reservation modal.
+       * reservation in the Manage Booking modal.
        */
       setEditingReservation(null);
       setEditError(null);
@@ -713,7 +713,7 @@ export default function UpcomingReservations() {
   };
 
   // ==========================================================
-  // Cancel Reservation
+  // Cancel Booking
   // ==========================================================
 
   const handleCancel = async (reservation: ParkingReservation) => {
@@ -742,7 +742,7 @@ export default function UpcomingReservations() {
       setSelectedReservation(null);
 
       setSuccessToast(
-        `Reservation ${reservation.reservation_number} cancelled successfully.`,
+        `Booking ${reservation.reservation_number} cancelled successfully.`,
       );
     } catch (err: any) {
       console.error(
@@ -778,13 +778,13 @@ export default function UpcomingReservations() {
           role="status"
           aria-live="polite"
         >
-          <div className="flex min-w-[320px] max-w-[90vw] items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-5 py-4 text-sm font-bold text-emerald-800 shadow-2xl ring-1 ring-black/5">
+          <div className="flex min-w-[320px] max-w-[90vw] items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-5 py-4 text-sm font-medium text-emerald-800 shadow-2xl ring-1 ring-black/5">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-600">
               <CheckCircle2 size={20} />
             </div>
 
             <div>
-              <p className="font-extrabold text-emerald-900">Success</p>
+              <p className="font-semibold text-emerald-900">Success</p>
 
               <p className="mt-0.5 font-medium text-emerald-700">
                 {successToast}
@@ -807,23 +807,23 @@ export default function UpcomingReservations() {
           PAGE CONTENT
       ====================================================== */}
 
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* ====================================================
             HEADER
         ==================================================== */}
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
           <div>
             <div className="flex items-center gap-2">
               <CalendarClock className="text-emerald-600" size={22} />
 
-              <h2 className="text-xl font-extrabold text-slate-900">
-                My Upcoming Reservations
+              <h2 className="text-xl font-semibold text-slate-900">
+                Upcoming Bookings
               </h2>
             </div>
 
             <p className="mt-1 text-sm text-slate-500">
-              View your reservations scheduled for a future date and time.
+              View your future parking bookings at a glance.
             </p>
           </div>
 
@@ -831,14 +831,14 @@ export default function UpcomingReservations() {
             type="button"
             onClick={() => void refresh()}
             disabled={isRefreshing || loading}
-            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
           >
             <RefreshCw
               size={16}
               className={isRefreshing ? "animate-spin" : ""}
             />
 
-            {isRefreshing ? "Refreshing..." : "Refresh"}
+            {isRefreshing ? "Refreshing bookings..." : "Refresh"}
           </button>
         </div>
 
@@ -850,7 +850,7 @@ export default function UpcomingReservations() {
           <Metric
             label="Upcoming"
             value={loading ? "…" : String(upcomingReservations.length)}
-            note="Future bookings"
+            note="Scheduled parking"
             Icon={CalendarClock}
           />
 
@@ -866,7 +866,7 @@ export default function UpcomingReservations() {
             note={
               upcomingReservations[0]
                 ? formatTime(upcomingReservations[0].reserved_from)
-                : "No future booking"
+                : "No scheduled booking"
             }
             Icon={Clock3}
           />
@@ -883,7 +883,7 @@ export default function UpcomingReservations() {
                     ).length,
                   )
             }
-            note="Ready for Check-In"
+            note="Ready for check-in"
             Icon={CheckCircle2}
           />
         </div>
@@ -898,7 +898,7 @@ export default function UpcomingReservations() {
               <Clock3 size={18} className="mt-0.5 shrink-0" />
 
               <div>
-                <b className="font-bold">Live data warning</b>
+                <b className="font-medium">Live data warning</b>
 
                 <p className="mt-1">{error}</p>
               </div>
@@ -911,13 +911,11 @@ export default function UpcomingReservations() {
         ==================================================== */}
 
         <Card
-          title="My Future Bookings"
+          title="Upcoming Bookings"
           sub={
             lastUpdated
-              ? `Live data • Last updated ${formatDateTime(
-                  lastUpdated.toISOString(),
-                )}`
-              : "Live reservation data from SmartPark AI"
+              ? `Updated ${formatDateTime(lastUpdated.toISOString())}`
+              : "Your latest scheduled parking bookings"
           }
         >
           {/* ==================================================
@@ -935,7 +933,7 @@ export default function UpcomingReservations() {
                 type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search reservation, vehicle, facility, bay or date..."
+                placeholder="Search by booking number, vehicle, location, space or date..."
                 aria-label="Search upcoming reservations"
                 className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
@@ -945,7 +943,7 @@ export default function UpcomingReservations() {
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
               >
                 Clear
               </button>
@@ -954,7 +952,7 @@ export default function UpcomingReservations() {
 
           {searchTerm.trim() && !loading && (
             <p className="mb-4 text-xs font-semibold text-slate-500">
-              Showing {visibleReservations.length} matching upcoming reservation
+              Showing {visibleReservations.length} matching upcoming booking
               {visibleReservations.length === 1 ? "" : "s"}.
             </p>
           )}
@@ -1002,8 +1000,8 @@ export default function UpcomingReservations() {
                 <CalendarClock size={28} />
               </div>
 
-              <h3 className="mt-4 text-lg font-extrabold text-slate-900">
-                No upcoming reservations
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                No upcoming bookings
               </h3>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
@@ -1013,9 +1011,9 @@ export default function UpcomingReservations() {
 
               <a
                 href="/reservations/create"
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-400"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
               >
-                Create Reservation
+                Find Parking
                 <ArrowRight size={16} />
               </a>
             </div>
@@ -1029,8 +1027,8 @@ export default function UpcomingReservations() {
                 <Search size={28} />
               </div>
 
-              <h3 className="mt-4 text-lg font-extrabold text-slate-900">
-                No matching reservations
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                No matching bookings
               </h3>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
@@ -1041,7 +1039,7 @@ export default function UpcomingReservations() {
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-700"
+                className="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
                 Clear search
               </button>
@@ -1061,7 +1059,7 @@ export default function UpcomingReservations() {
                 return (
                   <article
                     key={reservation.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-slate-300 hover:shadow-sm"
+                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-md sm:p-6"
                   >
                     {/* ==================================================
                         HEADER
@@ -1075,13 +1073,13 @@ export default function UpcomingReservations() {
                           </div>
 
                           <div className="min-w-0">
-                            <h3 className="truncate text-base font-extrabold text-slate-900">
-                              {facility?.name ?? "Parking Facility"}
+                            <h3 className="truncate text-base font-semibold text-slate-900">
+                              {facility?.name ?? "Parking Location"}
                             </h3>
 
                             <p className="mt-0.5 text-xs text-slate-500">
                               Reservation{" "}
-                              <span className="font-bold text-slate-700">
+                              <span className="font-medium text-slate-700">
                                 {reservation.reservation_number}
                               </span>
                             </p>
@@ -1090,7 +1088,7 @@ export default function UpcomingReservations() {
                       </div>
 
                       <span
-                        className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-extrabold ${status.className}`}
+                        className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
                       >
                         {status.label}
                       </span>
@@ -1109,7 +1107,7 @@ export default function UpcomingReservations() {
                           Date
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
                           {formatDate(reservation.reserved_from)}
                         </p>
                       </div>
@@ -1122,24 +1120,24 @@ export default function UpcomingReservations() {
                           Time
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
                           {formatTime(reservation.reserved_from)} –{" "}
                           {formatTime(reservation.reserved_until)}
                         </p>
                       </div>
 
-                      {/* Parking Bay */}
+                      {/* Parking Space */}
 
                       <div className="rounded-xl bg-slate-50 p-4">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <ParkingCircle size={15} />
-                          Parking Bay
+                          Parking Space
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
                           {bay?.bay_number ??
                             bay?.code ??
-                            `Bay #${reservation.parking_bay_id}`}
+                            `Space #${reservation.parking_bay_id}`}
                         </p>
 
                         {zone && (
@@ -1157,7 +1155,7 @@ export default function UpcomingReservations() {
                           Vehicle
                         </div>
 
-                        <p className="mt-2 text-sm font-extrabold text-slate-900">
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
                           {reservation.vehicle_registration || "Not specified"}
                         </p>
 
@@ -1177,7 +1175,7 @@ export default function UpcomingReservations() {
                           Estimated amount
                         </span>
 
-                        <p className="mt-0.5 text-base font-extrabold text-slate-900">
+                        <p className="mt-0.5 text-base font-semibold text-slate-900">
                           {formatAmount(
                             reservation.estimated_amount,
                             reservation.currency || "KES",
@@ -1190,7 +1188,7 @@ export default function UpcomingReservations() {
                           Reserved until
                         </span>
 
-                        <p className="mt-0.5 text-sm font-bold text-slate-700">
+                        <p className="mt-0.5 text-sm font-medium text-slate-700">
                           {formatDateTime(reservation.reserved_until)}
                         </p>
                       </div>
@@ -1232,7 +1230,7 @@ export default function UpcomingReservations() {
                       <button
                         type="button"
                         onClick={() => openManageModal(reservation)}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                       >
                         <ParkingCircle size={15} />
                         Manage Reservation
@@ -1240,16 +1238,16 @@ export default function UpcomingReservations() {
 
                       {String(reservation.status ?? "").toUpperCase() ===
                         "CREATED" && (
-                        <div className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-700">
+                        <div className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-700">
                           <CreditCard size={15} />
                           Payment required
                         </div>
                       )}
 
                       {status.label === "Confirmed" && (
-                        <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700">
+                        <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700">
                           <CheckCircle2 size={15} />
-                          Ready for Check-In
+                          Ready for check-in
                         </div>
                       )}
                     </div>
@@ -1279,20 +1277,20 @@ export default function UpcomingReservations() {
 
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-6 py-5">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-wider text-emerald-600">
-                  Reservation Management
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+                  Booking Management
                 </p>
 
                 <h2
                   id="manage-reservation-title"
-                  className="mt-1 text-xl font-extrabold text-slate-900"
+                  className="mt-1 text-xl font-semibold text-slate-900"
                 >
-                  Reservation Details
+                  Booking Details
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
                   Reservation{" "}
-                  <span className="font-bold text-slate-700">
+                  <span className="font-medium text-slate-700">
                     {selectedReservation.reservation_number}
                   </span>
                 </p>
@@ -1325,7 +1323,7 @@ export default function UpcomingReservations() {
                   />
 
                   <div>
-                    <p className="font-extrabold text-rose-900">
+                    <p className="font-semibold text-rose-900">
                       Unable to complete action
                     </p>
 
@@ -1341,16 +1339,16 @@ export default function UpcomingReservations() {
               <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-5">
                 <div>
                   <p className="text-xs font-semibold text-slate-500">
-                    Reservation Status
+                    Booking Status
                   </p>
 
-                  <p className="mt-1 text-lg font-extrabold text-slate-900">
+                  <p className="mt-1 text-lg font-semibold text-slate-900">
                     {getStatus(selectedReservation).label}
                   </p>
                 </div>
 
                 <span
-                  className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-extrabold ${
+                  className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold ${
                     getStatus(selectedReservation).className
                   }`}
                 >
@@ -1363,7 +1361,7 @@ export default function UpcomingReservations() {
               ================================================== */}
 
               <div>
-                <h3 className="mb-3 text-sm font-extrabold text-slate-900">
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">
                   Parking Location
                 </h3>
 
@@ -1373,31 +1371,31 @@ export default function UpcomingReservations() {
                       Facility
                     </p>
 
-                    <p className="mt-1 text-sm font-extrabold text-slate-900">
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
                       {getFacility(selectedReservation)?.name ??
-                        "Parking Facility"}
+                        "Parking Location"}
                     </p>
                   </div>
 
                   <div className="rounded-xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold text-slate-500">
-                      Zone / Level
+                      Parking Area / Level
                     </p>
 
-                    <p className="mt-1 text-sm font-extrabold text-slate-900">
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
                       {getZone(selectedReservation)?.name ?? "—"}
                     </p>
                   </div>
 
                   <div className="rounded-xl bg-slate-50 p-4">
                     <p className="text-xs font-semibold text-slate-500">
-                      Parking Bay
+                      Parking Space
                     </p>
 
-                    <p className="mt-1 text-sm font-extrabold text-slate-900">
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
                       {getBay(selectedReservation)?.bay_number ??
                         getBay(selectedReservation)?.code ??
-                        `Bay #${selectedReservation.parking_bay_id}`}
+                        `Space #${selectedReservation.parking_bay_id}`}
                     </p>
                   </div>
                 </div>
@@ -1408,8 +1406,8 @@ export default function UpcomingReservations() {
               ================================================== */}
 
               <div>
-                <h3 className="mb-3 text-sm font-extrabold text-slate-900">
-                  Booking Schedule
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                  Parking Schedule
                 </h3>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1419,7 +1417,7 @@ export default function UpcomingReservations() {
                       Start
                     </div>
 
-                    <p className="mt-2 text-sm font-extrabold text-slate-900">
+                    <p className="mt-2 text-sm font-semibold text-slate-900">
                       {formatDateTime(selectedReservation.reserved_from)}
                     </p>
                   </div>
@@ -1430,7 +1428,7 @@ export default function UpcomingReservations() {
                       End
                     </div>
 
-                    <p className="mt-2 text-sm font-extrabold text-slate-900">
+                    <p className="mt-2 text-sm font-semibold text-slate-900">
                       {formatDateTime(selectedReservation.reserved_until)}
                     </p>
                   </div>
@@ -1442,7 +1440,7 @@ export default function UpcomingReservations() {
               ================================================== */}
 
               <div>
-                <h3 className="mb-3 text-sm font-extrabold text-slate-900">
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">
                   Vehicle
                 </h3>
 
@@ -1453,7 +1451,7 @@ export default function UpcomingReservations() {
                       Registration
                     </div>
 
-                    <p className="mt-2 text-sm font-extrabold text-slate-900">
+                    <p className="mt-2 text-sm font-semibold text-slate-900">
                       {selectedReservation.vehicle_registration ||
                         "Not specified"}
                     </p>
@@ -1465,7 +1463,7 @@ export default function UpcomingReservations() {
                       Vehicle Type
                     </div>
 
-                    <p className="mt-2 text-sm font-extrabold text-slate-900">
+                    <p className="mt-2 text-sm font-semibold text-slate-900">
                       {selectedReservation.vehicle_type || "Vehicle"}
                     </p>
                   </div>
@@ -1479,10 +1477,10 @@ export default function UpcomingReservations() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl bg-slate-50 p-4">
                   <p className="text-xs font-semibold text-slate-500">
-                    Estimated Amount
+                    Amount to pay
                   </p>
 
-                  <p className="mt-1 text-base font-extrabold text-slate-900">
+                  <p className="mt-1 text-base font-semibold text-slate-900">
                     {formatAmount(
                       selectedReservation.estimated_amount,
                       selectedReservation.currency || "KES",
@@ -1491,11 +1489,9 @@ export default function UpcomingReservations() {
                 </div>
 
                 <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold text-slate-500">
-                    Reserved Until
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500">Ends</p>
 
-                  <p className="mt-1 text-sm font-extrabold text-slate-900">
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
                     {formatDateTime(selectedReservation.reserved_until)}
                   </p>
                 </div>
@@ -1520,7 +1516,7 @@ export default function UpcomingReservations() {
                   type="button"
                   onClick={closeManageModal}
                   disabled={processingReservationId === selectedReservation.id}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                 >
                   Close
                 </button>
@@ -1529,23 +1525,23 @@ export default function UpcomingReservations() {
                   type="button"
                   onClick={() => handleCancel(selectedReservation)}
                   disabled={processingReservationId === selectedReservation.id}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-5 py-2.5 text-sm font-extrabold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-5 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <XCircle size={16} />
 
                   {processingReservationId === selectedReservation.id
                     ? "Cancelling..."
-                    : "Cancel Reservation"}
+                    : "Cancel Booking"}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleUpdate(selectedReservation)}
                   disabled={processingReservationId === selectedReservation.id}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Pencil size={16} />
-                  Update Reservation
+                  Edit Booking
                 </button>
               </div>
             </div>
@@ -1573,14 +1569,14 @@ export default function UpcomingReservations() {
               <div>
                 <h2
                   id="update-reservation-title"
-                  className="text-xl font-extrabold text-slate-900"
+                  className="text-xl font-semibold text-slate-900"
                 >
-                  Update Reservation
+                  Edit Booking
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
                   Reservation{" "}
-                  <span className="font-bold text-slate-700">
+                  <span className="font-medium text-slate-700">
                     {editingReservation.reservation_number}
                   </span>
                 </p>
@@ -1591,7 +1587,7 @@ export default function UpcomingReservations() {
                 onClick={closeUpdateModal}
                 disabled={savingUpdate}
                 className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
-                aria-label="Close update reservation dialog"
+                aria-label="Close edit booking dialog"
               >
                 <XCircle size={18} />
               </button>
@@ -1614,8 +1610,8 @@ export default function UpcomingReservations() {
                   />
 
                   <div className="min-w-0">
-                    <p className="font-extrabold text-rose-900">
-                      Unable to update reservation
+                    <p className="font-semibold text-rose-900">
+                      Unable to update booking
                     </p>
 
                     <p className="mt-1 leading-5">{editError}</p>
@@ -1628,7 +1624,7 @@ export default function UpcomingReservations() {
               ================================================== */}
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   Facility
                   <select
                     value={editFacilityId}
@@ -1643,7 +1639,7 @@ export default function UpcomingReservations() {
                     }}
                     className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                   >
-                    <option value="">Select facility</option>
+                    <option value="">Choose location</option>
 
                     {facilities
                       .filter((facility) => facility.is_active !== false)
@@ -1655,8 +1651,8 @@ export default function UpcomingReservations() {
                   </select>
                 </label>
 
-                <label className="text-sm font-bold text-slate-700">
-                  Zone / Level
+                <label className="text-sm font-medium text-slate-700">
+                  Parking Area / Level
                   <select
                     value={editZoneId}
                     onChange={(event) => {
@@ -1670,7 +1666,7 @@ export default function UpcomingReservations() {
                     disabled={editFacilityId === ""}
                     className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
                   >
-                    <option value="">Select zone</option>
+                    <option value="">Choose area</option>
 
                     {zones
                       .filter(
@@ -1686,8 +1682,8 @@ export default function UpcomingReservations() {
                   </select>
                 </label>
 
-                <label className="text-sm font-bold text-slate-700">
-                  Parking Bay
+                <label className="text-sm font-medium text-slate-700">
+                  Parking Space
                   <select
                     value={editBayId}
                     onChange={(event) =>
@@ -1698,7 +1694,7 @@ export default function UpcomingReservations() {
                     disabled={editZoneId === ""}
                     className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50"
                   >
-                    <option value="">Select bay</option>
+                    <option value="">Choose space</option>
 
                     {bays
                       .filter(
@@ -1715,7 +1711,7 @@ export default function UpcomingReservations() {
                   </select>
                 </label>
 
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   Vehicle Type
                   <select
                     value={editVehicleType}
@@ -1736,7 +1732,7 @@ export default function UpcomingReservations() {
                     VEHICLE REGISTRATION
                 ================================================== */}
 
-                <label className="text-sm font-bold text-slate-700 sm:col-span-2">
+                <label className="text-sm font-medium text-slate-700 sm:col-span-2">
                   Vehicle Registration
                   <input
                     value={editVehicleRegistration}
@@ -1754,7 +1750,7 @@ export default function UpcomingReservations() {
                     START
                 ================================================== */}
 
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   Start Time
                   <input
                     type="datetime-local"
@@ -1770,7 +1766,7 @@ export default function UpcomingReservations() {
                     END
                 ================================================== */}
 
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-medium text-slate-700">
                   End Time
                   <input
                     type="datetime-local"
@@ -1787,14 +1783,14 @@ export default function UpcomingReservations() {
                     NOTES
                 ================================================== */}
 
-                <label className="text-sm font-bold text-slate-700 sm:col-span-2">
+                <label className="text-sm font-medium text-slate-700 sm:col-span-2">
                   Notes
                   <textarea
                     value={editNotes}
                     onChange={(event) => setEditNotes(event.target.value)}
                     rows={3}
                     className="mt-2 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="Optional reservation notes"
+                    placeholder="Optional booking notes"
                   />
                 </label>
               </div>
@@ -1808,7 +1804,7 @@ export default function UpcomingReservations() {
                   type="button"
                   onClick={closeUpdateModal}
                   disabled={savingUpdate}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                 >
                   Close
                 </button>
@@ -1817,7 +1813,7 @@ export default function UpcomingReservations() {
                   type="button"
                   onClick={() => void handleSaveUpdate()}
                   disabled={savingUpdate}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {savingUpdate ? (
                     <RefreshCw size={16} className="animate-spin" />
@@ -1825,7 +1821,7 @@ export default function UpcomingReservations() {
                     <Save size={16} />
                   )}
 
-                  {savingUpdate ? "Saving..." : "Save Changes"}
+                  {savingUpdate ? "Saving..." : "Save Booking"}
                 </button>
               </div>
             </div>

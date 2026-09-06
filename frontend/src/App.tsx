@@ -6,7 +6,7 @@ import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import RoleRoute from "./auth/RoleRoute";
-import { normalizeRole } from "./auth/role";
+import { normalizeRole } from "./auth/Role";
 import { useAuth } from "./auth/AuthContext";
 import Shell from "./components/layout/Shell";
 
