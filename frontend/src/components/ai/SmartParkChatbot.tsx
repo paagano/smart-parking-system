@@ -1794,7 +1794,7 @@ export default function SmartParkChatbot() {
 
                 <div className="mt-0.5 flex items-center gap-1.5 text-xs text-blue-100">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  You reliable Parking Assistant
+                  Your reliable Parking Assistant
                 </div>
               </div>
             </div>
