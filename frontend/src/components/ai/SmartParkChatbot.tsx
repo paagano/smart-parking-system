@@ -38,6 +38,13 @@ type ForecastPresentation = {
   observationCount?: string;
 };
 
+type NavigationPresentation = {
+  facilityName: string;
+  facilityCode?: string;
+  address?: string;
+  navigationUrl: string;
+};
+
 // ==========================================================
 // Assistant response presentation helpers
 // ==========================================================
@@ -117,6 +124,261 @@ const parseForecastPresentation = (
     observationCount: extractLabeledValue(normalized, "Observation count"),
   };
 };
+
+const parseNavigationPresentation = (
+  content: string,
+  originCoordinates?: Coordinates | null,
+): NavigationPresentation | null => {
+  /*
+   * SmartPark may return a complete Google Maps Directions URL, but it may
+   * also return only the destination coordinates and tell the customer to
+   * "open your preferred maps app".
+   *
+   * The latter is what the production response can currently look like:
+   *
+   *   Two Rivers Mall is at Limuru Road, Nairobi.
+   *   You're currently near -1.203129, 36.777630.
+   *   Open your preferred maps app and navigate to:
+   *   Two Rivers Mall
+   *   Coordinates: -1.210490, 36.802871
+   *
+   * Therefore the presentation layer supports BOTH forms:
+   *   1. A Google Maps Directions URL supplied by the AI.
+   *   2. Destination coordinates supplied by the AI, from which the
+   *      frontend constructs the Google Maps Directions URL.
+   */
+
+  const googleMapsStart = content.search(
+    /https:\/\/www\.google\.com\/maps\/dir\/\?/i,
+  );
+
+  let navigationUrl: string | undefined;
+
+  if (googleMapsStart >= 0) {
+    let rawNavigationUrl = content.slice(googleMapsStart);
+
+    const closingParenthesisIndex = rawNavigationUrl.indexOf(")");
+    if (closingParenthesisIndex >= 0) {
+      rawNavigationUrl = rawNavigationUrl.slice(0, closingParenthesisIndex);
+    }
+
+    const candidateUrl = rawNavigationUrl
+      .replace(/[\r\n\t\s]+/g, "")
+      .replace(/[.,;:]+$/, "");
+
+    if (
+      /^https:\/\/www\.google\.com\/maps\/dir\/\?api=1(?:&|$)/i.test(
+        candidateUrl,
+      ) &&
+      /[?&]destination=/i.test(candidateUrl)
+    ) {
+      navigationUrl = candidateUrl;
+    }
+  }
+
+  /*
+   * If the AI did not return a Google Maps URL, use the destination
+   * coordinates in the response to construct one ourselves.
+   *
+   * Prefer an explicit "Coordinates:" line so that the customer's current
+   * location is never mistaken for the facility destination.
+   */
+  const destinationCoordinatesMatch = content.match(
+    /(?:^|\n)\s*(?:[-*]\s*)?\*?\*?Coordinates\*?\*?\s*[:：]\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/im,
+  );
+
+  const destinationLatitude = destinationCoordinatesMatch
+    ? Number(destinationCoordinatesMatch[1])
+    : undefined;
+  const destinationLongitude = destinationCoordinatesMatch
+    ? Number(destinationCoordinatesMatch[2])
+    : undefined;
+
+  if (
+    !navigationUrl &&
+    destinationLatitude !== undefined &&
+    destinationLongitude !== undefined &&
+    Number.isFinite(destinationLatitude) &&
+    Number.isFinite(destinationLongitude)
+  ) {
+    /*
+     * Use the coordinates already obtained by the chatbot when available.
+     * If they are not available, the AI response may itself contain the
+     * customer's current coordinates in a "You're currently near ..." line.
+     */
+    let originLatitude = originCoordinates?.latitude;
+    let originLongitude = originCoordinates?.longitude;
+
+    if (originLatitude === undefined || originLongitude === undefined) {
+      const responseOriginMatch = content.match(
+        /(?:currently\s+near|your\s+(?:current\s+)?location)\s*[:：]?\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/i,
+      );
+
+      if (responseOriginMatch) {
+        originLatitude = Number(responseOriginMatch[1]);
+        originLongitude = Number(responseOriginMatch[2]);
+      }
+    }
+
+    const originIsValid =
+      originLatitude !== undefined &&
+      originLongitude !== undefined &&
+      Number.isFinite(originLatitude) &&
+      Number.isFinite(originLongitude);
+
+    const destination = `${destinationLatitude},${destinationLongitude}`;
+
+    navigationUrl = originIsValid
+      ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(
+          `${originLatitude},${originLongitude}`,
+        )}&destination=${encodeURIComponent(destination)}&travelmode=driving`
+      : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          destination,
+        )}&travelmode=driving`;
+  }
+
+  if (!navigationUrl) {
+    return null;
+  }
+
+  /*
+   * Prefer an explicit Facility/Address label when the AI provides one.
+   * Otherwise, handle the natural response format used by SmartPark, e.g.:
+   * "Two Rivers Mall is at Limuru Road, Nairobi."
+   */
+  const facilityFromNaturalSentence = content.match(
+    /(?:^|\n)\s*([^\n]+?)\s+is\s+at\s+/i,
+  )?.[1];
+
+  const facilityName =
+    extractLabeledValue(content, "Facility") ||
+    facilityFromNaturalSentence?.replace(/^[-*]\s*/, "").trim();
+
+  const facilityCode = extractLabeledValue(content, "Facility code");
+
+  const addressFromNaturalSentence = content.match(
+    /\bis\s+at\s+\*?\*?([^\n*]+?)\*?\*?\.?\s*(?:\n|$)/i,
+  )?.[1];
+
+  const address =
+    extractLabeledValue(content, "Address") ||
+    addressFromNaturalSentence?.trim();
+
+  /*
+   * Do not turn ordinary facility-coordinate information into a navigation
+   * card unless the response is actually navigation-related.
+   *
+   * A Google Maps Directions URL is itself an explicit navigation signal.
+   * For coordinate-only responses, require navigation wording.
+   */
+  const hasNavigationLanguage =
+    /open your preferred maps app|navigate to|navigation|directions|how do i get to|how do i get there|take me to|get me to/i.test(
+      content,
+    );
+
+  if (!hasNavigationLanguage && googleMapsStart < 0) {
+    return null;
+  }
+
+  return {
+    facilityName: cleanMarkdownValue(facilityName || "SmartPark Facility"),
+    facilityCode,
+    address: address ? cleanMarkdownValue(address) : undefined,
+    navigationUrl,
+  };
+};
+
+const renderNavigationCard = (navigation: NavigationPresentation) => (
+  <article className="mb-3 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-blue-50/60 px-4 py-3.5">
+      <div className="flex items-center gap-2">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0b2a4a] text-white">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"
+            />
+            <circle cx="12" cy="9" r="2.2" />
+          </svg>
+        </span>
+
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+          Navigation
+        </span>
+      </div>
+
+      <h3 className="mt-2 text-sm font-semibold text-slate-900">
+        {navigation.facilityName}
+      </h3>
+
+      {navigation.facilityCode && (
+        <p className="mt-0.5 text-[11px] font-medium text-slate-500">
+          {navigation.facilityCode}
+        </p>
+      )}
+
+      {navigation.address && (
+        <p className="mt-2 text-[11px] leading-4 text-slate-500">
+          {cleanMarkdownValue(navigation.address)}
+        </p>
+      )}
+    </div>
+
+    <div className="px-4 py-3">
+      <a
+        href={navigation.navigationUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Start navigation to ${navigation.facilityName}`}
+        className="
+          flex
+          w-full
+          items-center
+          justify-center
+          gap-2
+          rounded-xl
+          bg-[#0b2a4a]
+          px-4
+          py-2.5
+          text-xs
+          font-semibold
+          text-white
+          shadow-sm
+          transition
+          hover:bg-[#123b63]
+          focus:outline-none
+          focus:ring-4
+          focus:ring-blue-100
+        "
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          className="h-4 w-4"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 19V5m0 0-5 5m5-5 5 5"
+          />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 19h14" />
+        </svg>
+        Start Navigation
+      </a>
+    </div>
+  </article>
+);
 
 const formatForecastTimestamp = (value?: string): string | null => {
   if (!value) return null;
@@ -517,10 +779,15 @@ const renderReservationCard = (content: string) => {
   );
 };
 
-const isStructuredAssistantContent = (content: string): boolean => {
+const isStructuredAssistantContent = (
+  content: string,
+  originCoordinates?: Coordinates | null,
+): boolean => {
   try {
     return Boolean(
-      parseForecastPresentation(content) || parseReservationNumber(content),
+      parseForecastPresentation(content) ||
+      parseNavigationPresentation(content, originCoordinates) ||
+      parseReservationNumber(content),
     );
   } catch (error) {
     console.error(
@@ -531,7 +798,10 @@ const isStructuredAssistantContent = (content: string): boolean => {
   }
 };
 
-const renderAssistantContent = (content: string) => {
+const renderAssistantContent = (
+  content: string,
+  originCoordinates?: Coordinates | null,
+) => {
   /*
    * Presentation must never be allowed to break the whole application.
    * If a response does not match one of the structured formats, or a
@@ -543,6 +813,41 @@ const renderAssistantContent = (content: string) => {
 
     if (forecast) {
       return renderForecastCard(forecast);
+    }
+
+    const navigation = parseNavigationPresentation(content, originCoordinates);
+
+    if (navigation) {
+      /*
+       * Remove the complete Markdown navigation link from the conversational
+       * response. The navigation card owns the actual Google Maps action.
+       * Keep this replacement independent of the generated URL so special
+       * URL characters can never break a dynamic RegExp.
+       */
+      const contentWithoutNavigationLink = content
+        // Remove Markdown navigation labels when present.
+        .replace(/\[[^\]]*start\s+navigation[^\]]*\]\s*/gi, "")
+        // Remove a complete Google Maps Directions URL when present.
+        .replace(/https:\/\/www\.google\.com\/maps\/dir\/\?[^\s)]+/gi, "")
+        // Remove the conversational instruction used when the AI returns
+        // coordinates instead of a URL.
+        .replace(/you(?:'|’)?re currently near[^\n]*\n?/gi, "")
+        .replace(/open your preferred maps app and navigate to:\s*/gi, "")
+        // Remove the destination coordinate line because the navigation card
+        // already represents that action.
+        .replace(
+          /(?:^|\n)\s*(?:[-*]\s*)?\*?\*?Coordinates\*?\*?\s*[:：]\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\.?\s*/gim,
+          "\n",
+        )
+        .trim();
+
+      return (
+        <>
+          {renderNavigationCard(navigation)}
+          {contentWithoutNavigationLink &&
+            renderFriendlyMarkdown(contentWithoutNavigationLink)}
+        </>
+      );
     }
 
     const reservationNumber = parseReservationNumber(content);
@@ -1695,7 +2000,10 @@ export default function SmartParkChatbot() {
                   className={`
                     ${
                       message.role === "assistant"
-                        ? isStructuredAssistantContent(message.content)
+                        ? isStructuredAssistantContent(
+                            message.content,
+                            coordinates,
+                          )
                           ? "w-[min(100%,380px)] max-w-[98%]"
                           : "max-w-[94%] rounded-bl-md border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm"
                         : "max-w-[84%] rounded-br-md bg-[#0b2a4a] px-4 py-3 text-white"
@@ -1706,7 +2014,7 @@ export default function SmartParkChatbot() {
                   `}
                 >
                   {message.role === "assistant" ? (
-                    renderAssistantContent(message.content)
+                    renderAssistantContent(message.content, coordinates)
                   ) : (
                     <div className="whitespace-pre-wrap">{message.content}</div>
                   )}
@@ -1903,6 +2211,56 @@ export default function SmartParkChatbot() {
                 "
               >
                 EV charging
+              </button>
+
+              <button
+                type="button"
+                onClick={() => sendQuickPrompt("Show me my reservations.")}
+                className="
+                  whitespace-nowrap
+                  rounded-full
+                  border
+                  border-slate-200
+                  bg-white
+                  px-3
+                  py-1.5
+                  text-xs
+                  font-medium
+                  text-slate-600
+                  transition
+                  hover:border-blue-200
+                  hover:bg-blue-50
+                  hover:text-blue-700
+                "
+              >
+                My reservations
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  sendQuickPrompt(
+                    "Do I currently have an active parking session?",
+                  )
+                }
+                className="
+                  whitespace-nowrap
+                  rounded-full
+                  border
+                  border-slate-200
+                  bg-white
+                  px-3
+                  py-1.5
+                  text-xs
+                  font-medium
+                  text-slate-600
+                  transition
+                  hover:border-blue-200
+                  hover:bg-blue-50
+                  hover:text-blue-700
+                "
+              >
+                Active session
               </button>
             </div>
           </div>

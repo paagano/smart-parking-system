@@ -16,6 +16,10 @@ Current tools:
     - get_facility_availability
     - get_nearest_facilities
     - get_customer_vehicles
+    - get_user_reservations
+    - get_user_active_session
+    - find_available_parking
+    - navigate_to_facility
     - find_available_reservation_bay
     - get_30_minute_occupancy_forecast
     - create_reservation
@@ -902,6 +906,231 @@ class SmartParkAITools:
         return results
 
     # ==========================================================
+    # Customer Reservations
+    # ==========================================================
+
+    async def get_user_reservations(
+        self,
+        *,
+        customer_id: int,
+        active_only: bool = False,
+    ) -> list[dict[str, Any]]:
+        """
+        Return reservations belonging only to the authenticated
+        SmartPark customer.
+
+        Reservation retrieval is delegated to the existing
+        ParkingReservationService so overdue reservations are
+        expired using the application's existing business rules.
+        """
+
+        if self.reservation_service is None:
+            raise RuntimeError(
+                "Parking reservation service is not configured for SmartPark AI."
+            )
+
+        if active_only:
+            reservations = (
+                await self.reservation_service.get_active_customer_reservations(
+                    customer_id,
+                )
+            )
+        else:
+            reservations = (
+                await self.reservation_service.get_customer_reservations(
+                    customer_id,
+                )
+            )
+
+        return [
+            self._reservation_to_dict(reservation)
+            for reservation in reservations
+        ]
+
+    # ==========================================================
+    # Customer Active Parking Session
+    # ==========================================================
+
+    async def get_user_active_session(
+        self,
+        *,
+        customer_id: int,
+    ) -> dict[str, Any] | None:
+        """
+        Return the authenticated customer's current active
+        parking session, if one exists.
+
+        The existing ParkingSessionService/repository is reused
+        so session status and customer filtering remain aligned
+        with the application's existing implementation.
+        """
+
+        if self.reservation_service is None:
+            raise RuntimeError(
+                "Parking reservation service is not configured for SmartPark AI."
+            )
+
+        sessions = await self.reservation_service.parking_session_service.list_active(
+            customer_id=customer_id,
+        )
+
+        if not sessions:
+            return None
+
+        return self._parking_session_to_dict(sessions[0])
+
+    # ==========================================================
+    # Find Available Parking
+    # ==========================================================
+
+    async def find_available_parking(
+        self,
+        *,
+        facility_id: int,
+        ev_required: bool = False,
+        accessible_required: bool = False,
+        vip_required: bool = False,
+        limit: int = 5,
+    ) -> dict[str, Any]:
+        """
+        Find currently available parking bays at a facility.
+
+        Current availability is based on active/reservable bays
+        that do not currently have an ACTIVE parking session.
+        This is a current-state search; future reservation-period
+        conflicts are handled by find_available_reservation_bay.
+        """
+
+        facility_result = await self.db.execute(
+            select(ParkingFacility).where(
+                ParkingFacility.id == facility_id,
+                ParkingFacility.is_active.is_(True),
+            )
+        )
+
+        facility = facility_result.scalar_one_or_none()
+
+        if facility is None:
+            return {
+                "facility_id": facility_id,
+                "facility_found": False,
+                "available": False,
+                "available_bays": [],
+                "count": 0,
+            }
+
+        limit = max(1, min(int(limit), 20))
+
+        query = (
+            select(ParkingBay)
+            .join(
+                ParkingZone,
+                ParkingZone.id == ParkingBay.zone_id,
+            )
+            .where(
+                ParkingZone.facility_id == facility_id,
+                ParkingZone.is_active.is_(True),
+                ParkingBay.is_active.is_(True),
+                ParkingBay.is_reservable.is_(True),
+            )
+            .order_by(
+                ParkingBay.sort_order,
+                ParkingBay.bay_number,
+            )
+        )
+
+        if ev_required:
+            query = query.where(
+                ParkingBay.is_ev_charging.is_(True)
+            )
+
+        if accessible_required:
+            query = query.where(
+                ParkingBay.is_accessible.is_(True)
+            )
+
+        if vip_required:
+            query = query.where(
+                ParkingBay.is_vip.is_(True)
+            )
+
+        result = await self.db.execute(query)
+        candidate_bays = result.scalars().all()
+
+        available_bays: list[dict[str, Any]] = []
+
+        for bay in candidate_bays:
+            if self.reservation_service is None:
+                raise RuntimeError(
+                    "Parking reservation service is not configured for SmartPark AI."
+                )
+
+            has_active_session = (
+                await self.reservation_service.parking_session_service.has_active_session(
+                    bay.id
+                )
+            )
+
+            if has_active_session:
+                continue
+
+            available_bays.append(
+                self._bay_to_dict(bay)
+            )
+
+            if len(available_bays) >= limit:
+                break
+
+        return {
+            "facility_id": facility.id,
+            "facility_name": facility.name,
+            "facility_code": facility.code,
+            "available": bool(available_bays),
+            "count": len(available_bays),
+            "available_bays": available_bays,
+        }
+
+    # ==========================================================
+    # Navigation
+    # ==========================================================
+
+    async def navigate_to_facility(
+        self,
+        *,
+        facility_id: int | None = None,
+        facility_name: str | None = None,
+        facility_code: str | None = None,
+    ) -> dict[str, Any] | None:
+        """
+        Resolve a SmartPark facility into the information required
+        by the frontend/client to navigate to it.
+
+        Facility identity and coordinates come directly from the
+        existing facility data; no route or travel time is invented
+        by the backend.
+        """
+
+        facility = await self.get_facility_details(
+            facility_id=facility_id,
+            facility_name=facility_name,
+            facility_code=facility_code,
+        )
+
+        if facility is None:
+            return None
+
+        return {
+            "facility_id": facility["id"],
+            "facility_name": facility["name"],
+            "facility_code": facility["code"],
+            "address": facility["address"],
+            "city": facility["city"],
+            "latitude": facility["latitude"],
+            "longitude": facility["longitude"],
+            "timezone": facility["timezone"],
+        }
+
+    # ==========================================================
     # Find Available Reservation Bay
     # ==========================================================
 
@@ -1370,6 +1599,87 @@ class SmartParkAITools:
             ),
             "is_default": vehicle.is_default,
             "is_active": vehicle.is_active,
+        }
+
+    @staticmethod
+    def _parking_session_to_dict(
+        session: ParkingSession,
+    ) -> dict[str, Any]:
+        """
+        Convert a ParkingSession ORM object into a
+        JSON-serializable dictionary suitable for the AI.
+        """
+
+        return {
+            "id": session.id,
+            "session_number": session.session_number,
+            "customer_id": session.customer_id,
+            "parking_bay_id": session.parking_bay_id,
+            "vehicle_id": session.vehicle_id,
+            "vehicle_registration": session.vehicle_registration,
+            "vehicle_type": (
+                session.vehicle_type.value
+                if session.vehicle_type is not None
+                else None
+            ),
+            "billing_type": (
+                session.billing_type.value
+                if session.billing_type is not None
+                else None
+            ),
+            "status": (
+                session.status.value
+                if session.status is not None
+                else None
+            ),
+            "session_source": (
+                session.session_source.value
+                if session.session_source is not None
+                else None
+            ),
+            "entry_method": (
+                session.entry_method.value
+                if session.entry_method is not None
+                else None
+            ),
+            "entry_time": (
+                session.entry_time.isoformat()
+                if session.entry_time is not None
+                else None
+            ),
+            "expected_exit_time": (
+                session.expected_exit_time.isoformat()
+                if session.expected_exit_time is not None
+                else None
+            ),
+            "exit_time": (
+                session.exit_time.isoformat()
+                if session.exit_time is not None
+                else None
+            ),
+            "duration_minutes": session.duration_minutes,
+            "calculated_amount": (
+                float(session.calculated_amount)
+                if session.calculated_amount is not None
+                else None
+            ),
+            "paid_amount": (
+                float(session.paid_amount)
+                if session.paid_amount is not None
+                else None
+            ),
+            "payment_status": (
+                session.payment_status.value
+                if session.payment_status is not None
+                else None
+            ),
+            "paid_at": (
+                session.paid_at.isoformat()
+                if session.paid_at is not None
+                else None
+            ),
+            "reservation_id": session.reservation_id,
+            "notes": session.notes,
         }
 
     @staticmethod

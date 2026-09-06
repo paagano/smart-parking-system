@@ -236,6 +236,37 @@ class SmartParkChatService:
             "available."
             "\n\n"
 
+            "CUSTOMER ACCOUNT, PARKING SEARCH, AND NAVIGATION RULES:"
+            "\n"
+            "15. When the authenticated customer asks about their reservations, "
+            "use get_user_reservations. Never use another customer's reservation "
+            "data and never ask for a customer ID."
+            "\n"
+            "16. When the authenticated customer asks whether they are currently "
+            "parked, currently in a parking session, or what vehicle/bay they are "
+            "currently using, use get_user_active_session."
+            "\n"
+            "17. When the customer asks about their registered vehicles, use "
+            "get_customer_vehicles and present the actual vehicles returned by "
+            "the tool. Do not invent or infer a vehicle."
+            "\n"
+            "18. When the customer asks for parking that is available right now "
+            "at a specific facility, use find_available_parking. This is a current "
+            "availability search and must not be presented as a guarantee for a "
+            "future reservation period."
+            "\n"
+            "19. If the customer asks for a future reservation period, use "
+            "find_available_reservation_bay instead of find_available_parking."
+            "\n"
+            "20. When the customer asks to navigate to a SmartPark facility, "
+            "use navigate_to_facility and rely only on its returned facility "
+            "identity, address, and coordinates. Do not invent directions, "
+            "distances, or travel times."
+            "\n"
+            "21. When a facility name is provided for parking search or navigation, "
+            "resolve it against the actual SmartPark facility data before calling "
+            "the facility-specific tool."
+            "\n\n"
             "RESERVATION RULES:"
             "\n"
 
@@ -987,6 +1018,155 @@ class SmartParkChatService:
             },
 
             # --------------------------------------------------
+            # Get User Reservations
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "get_user_reservations",
+                "description": (
+                    "Retrieve the authenticated customer's parking "
+                    "reservations. Use this for questions about the "
+                    "customer's own reservation history or active "
+                    "reservations. The customer identity is supplied "
+                    "securely by the application."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "active_only": {
+                            "type": "boolean",
+                            "description": (
+                                "Whether to return only currently active "
+                                "reservations. Defaults to false."
+                            ),
+                        },
+                    },
+                    "required": [],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Get User Active Session
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "get_user_active_session",
+                "description": (
+                    "Retrieve the authenticated customer's current "
+                    "active parking session, if any. Use this when "
+                    "the customer asks whether they are currently "
+                    "parked or asks about their current parking session."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Find Available Parking
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "find_available_parking",
+                "description": (
+                    "Find parking bays that are currently available "
+                    "at a SmartPark facility. Current availability "
+                    "excludes bays with active parking sessions. "
+                    "Use this for parking available now; use "
+                    "find_available_reservation_bay for a future "
+                    "reservation period."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "facility_id": {
+                            "type": "integer",
+                            "description": (
+                                "SmartPark facility ID."
+                            ),
+                        },
+                        "ev_required": {
+                            "type": "boolean",
+                            "description": (
+                                "Whether the available bay must have "
+                                "EV charging."
+                            ),
+                        },
+                        "accessible_required": {
+                            "type": "boolean",
+                            "description": (
+                                "Whether the available bay must be "
+                                "accessible."
+                            ),
+                        },
+                        "vip_required": {
+                            "type": "boolean",
+                            "description": (
+                                "Whether the available bay must be VIP."
+                            ),
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": (
+                                "Maximum number of available bays to return."
+                            ),
+                        },
+                    },
+                    "required": [
+                        "facility_id",
+                    ],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Navigate to Facility
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "navigate_to_facility",
+                "description": (
+                    "Resolve a SmartPark facility for navigation and "
+                    "return its actual name, code, address, city, and "
+                    "geographic coordinates."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "facility_id": {
+                            "type": "integer",
+                            "description": (
+                                "SmartPark facility ID, when known."
+                            ),
+                        },
+                        "facility_name": {
+                            "type": "string",
+                            "description": (
+                                "SmartPark facility name, when the ID "
+                                "is not known."
+                            ),
+                        },
+                        "facility_code": {
+                            "type": "string",
+                            "description": (
+                                "SmartPark facility code, when known."
+                            ),
+                        },
+                    },
+                    "required": [],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
             # Find Available Reservation Bay
             # --------------------------------------------------
 
@@ -1394,6 +1574,118 @@ class SmartParkChatService:
 
             return await self.tools.get_customer_vehicles(
                 customer_id=customer_id,
+            )
+
+        # ------------------------------------------------------
+        # Get User Reservations
+        # ------------------------------------------------------
+
+        if tool_name == "get_user_reservations":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for get_user_reservations."
+                )
+
+            return await self.tools.get_user_reservations(
+                customer_id=customer_id,
+                active_only=arguments.get(
+                    "active_only",
+                    False,
+                ),
+            )
+
+        # ------------------------------------------------------
+        # Get User Active Session
+        # ------------------------------------------------------
+
+        if tool_name == "get_user_active_session":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for get_user_active_session."
+                )
+
+            return await self.tools.get_user_active_session(
+                customer_id=customer_id,
+            )
+
+        # ------------------------------------------------------
+        # Find Available Parking
+        # ------------------------------------------------------
+
+        if tool_name == "find_available_parking":
+            facility_id = arguments.get(
+                "facility_id"
+            )
+
+            if facility_id is None:
+                raise ValueError(
+                    "facility_id is required for "
+                    "find_available_parking."
+                )
+
+            return await self.tools.find_available_parking(
+                facility_id=int(facility_id),
+                ev_required=arguments.get(
+                    "ev_required",
+                    False,
+                ),
+                accessible_required=arguments.get(
+                    "accessible_required",
+                    False,
+                ),
+                vip_required=arguments.get(
+                    "vip_required",
+                    False,
+                ),
+                limit=arguments.get(
+                    "limit",
+                    5,
+                ),
+            )
+
+        # ------------------------------------------------------
+        # Navigate to Facility
+        # ------------------------------------------------------
+
+        if tool_name == "navigate_to_facility":
+            facility_id = arguments.get(
+                "facility_id"
+            )
+            facility_name = arguments.get(
+                "facility_name"
+            )
+            facility_code = arguments.get(
+                "facility_code"
+            )
+
+            if (
+                facility_id is None
+                and not facility_name
+                and not facility_code
+            ):
+                raise ValueError(
+                    "A facility_id, facility_name, or facility_code "
+                    "is required for navigate_to_facility."
+                )
+
+            return await self.tools.navigate_to_facility(
+                facility_id=(
+                    int(facility_id)
+                    if facility_id is not None
+                    else None
+                ),
+                facility_name=(
+                    str(facility_name)
+                    if facility_name
+                    else None
+                ),
+                facility_code=(
+                    str(facility_code)
+                    if facility_code
+                    else None
+                ),
             )
 
         # ------------------------------------------------------
