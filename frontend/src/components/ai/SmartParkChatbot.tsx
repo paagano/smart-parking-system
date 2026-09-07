@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { aiApi, getApiErrorMessage } from "../../api";
@@ -13,6 +13,8 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   paymentReservationNumber?: string;
+  paymentSessionId?: number;
+  attachmentName?: string;
 };
 
 type Coordinates = {
@@ -26,6 +28,12 @@ type LocationStatus =
   | "available"
   | "denied"
   | "unavailable";
+
+type ChatAttachment = {
+  file: File;
+  name: string;
+  size: number;
+};
 
 type ForecastPresentation = {
   facilityName: string;
@@ -93,7 +101,7 @@ const parseForecastPresentation = (
   let facilityCode: string | undefined;
 
   const portalHeadingMatch = normalized.match(
-    /^#{1,6}\s*Parking Forecasting Portal\s*[—-]\s*(.+?)(?:\s*\(([^)]+)\))?\s*$/im,
+    /^#{1,6}\s*Parking Forecasting\s*[—-]\s*(.+?)(?:\s*\(([^)]+)\))?\s*$/im,
   );
 
   if (portalHeadingMatch) {
@@ -568,6 +576,24 @@ const renderForecastCard = (forecast: ForecastPresentation) => {
 const parseReservationNumber = (content: string): string | undefined =>
   content.match(/\bRES-[A-Z0-9-]+\b/i)?.[0]?.toUpperCase();
 
+const parseSessionPaymentId = (content: string): number | undefined => {
+  const match = content.match(/\[\[SESSION_PAYMENT:(\d+)\]\]/i);
+
+  if (!match) {
+    return undefined;
+  }
+
+  const sessionId = Number(match[1]);
+
+  return Number.isInteger(sessionId) && sessionId > 0 ? sessionId : undefined;
+};
+
+const removeSessionPaymentMarker = (content: string): string =>
+  content
+    .replace(/\[\[SESSION_PAYMENT:\d+\]\]/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
 const parseReservationFacility = (content: string): string | undefined =>
   extractLabeledValue(content, "Facility") ||
   content
@@ -623,6 +649,89 @@ const renderInlineMarkdown = (text: string) => {
   });
 };
 
+const isVehicleInventoryResponse = (content: string): boolean =>
+  /^\s*Your vehicles\s*:/im.test(content) && /^\s*\d+[.)]\s+.+$/m.test(content);
+
+const renderVehicleInventory = (content: string) => {
+  const lines = content.replace(/\r/g, "").split("\n");
+  const headingIndex = lines.findIndex((line) =>
+    /^\s*Your vehicles\s*:/i.test(line.trim()),
+  );
+
+  if (headingIndex < 0) {
+    return renderFriendlyMarkdown(content);
+  }
+
+  const before = lines.slice(0, headingIndex).filter((line) => line.trim());
+  const vehicleItems: Array<{ title: string; details: string[] }> = [];
+  let currentItem: { title: string; details: string[] } | null = null;
+
+  for (const rawLine of lines.slice(headingIndex + 1)) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      continue;
+    }
+
+    const numberedMatch = line.match(/^\d+[.)]\s+(.+)$/);
+
+    if (numberedMatch) {
+      if (currentItem) {
+        vehicleItems.push(currentItem);
+      }
+
+      currentItem = {
+        title: numberedMatch[1],
+        details: [],
+      };
+      continue;
+    }
+
+    if (currentItem) {
+      currentItem.details.push(line);
+    }
+  }
+
+  if (currentItem) {
+    vehicleItems.push(currentItem);
+  }
+
+  if (vehicleItems.length === 0) {
+    return renderFriendlyMarkdown(content);
+  }
+
+  return (
+    <div className="text-sm leading-5 text-slate-700">
+      {before.map((line, index) => (
+        <p key={`vehicle-before-${index}`} className="my-1.5 leading-5">
+          {renderInlineMarkdown(line)}
+        </p>
+      ))}
+
+      <p className="my-1.5 leading-5">
+        {renderInlineMarkdown(lines[headingIndex].trim())}
+      </p>
+
+      <ol className="my-2 space-y-2 list-decimal pl-5">
+        {vehicleItems.map((item, index) => (
+          <li key={`vehicle-${index}`} className="pl-1 leading-5">
+            <div>{renderInlineMarkdown(item.title)}</div>
+
+            {item.details.map((detail, detailIndex) => (
+              <div
+                key={`vehicle-${index}-detail-${detailIndex}`}
+                className="mt-0.5 text-sm leading-5"
+              >
+                {renderInlineMarkdown(detail)}
+              </div>
+            ))}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+};
+
 const renderFriendlyMarkdown = (content: string) => {
   const lines = content.replace(/\r/g, "").split("\n");
   const elements: JSX.Element[] = [];
@@ -667,6 +776,41 @@ const renderFriendlyMarkdown = (content: string) => {
     const line = rawLine.trim();
 
     if (!line) {
+      /*
+       * Keep a numbered/bulleted list open across blank lines.
+       *
+       * The AI may return numbered items separated by blank lines, e.g.:
+       *
+       *   1. First vehicle
+       *
+       *   1. Second vehicle
+       *
+       *   1. Third vehicle
+       *
+       * If we flush the <ol> at every blank line, each item becomes a
+       * separate one-item <ol>, so the browser correctly renders every
+       * one as "1.". Only flush here when the next non-empty line is not
+       * another item of the same list type.
+       */
+      const nextNonEmptyLine = lines
+        .slice(index + 1)
+        .map((nextLine) => nextLine.trim())
+        .find(Boolean);
+
+      const continuesNumberedList =
+        numberedItems.length > 0 &&
+        !!nextNonEmptyLine &&
+        /^\d+[.)]\s+(.+)$/.test(nextNonEmptyLine);
+
+      const continuesBulletList =
+        bulletItems.length > 0 &&
+        !!nextNonEmptyLine &&
+        /^[-*]\s+(.+)$/.test(nextNonEmptyLine);
+
+      if (continuesNumberedList || continuesBulletList) {
+        return;
+      }
+
       flushLists();
       return;
     }
@@ -717,19 +861,212 @@ const renderFriendlyMarkdown = (content: string) => {
   return <div className="text-sm leading-5 text-slate-700">{elements}</div>;
 };
 
-const renderReservationCard = (content: string) => {
-  const reservationNumber = parseReservationNumber(content);
-  if (!reservationNumber) return null;
+const parseReservationDetails = (content: string) => ({
+  reservationNumber: parseReservationNumber(content),
+  facility: parseReservationFacility(content),
+  bay: extractLabeledValue(content, "Bay"),
+  date: extractLabeledValue(content, "Date"),
+  time: extractLabeledValue(content, "Time"),
+  vehicle: extractLabeledValue(content, "Vehicle"),
+  estimatedAmount:
+    extractLabeledValue(content, "Estimated amount") ||
+    extractLabeledValue(content, "Estimated amount (KES)"),
+});
 
-  const facility = parseReservationFacility(content);
-  const status = parseReservationStatus(content);
+const renderReservationDetail = (
+  icon: JSX.Element,
+  label: string,
+  value?: string,
+) => {
+  if (!value) return null;
 
   return (
-    <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-blue-50/50 px-4 py-3.5">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0b2a4a] text-white">
+    <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-[#0b2a4a] shadow-sm ring-1 ring-slate-100">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+          {label}
+        </p>
+        <p className="mt-0.5 break-words text-[11px] font-semibold leading-4 text-slate-700">
+          {cleanMarkdownValue(value)}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const renderReservationCard = (content: string) => {
+  const details = parseReservationDetails(content);
+  if (!details.reservationNumber) return null;
+
+  const status = parseReservationStatus(content);
+  const isCreated = status === "Created";
+  const isConfirmed = status === "Confirmed";
+
+  return (
+    <article className="mb-3 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-blue-50/60 px-4 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0b2a4a] text-white">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 7.5 12 4l9 3.5M4.5 8.5v8.5L12 20l7.5-3V8.5M8 6v8l4 2 4-2V6"
+                  />
+                </svg>
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Parking Reservation
+              </span>
+            </div>
+
+            <h3 className="text-base font-bold tracking-tight text-slate-900">
+              {isConfirmed ? "Reservation Confirmed" : "Reservation Created"}
+            </h3>
+
+            {details.facility && (
+              <p className="mt-1 text-xs font-medium text-slate-500">
+                {cleanMarkdownValue(details.facility)}
+              </p>
+            )}
+
+            <p className="mt-2 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Booking reference
+            </p>
+            <p className="mt-0.5 text-xs font-bold text-[#0b2a4a]">
+              {details.reservationNumber}
+            </p>
+          </div>
+
+          <span
+            className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+              isConfirmed
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : isCreated
+                  ? "border-amber-200 bg-amber-50 text-amber-700"
+                  : "border-slate-200 bg-slate-50 text-slate-600"
+            }`}
+          >
+            {isConfirmed
+              ? "Confirmed"
+              : isCreated
+                ? "Payment Required"
+                : status}
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-2 px-4 py-4">
+        <div className="grid grid-cols-2 gap-2">
+          {renderReservationDetail(
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 5h14v14H5zM8 3v4M16 3v4M5 10h14"
+              />
+            </svg>,
+            "Date",
+            details.date,
+          )}
+
+          {renderReservationDetail(
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="8.5" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 7v5l3 2"
+              />
+            </svg>,
+            "Time",
+            details.time,
+          )}
+
+          {renderReservationDetail(
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 16.5V10l2-4h10l2 4v6.5M4 16.5h16M7.5 16.5v2M16.5 16.5v2M7 10h10"
+              />
+              <circle cx="7.5" cy="13.5" r="1" />
+              <circle cx="16.5" cy="13.5" r="1" />
+            </svg>,
+            "Vehicle",
+            details.vehicle,
+          )}
+
+          {renderReservationDetail(
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M6 6v12M18 6v12M4 18h16"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 10h6M9 14h6"
+              />
+            </svg>,
+            "Parking Bay",
+            details.bay,
+          )}
+        </div>
+
+        {details.estimatedAmount && (
+          <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-3">
+            <div>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                Estimated amount
+              </p>
+              <p className="mt-0.5 text-base font-bold text-[#0b2a4a]">
+                {cleanMarkdownValue(details.estimatedAmount)}
+              </p>
+            </div>
+
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#0b2a4a] shadow-sm ring-1 ring-blue-100">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -741,41 +1078,98 @@ const renderReservationCard = (content: string) => {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M3 7.5 12 4l9 3.5M4.5 8.5v8.5L12 20l7.5-3V8.5M8 6v8l4 2 4-2V6"
+                  d="M12 3v18M16 7.5c0-1.4-1.8-2.5-4-2.5S8 6.1 8 7.5s1.8 2.5 4 2.5 4 1.1 4 2.5-1.8 2.5-4 2.5-4-1.1-4-2.5"
                 />
               </svg>
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Parking Reservation
-            </span>
           </div>
-          <p className="mt-2 text-sm font-semibold text-slate-900">
-            {reservationNumber}
-          </p>
-          {facility && (
-            <p className="mt-0.5 text-[11px] text-slate-500">
-              {cleanMarkdownValue(facility)}
-            </p>
-          )}
-        </div>
-
-        {status && (
-          <span
-            className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${status === "Confirmed" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : status === "Created" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-50 text-slate-600"}`}
-          >
-            {status}
-          </span>
         )}
-      </div>
 
-      <div className="px-4 py-3 text-[11px] text-slate-500">
-        {status === "Created"
-          ? "Your reservation has been created and is awaiting payment confirmation."
-          : status === "Confirmed"
-            ? "Your reservation is confirmed."
-            : "Your reservation details are shown below."}
+        <div
+          className={`rounded-xl px-3 py-3 text-[11px] leading-5 ${
+            isCreated
+              ? "border border-amber-100 bg-amber-50/70 text-amber-800"
+              : isConfirmed
+                ? "border border-emerald-100 bg-emerald-50/70 text-emerald-800"
+                : "border border-slate-100 bg-slate-50 text-slate-600"
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5 shrink-0">
+              {isCreated ? "💳" : isConfirmed ? "✓" : "ℹ"}
+            </span>
+            <p>
+              {isCreated
+                ? "Your reservation has been created successfully. Payment is required to confirm your booking."
+                : isConfirmed
+                  ? "Your reservation is confirmed. We look forward to seeing you at the facility."
+                  : "Your reservation details are shown above."}
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+    </article>
+  );
+};
+
+type VehicleActionPresentation = {
+  action: "ADD" | "EDIT";
+  vehicleId?: number;
+};
+
+const parseVehicleActionPresentation = (
+  content: string,
+): VehicleActionPresentation | null => {
+  if (/\[\[VEHICLE_ACTION:ADD\]\]/i.test(content)) return { action: "ADD" };
+  const match = content.match(/\[\[VEHICLE_ACTION:EDIT:(\d+)\]\]/i);
+  if (!match) return null;
+  const vehicleId = Number(match[1]);
+  return Number.isInteger(vehicleId) && vehicleId > 0
+    ? { action: "EDIT", vehicleId }
+    : null;
+};
+
+const removeVehicleActionMarker = (content: string): string =>
+  content
+    .replace(/\[\[VEHICLE_ACTION:ADD\]\]/gi, "")
+    .replace(/\[\[VEHICLE_ACTION:EDIT:\d+\]\]/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+const renderVehicleActionCard = (
+  action: VehicleActionPresentation,
+  navigate: (path: string) => void,
+) => {
+  const isAdd = action.action === "ADD";
+  return (
+    <article className="mb-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-blue-50/50 px-4 py-3.5">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+          Vehicle Management
+        </div>
+        <h3 className="mt-2 text-sm font-semibold text-slate-900">
+          {isAdd ? "Add a vehicle" : "Edit vehicle details"}
+        </h3>
+        <p className="mt-1 text-[11px] leading-4 text-slate-500">
+          {isAdd
+            ? "Open the vehicle registration page to add a new vehicle."
+            : "Open the vehicle details page to review and update this vehicle."}
+        </p>
+      </div>
+      <div className="px-4 py-3">
+        <button
+          type="button"
+          onClick={() =>
+            navigate(
+              isAdd ? "/vehicles/create" : `/vehicles/${action.vehicleId}/edit`,
+            )
+          }
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0b2a4a] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#123b63] focus:outline-none focus:ring-4 focus:ring-blue-100"
+        >
+          {isAdd ? "Add Vehicle" : "Edit Vehicle"}
+        </button>
+      </div>
+    </article>
   );
 };
 
@@ -801,6 +1195,7 @@ const isStructuredAssistantContent = (
 const renderAssistantContent = (
   content: string,
   originCoordinates?: Coordinates | null,
+  navigate?: (path: string) => void,
 ) => {
   /*
    * Presentation must never be allowed to break the whole application.
@@ -809,6 +1204,21 @@ const renderAssistantContent = (
    * the friendly Markdown renderer instead of throwing during render.
    */
   try {
+    const vehicleAction = parseVehicleActionPresentation(content);
+    if (vehicleAction && navigate) {
+      const cleanContent = removeVehicleActionMarker(content);
+      return (
+        <>
+          {renderVehicleActionCard(vehicleAction, navigate)}
+          {cleanContent && renderFriendlyMarkdown(cleanContent)}
+        </>
+      );
+    }
+
+    if (isVehicleInventoryResponse(content)) {
+      return renderVehicleInventory(content);
+    }
+
     const forecast = parseForecastPresentation(content);
 
     if (forecast) {
@@ -852,12 +1262,7 @@ const renderAssistantContent = (
 
     const reservationNumber = parseReservationNumber(content);
     if (reservationNumber) {
-      return (
-        <>
-          {renderReservationCard(content)}
-          {renderFriendlyMarkdown(content)}
-        </>
-      );
+      return renderReservationCard(content);
     }
 
     return renderFriendlyMarkdown(content);
@@ -911,6 +1316,9 @@ export default function SmartParkChatbot() {
   const launchGreeting = `${greetingTimeOfDay} ${firstName}, I'm SmartPark AI, your reliable SmartPark Assistant. How may I assist you today?`;
 
   const [input, setInput] = useState("");
+
+  const [selectedAttachment, setSelectedAttachment] =
+    useState<ChatAttachment | null>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -969,6 +1377,8 @@ export default function SmartParkChatbot() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const attachmentInputRef = useRef<HTMLInputElement | null>(null);
 
   const chatWindowRef = useRef<HTMLDivElement | null>(null);
 
@@ -1146,6 +1556,66 @@ export default function SmartParkChatbot() {
     );
   };
 
+  const handlePayActiveSession = (sessionId: number) => {
+    setIsOpen(false);
+
+    const params = new URLSearchParams({
+      checkout: "1",
+      sessionId: String(sessionId),
+    });
+
+    navigate(`/payments?${params.toString()}`);
+  };
+
+  // ----------------------------------------------------------
+  // Receipt attachment
+  // ----------------------------------------------------------
+
+  const handleAttachmentChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = new Set([
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ]);
+
+    if (!allowedTypes.has(file.type.toLowerCase())) {
+      window.alert(
+        "Please attach a SmartPark receipt as a PDF, JPEG, PNG, or WebP file.",
+      );
+      event.target.value = "";
+      return;
+    }
+
+    const maxAttachmentBytes = 10 * 1024 * 1024;
+
+    if (file.size > maxAttachmentBytes) {
+      window.alert("Receipt attachments must not exceed 10 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedAttachment({
+      file,
+      name: file.name,
+      size: file.size,
+    });
+  };
+
+  const removeAttachment = () => {
+    setSelectedAttachment(null);
+
+    if (attachmentInputRef.current) {
+      attachmentInputRef.current.value = "";
+    }
+  };
+
   // ----------------------------------------------------------
   // Send message
   // ----------------------------------------------------------
@@ -1153,7 +1623,8 @@ export default function SmartParkChatbot() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const trimmedMessage = input.trim();
+    const trimmedMessage =
+      input.trim() || (selectedAttachment ? "Please verify this receipt." : "");
 
     if (!trimmedMessage || isSending) {
       return;
@@ -1237,11 +1708,19 @@ export default function SmartParkChatbot() {
       id: Date.now(),
       role: "user",
       content: trimmedMessage,
+      attachmentName: selectedAttachment?.name,
     };
+
+    const attachmentToSend = selectedAttachment?.file ?? null;
 
     setMessages((previous) => [...previous, userMessage]);
 
     setInput("");
+    setSelectedAttachment(null);
+
+    if (attachmentInputRef.current) {
+      attachmentInputRef.current.value = "";
+    }
 
     setIsSending(true);
 
@@ -1289,12 +1768,16 @@ export default function SmartParkChatbot() {
       // Send request to SmartPark AI
       // ------------------------------------------------------
 
-      const response = await aiApi.chat({
+      const chatPayload = {
         message: trimmedMessage,
         latitude: currentCoordinates?.latitude ?? null,
         longitude: currentCoordinates?.longitude ?? null,
         previous_response_id: previousResponseId,
-      });
+      };
+
+      const response = attachmentToSend
+        ? await aiApi.chatWithAttachment(chatPayload, attachmentToSend)
+        : await aiApi.chat(chatPayload);
 
       // ------------------------------------------------------
       // Preserve conversation continuity
@@ -1318,7 +1801,9 @@ export default function SmartParkChatbot() {
        */
       const reservationMatch = response.message.match(/\bRES-[A-Z0-9-]+\b/i);
 
-      let assistantContent = response.message;
+      const paymentSessionId = parseSessionPaymentId(response.message);
+
+      let assistantContent = removeSessionPaymentMarker(response.message);
 
       /*
        * Only attach the payment hand-off to a response that actually
@@ -1379,6 +1864,7 @@ export default function SmartParkChatbot() {
           isNewReservationResponse && reservationMatch
             ? reservationMatch[0].toUpperCase()
             : undefined,
+        paymentSessionId,
       };
 
       setMessages((previous) => [...previous, assistantMessage]);
@@ -1485,6 +1971,11 @@ export default function SmartParkChatbot() {
 
     setPreviousResponseId(null);
     setPendingPaymentReservationNumber(null);
+    setSelectedAttachment(null);
+
+    if (attachmentInputRef.current) {
+      attachmentInputRef.current.value = "";
+    }
 
     setInput("");
 
@@ -2014,9 +2505,38 @@ export default function SmartParkChatbot() {
                   `}
                 >
                   {message.role === "assistant" ? (
-                    renderAssistantContent(message.content, coordinates)
+                    renderAssistantContent(
+                      message.content,
+                      coordinates,
+                      navigate,
+                    )
                   ) : (
-                    <div className="whitespace-pre-wrap">{message.content}</div>
+                    <div className="space-y-2">
+                      {message.attachmentName && (
+                        <div className="flex items-center gap-2 rounded-lg bg-white/10 px-2.5 py-2 text-xs">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            className="h-4 w-4 shrink-0"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m15.5 5.5-7.8 7.8a3 3 0 1 0 4.2 4.2l8-8a5 5 0 0 0-7.1-7.1l-8 8a7 7 0 1 0 9.9 9.9l6.2-6.2"
+                            />
+                          </svg>
+                          <span className="min-w-0 truncate">
+                            {message.attachmentName}
+                          </span>
+                        </div>
+                      )}
+                      <div className="whitespace-pre-wrap">
+                        {message.content}
+                      </div>
+                    </div>
                   )}
 
                   {message.role === "assistant" &&
@@ -2064,6 +2584,48 @@ export default function SmartParkChatbot() {
                         Pay & Confirm Reservation
                       </button>
                     )}
+                  {message.role === "assistant" && message.paymentSessionId && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handlePayActiveSession(message.paymentSessionId!)
+                      }
+                      className="
+                          mt-3
+                          flex
+                          w-full
+                          items-center
+                          justify-center
+                          gap-2
+                          rounded-xl
+                          bg-[#0b2a4a]
+                          px-4
+                          py-2.5
+                          text-xs
+                          font-semibold
+                          text-white
+                          shadow-sm
+                          transition
+                          hover:bg-[#123b63]
+                          focus:outline-none
+                          focus:ring-4
+                          focus:ring-blue-100
+                        "
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        className="h-4 w-4"
+                      >
+                        <rect x="3" y="5" width="18" height="14" rx="2" />
+                        <path strokeLinecap="round" d="M3 10h18M7 15h3" />
+                      </svg>
+                      Pay for Parking Session
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -2278,6 +2840,66 @@ export default function SmartParkChatbot() {
               p-3
             "
           >
+            <input
+              ref={attachmentInputRef}
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              onChange={handleAttachmentChange}
+              className="hidden"
+              aria-label="Attach receipt"
+            />
+
+            {selectedAttachment && (
+              <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      className="h-4 w-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m15.5 5.5-7.8 7.8a3 3 0 1 0 4.2 4.2l8-8a5 5 0 0 0-7.1-7.1l-8 8a7 7 0 1 0 9.9 9.9l6.2-6.2"
+                      />
+                    </svg>
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium text-slate-700">
+                      {selectedAttachment.name}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      Receipt attached •{" "}
+                      {(selectedAttachment.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={removeAttachment}
+                  disabled={isSending}
+                  className="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-white hover:text-slate-700 disabled:opacity-50"
+                  aria-label="Remove receipt attachment"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-4 w-4"
+                  >
+                    <path strokeLinecap="round" d="M6 6l12 12M18 6 6 18" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
             <div
               className="
                 flex
@@ -2294,6 +2916,30 @@ export default function SmartParkChatbot() {
                 focus-within:ring-blue-100
               "
             >
+              <button
+                type="button"
+                onClick={() => attachmentInputRef.current?.click()}
+                disabled={isSending}
+                aria-label="Attach receipt"
+                title="Attach receipt"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-[#0b2a4a] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m15.5 5.5-7.8 7.8a3 3 0 1 0 4.2 4.2l8-8a5 5 0 0 0-7.1-7.1l-8 8a7 7 0 1 0 9.9 9.9l6.2-6.2"
+                  />
+                </svg>
+              </button>
+
               <input
                 ref={inputRef}
                 type="text"
@@ -2319,7 +2965,7 @@ export default function SmartParkChatbot() {
 
               <button
                 type="submit"
-                disabled={isSending || !input.trim()}
+                disabled={isSending || (!input.trim() && !selectedAttachment)}
                 aria-label="Send message"
                 className="
                   flex

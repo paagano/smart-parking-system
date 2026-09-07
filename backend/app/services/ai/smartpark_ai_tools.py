@@ -16,26 +16,42 @@ Current tools:
     - get_facility_availability
     - get_nearest_facilities
     - get_customer_vehicles
+    - get_my_vehicles
+    - add_vehicle
+    - set_default_vehicle
+    - deactivate_vehicle
+    - activate_vehicle
+    - edit_vehicle
+    - delete_vehicle
     - get_user_reservations
     - get_user_active_session
+    - get_user_active_sessions
     - find_available_parking
     - navigate_to_facility
     - find_available_reservation_bay
     - get_30_minute_occupancy_forecast
     - create_reservation
+    - verify_receipt
+    - get_my_loyalty_program
 """
 
 from __future__ import annotations
 
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.enums import ReservationStatus, SessionStatus
+from app.models.enums import (
+    ParkingProfile,
+    ReservationStatus,
+    SessionStatus,
+    VehicleType,
+)
 from app.models.parking_bay import ParkingBay
 from app.models.parking_facility import ParkingFacility
 from app.models.parking_session import ParkingSession
@@ -46,9 +62,18 @@ from app.models.parking_zone import ParkingZone
 from app.repositories.vehicle_repository import VehicleRepository
 
 from app.schemas.parking_reservation import ParkingReservationCreate
+from app.schemas.vehicle import VehicleUpdate
 
 from app.services.parking_reservation_service import ParkingReservationService
+from app.services.receipt_service import ReceiptService
+from app.services.loyalty_service import LoyaltyService
+from app.services.loyalty_reward_service import LoyaltyRewardService
+from app.services.vehicle_service import VehicleService
+from app.exceptions.handlers import NotFoundException
 from app.ml.production.service import ProductionForecastService
+
+
+SMARTPARK_TIMEZONE = ZoneInfo("Africa/Nairobi")
 
 
 class SmartParkAITools:
@@ -61,7 +86,11 @@ class SmartParkAITools:
         db: AsyncSession,
         reservation_service: ParkingReservationService | None = None,
         vehicle_repository: VehicleRepository | None = None,
+        vehicle_service: VehicleService | None = None,
         forecast_service: ProductionForecastService | None = None,
+        receipt_service: ReceiptService | None = None,
+        loyalty_service: LoyaltyService | None = None,
+        loyalty_reward_service: LoyaltyRewardService | None = None,
     ) -> None:
         """
         Create the SmartPark AI tools service.
@@ -74,7 +103,11 @@ class SmartParkAITools:
         self.db = db
         self.reservation_service = reservation_service
         self.vehicle_repository = vehicle_repository
+        self.vehicle_service = vehicle_service
         self.forecast_service = forecast_service
+        self.receipt_service = receipt_service
+        self.loyalty_service = loyalty_service
+        self.loyalty_reward_service = loyalty_reward_service
 
     # ==========================================================
     # Facilities
@@ -906,6 +939,466 @@ class SmartParkAITools:
         return results
 
     # ==========================================================
+    # Customer Vehicle Management
+    # ==========================================================
+
+    async def get_my_vehicles(
+        self,
+        *,
+        customer_id: int,
+    ) -> list[dict[str, Any]]:
+        """
+        Return all vehicles belonging to the authenticated customer,
+        including inactive vehicles.
+
+        This management view is intentionally separate from
+        get_customer_vehicles(), which returns active vehicles for
+        reservation vehicle selection.
+        """
+
+        if self.vehicle_service is None:
+            raise RuntimeError(
+                "Vehicle service is not configured for SmartPark AI."
+            )
+
+        vehicles = await self.vehicle_service.get_customer_vehicles(
+            customer_id=customer_id,
+        )
+
+        vehicles = sorted(
+            vehicles,
+            key=lambda vehicle: (
+                not bool(vehicle.is_active),
+                not bool(vehicle.is_default),
+                (vehicle.registration_number or "").strip().upper(),
+                vehicle.id,
+            ),
+        )
+
+        results: list[dict[str, Any]] = []
+
+        for vehicle in vehicles:
+            # Do not add a presentation/selection number here.
+            # Vehicle management lists must be numbered by the AI from 1..N
+            # in the exact order returned, while the real vehicle ID remains
+            # available internally for trusted management operations.
+            results.append(self._vehicle_to_dict(vehicle))
+
+        return results
+
+    async def add_vehicle(
+        self,
+        *,
+        customer_id: int,
+        plate_country: str = "KE",
+        registration_number: str,
+        make: str,
+        model: str,
+        vehicle_type: str,
+        parking_profile: str = "STANDARD",
+        nickname: str | None = None,
+        colour: str | None = None,
+        year: int | None = None,
+        is_default: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Add a new registered vehicle for the authenticated customer.
+
+        Vehicle ownership and all validation are delegated to the
+        existing VehicleService.
+        """
+
+        if self.vehicle_service is None:
+            raise RuntimeError(
+                "Vehicle service is not configured for SmartPark AI."
+            )
+
+        from app.schemas.vehicle import VehicleCreate
+
+        data = VehicleCreate(
+            plate_country=plate_country.strip().upper(),
+            registration_number=registration_number.strip(),
+            nickname=nickname.strip() if nickname else None,
+            make=make.strip(),
+            model=model.strip(),
+            colour=colour.strip() if colour else None,
+            year=year,
+            vehicle_type=VehicleType(str(vehicle_type).upper()),
+            parking_profile=ParkingProfile(str(parking_profile).upper()),
+            is_default=bool(is_default),
+        )
+
+        vehicle = await self.vehicle_service.create_vehicle(
+            customer_id=customer_id,
+            data=data,
+        )
+
+        return self._vehicle_to_dict(vehicle)
+
+    async def set_default_vehicle(
+        self,
+        *,
+        customer_id: int,
+        vehicle_id: int,
+    ) -> dict[str, Any]:
+        """
+        Set one of the authenticated customer's active vehicles as default.
+        """
+
+        if self.vehicle_service is None:
+            raise RuntimeError(
+                "Vehicle service is not configured for SmartPark AI."
+            )
+
+        vehicle = await self.vehicle_service.set_default_vehicle(
+            vehicle_id=vehicle_id,
+            customer_id=customer_id,
+        )
+
+        return self._vehicle_to_dict(vehicle)
+
+    async def activate_vehicle(
+        self,
+        *,
+        customer_id: int,
+        vehicle_id: int,
+    ) -> dict[str, Any]:
+        """
+        Reactivate one of the authenticated customer's inactive vehicles.
+        """
+
+        if self.vehicle_service is None:
+            raise RuntimeError(
+                "Vehicle service is not configured for SmartPark AI."
+            )
+
+        vehicle = await self.vehicle_service.activate_vehicle(
+            vehicle_id=vehicle_id,
+            customer_id=customer_id,
+        )
+
+        return self._vehicle_to_dict(vehicle)
+
+    async def deactivate_vehicle(
+        self,
+        *,
+        customer_id: int,
+        vehicle_id: int,
+    ) -> dict[str, Any]:
+        """
+        Deactivate one of the authenticated customer's vehicles.
+        """
+
+        if self.vehicle_service is None:
+            raise RuntimeError(
+                "Vehicle service is not configured for SmartPark AI."
+            )
+
+        vehicle = await self.vehicle_service.deactivate_vehicle(
+            vehicle_id=vehicle_id,
+            customer_id=customer_id,
+        )
+
+        return self._vehicle_to_dict(vehicle)
+
+    async def edit_vehicle(
+        self,
+        *,
+        customer_id: int,
+        vehicle_id: int,
+        plate_country: str | None = None,
+        registration_number: str | None = None,
+        nickname: str | None = None,
+        make: str | None = None,
+        model: str | None = None,
+        colour: str | None = None,
+        year: int | None = None,
+        vehicle_type: str | None = None,
+        parking_profile: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Edit the details of one of the authenticated customer's active vehicles.
+
+        Validation, ownership checks, duplicate-registration checks, and
+        persistence are delegated to the existing VehicleService.
+        """
+
+        if self.vehicle_service is None:
+            raise RuntimeError(
+                "Vehicle service is not configured for SmartPark AI."
+            )
+
+        update_data: dict[str, Any] = {}
+
+        if plate_country is not None:
+            update_data["plate_country"] = plate_country.strip().upper()
+        if registration_number is not None:
+            update_data["registration_number"] = registration_number.strip()
+        if nickname is not None:
+            update_data["nickname"] = nickname.strip() or None
+        if make is not None:
+            update_data["make"] = make.strip()
+        if model is not None:
+            update_data["model"] = model.strip()
+        if colour is not None:
+            update_data["colour"] = colour.strip() or None
+        if year is not None:
+            update_data["year"] = year
+        if vehicle_type is not None:
+            update_data["vehicle_type"] = VehicleType(str(vehicle_type).upper())
+        if parking_profile is not None:
+            update_data["parking_profile"] = ParkingProfile(str(parking_profile).upper())
+
+        if not update_data:
+            raise ValueError("At least one vehicle detail must be supplied for editing.")
+
+        data = VehicleUpdate(**update_data)
+
+        vehicle = await self.vehicle_service.update_vehicle(
+            vehicle_id=vehicle_id,
+            customer_id=customer_id,
+            data=data,
+        )
+
+        return self._vehicle_to_dict(vehicle)
+
+    async def delete_vehicle(
+        self,
+        *,
+        customer_id: int,
+        vehicle_id: int,
+    ) -> dict[str, Any]:
+        """
+        Permanently delete one of the authenticated customer's vehicles.
+
+        The existing VehicleService remains authoritative for ownership
+        and database referential-integrity rules.
+        """
+
+        if self.vehicle_service is None:
+            raise RuntimeError(
+                "Vehicle service is not configured for SmartPark AI."
+            )
+
+        vehicle = await self.vehicle_service.get_vehicle(vehicle_id)
+
+        if vehicle.customer_id != customer_id:
+            raise ValueError(
+                "You are not authorized to delete this vehicle."
+            )
+
+        vehicle_data = self._vehicle_to_dict(vehicle)
+
+        await self.vehicle_service.delete_vehicle(
+            vehicle_id=vehicle_id,
+            customer_id=customer_id,
+        )
+
+        return {
+            "deleted": True,
+            "vehicle": vehicle_data,
+        }
+
+    # ==========================================================
+    # Receipt Verification
+    # ==========================================================
+
+    async def verify_receipt(
+        self,
+        *,
+        receipt_number: str,
+        verification_token: str,
+    ) -> dict[str, Any]:
+        """
+        Verify a SmartPark receipt using the existing ReceiptService
+        verification rules.
+
+        The AI must obtain the receipt number and verification token from
+        the uploaded receipt/QR code; they are never supplied by the
+        authenticated customer context.
+        """
+
+        if self.receipt_service is None:
+            raise RuntimeError(
+                "Receipt service is not configured for SmartPark AI."
+            )
+
+        receipt_number = receipt_number.strip()
+        verification_token = verification_token.strip()
+
+        if not receipt_number:
+            raise ValueError("Receipt number is required for verification.")
+
+        if not verification_token:
+            raise ValueError("Verification code is required for verification.")
+
+        try:
+            verification = await self.receipt_service.verify_receipt(
+                receipt_number=receipt_number,
+                verification_token=verification_token,
+            )
+        except NotFoundException:
+            return {
+                "valid": False,
+                "result": "not_found",
+                "receipt_number": receipt_number,
+                "message": "No matching SmartPark receipt was found.",
+            }
+
+        return {
+            "valid": bool(verification.valid),
+            "result": "valid" if verification.valid else "invalid",
+            "receipt_number": verification.receipt_number,
+            "status": verification.status.value
+            if hasattr(verification.status, "value")
+            else str(verification.status),
+            "receipt_type": verification.receipt_type.value
+            if hasattr(verification.receipt_type, "value")
+            else str(verification.receipt_type),
+            "total_amount": str(verification.total_amount),
+            "currency": verification.currency,
+            "payment_transaction_id": verification.payment_transaction_id,
+            "paid_at": (
+                verification.paid_at.isoformat()
+                if verification.paid_at
+                else None
+            ),
+            "verified_at": verification.verified_at.isoformat(),
+        }
+
+    # ==========================================================
+    # Customer Loyalty Programme
+    # ==========================================================
+
+    async def get_my_loyalty_program(
+        self,
+        *,
+        customer_id: int,
+    ) -> dict[str, Any]:
+        """
+        Return the authenticated customer's loyalty programme details.
+
+        The existing LoyaltyService and LoyaltyRewardService are reused
+        so the chatbot reports the same loyalty data and eligibility
+        rules used by the application's loyalty APIs.
+
+        The customer ID is supplied by the authenticated backend request
+        and is never accepted from the AI model.
+        """
+
+        if self.loyalty_service is None:
+            raise RuntimeError(
+                "Loyalty service is not configured for SmartPark AI."
+            )
+
+        if self.loyalty_reward_service is None:
+            raise RuntimeError(
+                "Loyalty reward service is not configured for SmartPark AI."
+            )
+
+        try:
+            account = await self.loyalty_service.get_account(
+                customer_id,
+            )
+        except NotFoundException:
+            return {
+                "account_found": False,
+                "message": (
+                    "No SmartPark loyalty account was found for "
+                    "the authenticated customer."
+                ),
+                "points_balance": 0,
+                "lifetime_points": 0,
+                "tier": None,
+                "eligible_rewards": [],
+                "reward_redemptions": [],
+            }
+
+        eligible_rewards = await self.loyalty_reward_service.get_eligible_rewards(
+            customer_id,
+            limit=100,
+            offset=0,
+        )
+
+        reward_redemptions = await self.loyalty_reward_service.get_customer_redemptions(
+            customer_id,
+            limit=100,
+            offset=0,
+        )
+
+        return {
+            "account_found": True,
+            "account_id": account.id,
+            "points_balance": account.points_balance,
+            "lifetime_points": account.lifetime_points,
+            "tier": (
+                account.tier.value
+                if account.tier is not None
+                else None
+            ),
+            "eligible_rewards": [
+                {
+                    "id": reward.id,
+                    "name": reward.name,
+                    "description": reward.description,
+                    "reward_type": (
+                        reward.reward_type.value
+                        if reward.reward_type is not None
+                        else None
+                    ),
+                    "points_cost": reward.points_cost,
+                    "monetary_value": (
+                        str(reward.monetary_value)
+                        if reward.monetary_value is not None
+                        else None
+                    ),
+                    "minimum_tier": (
+                        reward.minimum_tier.value
+                        if reward.minimum_tier is not None
+                        else None
+                    ),
+                    "valid_from": self._loyalty_date_only(
+                        reward.valid_from
+                    ),
+                    "valid_until": self._loyalty_date_only(
+                        reward.valid_until
+                    ),
+                }
+                for reward in eligible_rewards
+            ],
+            "reward_redemptions": [
+                {
+                    "id": redemption.id,
+                    "reward_id": redemption.reward_id,
+                    "redemption_reference": redemption.redemption_reference,
+                    "points_spent": redemption.points_spent,
+                    "status": (
+                        redemption.status.value
+                        if redemption.status is not None
+                        else None
+                    ),
+                    "redeemed_at": (
+                        redemption.created_at.isoformat()
+                        if redemption.created_at is not None
+                        else None
+                    ),
+                    "used_at": (
+                        redemption.used_at.isoformat()
+                        if redemption.used_at is not None
+                        else None
+                    ),
+                    "expires_at": (
+                        redemption.expires_at.isoformat()
+                        if redemption.expires_at is not None
+                        else None
+                    ),
+                    "description": redemption.description,
+                }
+                for redemption in reward_redemptions
+            ],
+        }
+
+    # ==========================================================
     # Customer Reservations
     # ==========================================================
 
@@ -978,6 +1471,35 @@ class SmartParkAITools:
             return None
 
         return self._parking_session_to_dict(sessions[0])
+
+    async def get_user_active_sessions(
+        self,
+        *,
+        customer_id: int,
+    ) -> list[dict[str, Any]]:
+        """
+        Return all active parking sessions belonging to the
+        authenticated customer.
+
+        This is intentionally separate from get_user_active_session()
+        so the existing single-session chatbot capability remains
+        unchanged. It is used when the customer needs to choose
+        a specific active session, such as before payment.
+        """
+
+        if self.reservation_service is None:
+            raise RuntimeError(
+                "Parking reservation service is not configured for SmartPark AI."
+            )
+
+        sessions = await self.reservation_service.parking_session_service.list_active(
+            customer_id=customer_id,
+        )
+
+        return [
+            self._parking_session_to_dict(session)
+            for session in sessions
+        ]
 
     # ==========================================================
     # Find Available Parking
@@ -1440,6 +1962,28 @@ class SmartParkAITools:
         )
 
         return self._reservation_to_dict(reservation)
+
+    @staticmethod
+    def _loyalty_date_only(
+        value: datetime | None,
+    ) -> str | None:
+        """
+        Convert a loyalty reward validity timestamp into the
+        customer-facing SmartPark calendar date.
+
+        Loyalty reward validity columns are stored as naive UTC
+        datetimes.  Treat naive values as UTC before converting to
+        the SmartPark (Kenya) timezone so the AI receives the same
+        calendar date shown by the customer portal.
+        """
+
+        if value is None:
+            return None
+
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+
+        return value.astimezone(SMARTPARK_TIMEZONE).date().isoformat()
 
     # ==========================================================
     # Search Helpers

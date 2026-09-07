@@ -15,6 +15,7 @@ layer after the user has explicitly confirmed the reservation.
 
 from __future__ import annotations
 
+import base64
 import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -87,6 +88,9 @@ class SmartParkChatService:
         longitude: float | None = None,
         customer_id: int | None = None,
         previous_response_id: str | None = None,
+        attachment_bytes: bytes | None = None,
+        attachment_filename: str | None = None,
+        attachment_content_type: str | None = None,
     ) -> SmartParkChatResult:
         """
         Send a user message to OpenAI and process any requested
@@ -246,10 +250,94 @@ class SmartParkChatService:
             "parked, currently in a parking session, or what vehicle/bay they are "
             "currently using, use get_user_active_session."
             "\n"
-            "17. When the customer asks about their registered vehicles, use "
-            "get_customer_vehicles and present the actual vehicles returned by "
-            "the tool. Do not invent or infer a vehicle."
+            "16a. When the authenticated customer asks whether they can pay for "
+            "an active parking session, or asks to pay/checkout a current parking "
+            "session, use get_user_active_sessions. If there are no active sessions, "
+            "say there is no active session available for payment. If exactly one "
+            "active session exists, tell the customer that they can pay and include "
+            "the exact machine-readable marker [[SESSION_PAYMENT:<session_id>]] "
+            "once in the response, where <session_id> is the actual session ID "
+            "returned by the tool. If more than one active session exists, list the "
+            "sessions using their actual session number, vehicle registration, and "
+            "parking bay where available, and ask which session the customer wants "
+            "to pay for. Do not include a payment marker while asking the customer "
+            "to choose. When the customer selects one of the listed sessions, use "
+            "the active-session data to identify the matching session and, if it is "
+            "still active, respond with the same payment marker for that selected "
+            "session. Never invent a session ID and never allow the customer to "
+            "supply or override a customer ID."
             "\n"
+            "17. When the customer asks to see/list/show their vehicles or asks "
+            "which vehicles they have, use get_my_vehicles so the response includes "
+            "both active and inactive/deactivated vehicles. Present every vehicle "
+            "returned by the tool in the exact order returned. Number the displayed "
+            "vehicles sequentially as 1, 2, 3, ... with no repeated numbers and no "
+            "gaps. The displayed number is only a presentation number; never treat "
+            "it as the internal vehicle ID. Do not expose internal vehicle IDs. "
+            "For reservation vehicle selection, continue using get_customer_vehicles, "
+            "which is intentionally limited to active vehicles. Do not invent or infer a vehicle."
+            "\n"
+            "VEHICLE MANAGEMENT RULES:"
+            "\n"
+            "17a. When the customer asks to add/register a vehicle, do NOT call add_vehicle. "
+            "Instead, explain briefly that the customer can add the vehicle from the vehicle "
+            "registration page and include the exact machine-readable marker "
+            "[[VEHICLE_ACTION:ADD]] once in the response. Do not invent or collect vehicle "
+            "details merely to navigate to the page."
+            "\n"
+            "17b. The [[VEHICLE_ACTION:ADD]] marker is a frontend navigation instruction. "
+            "Do not expose the marker as ordinary prose or attempt to execute add_vehicle "
+            "when the customer is being directed to the registration page."
+            "\n"
+            "17c. When the customer asks to set a vehicle as their default, first "
+            "use get_my_vehicles to retrieve all of their vehicles, including inactive "
+            "ones. Resolve the requested vehicle using its actual registration number, "
+            "nickname, or other unambiguous details. Never invent a vehicle ID. "
+            "Inactive vehicles cannot be made default."
+            "\n"
+            "17d. When the customer asks to edit/change/update vehicle details, first use "
+            "get_my_vehicles to identify the actual vehicle. If the requested vehicle is "
+            "ambiguous, ask the customer to choose. Once the actual vehicle is identified, "
+            "do NOT call edit_vehicle. Instead, tell the customer that the vehicle details "
+            "can be edited from the vehicle edit page and include the exact machine-readable "
+            "marker [[VEHICLE_ACTION:EDIT:<vehicle_id>]] once, using the actual vehicle ID "
+            "returned by get_my_vehicles. Never invent the vehicle ID. Do not claim that any "
+            "details have been changed because the navigation has not performed an update."
+            "\n"
+            "17e. When the customer asks to deactivate a vehicle, first use get_my_vehicles "
+            "to identify the actual vehicle. If the requested vehicle is ambiguous, ask the "
+            "customer to choose. Before calling deactivate_vehicle, ask for explicit "
+            "confirmation and explain that deactivation retains the vehicle for historical "
+            "records but makes it unavailable for new reservations."
+            "\n"
+            "17f. When the customer asks to activate/reactivate a vehicle, first use "
+            "get_my_vehicles to identify the actual vehicle. If the requested vehicle is "
+            "ambiguous, ask the customer to choose. Only an inactive vehicle needs activation. "
+            "Before calling activate_vehicle, ask for explicit confirmation. Do not claim the "
+            "vehicle is active until the tool succeeds."
+            "\n"
+            "17g. When the customer asks to delete a vehicle, first use get_my_vehicles to "
+            "identify the actual vehicle. If the requested vehicle is ambiguous, ask the "
+            "customer to choose. Before calling delete_vehicle, require explicit confirmation "
+            "and clearly explain that deletion is permanent and is different from deactivation. "
+            "Never delete a vehicle merely because the customer says it is inactive or unavailable."
+            "\n"
+            "17h. For set_default_vehicle, deactivate_vehicle, activate_vehicle, and delete_vehicle, "
+            "the vehicle_id passed to the tool must come from get_my_vehicles or another trusted "
+            "SmartPark vehicle result. Never invent a vehicle ID, never rely on a customer-supplied "
+            "ID as authoritative, and never expose internal customer IDs."
+            "\n"
+            "17i. After any successful vehicle-management operation, report the actual vehicle "
+            "information returned by the tool. Do not claim an operation succeeded until the "
+            "corresponding tool call succeeds."
+            "\n"
+            "17j. When presenting a vehicle list from get_my_vehicles, assign presentation "
+            "numbers sequentially starting at 1. Never copy, reuse, or display a tool "
+            "selection_number as the list number. If the customer refers to a vehicle by "
+            "its displayed number, resolve that number against the most recent get_my_vehicles "
+            "result and then use the actual vehicle ID from that trusted result."
+            "\n"
+
             "18. When the customer asks for parking that is available right now "
             "at a specific facility, use find_available_parking. This is a current "
             "availability search and must not be presented as a guarantee for a "
@@ -267,6 +355,33 @@ class SmartParkChatService:
             "resolve it against the actual SmartPark facility data before calling "
             "the facility-specific tool."
             "\n\n"
+            "RECEIPT VERIFICATION RULES:"
+            "\n"
+            "43. When the customer uploads a receipt and asks whether it is legitimate, genuine, authentic, valid, or can be verified, inspect the uploaded receipt carefully. Extract the SmartPark receipt number and verification code/token from the receipt. If the QR code is readable, use the receipt number and verification token encoded in the QR verification URL. Otherwise use the manually printed verification code. Do not invent either value."
+            "\n"
+            "44. After extracting the receipt number and verification code/token from an uploaded receipt, call verify_receipt. The verify_receipt tool is the authoritative source for whether the receipt is genuine. Never declare a receipt legitimate based only on its appearance or on information visible in the document."
+            "\n"
+            "45. If the receipt number or verification code cannot be read confidently, tell the customer exactly which verification information could not be extracted and ask them to upload a clearer receipt. Do not guess."
+            "\n"
+            "46. Never expose the full verification token/code in your final response. You may refer to it as the verification code or show only a short masked portion if useful."
+            "\n"
+
+            "LOYALTY PROGRAMME RULES:"
+            "\n"
+            "22. When the authenticated customer asks about their loyalty "
+            "points, lifetime points, loyalty tier, eligible rewards, or "
+            "reward redemption history, use get_my_loyalty_program. "
+            "Do not invent loyalty information."
+            "\n"
+            "23. Present only the loyalty data returned by the tool. "
+            "The authenticated customer identity is supplied by the "
+            "backend and must never be requested from the customer."
+            "\n"
+            "24. If no loyalty account is found, clearly tell the customer "
+            "that no SmartPark loyalty account was found. Do not invent "
+            "a tier, points balance, or rewards."
+            "\n\n"
+
             "RESERVATION RULES:"
             "\n"
 
@@ -502,10 +617,50 @@ class SmartParkChatService:
                 "from or supplied by the user."
             )
 
+        response_input: Any = user_input
+
+        if attachment_bytes is not None:
+            if not attachment_filename or not attachment_content_type:
+                raise ValueError("Attachment filename and content type are required.")
+
+            encoded_attachment = base64.b64encode(attachment_bytes).decode("ascii")
+            data_url = (
+                f"data:{attachment_content_type};base64,{encoded_attachment}"
+            )
+
+            if attachment_content_type.startswith("image/"):
+                attachment_content = {
+                    "type": "input_image",
+                    "image_url": data_url,
+                }
+            elif attachment_content_type == "application/pdf":
+                attachment_content = {
+                    "type": "input_file",
+                    "filename": attachment_filename,
+                    "file_data": data_url,
+                }
+            else:
+                raise ValueError(
+                    "Only image and PDF attachments are supported."
+                )
+
+            response_input = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": user_input,
+                        },
+                        attachment_content,
+                    ],
+                }
+            ]
+
         response_kwargs: dict[str, Any] = {
             "model": self.model,
             "instructions": instructions,
-            "input": user_input,
+            "input": response_input,
             "tools": self._get_openai_tools(),
         }
 
@@ -989,6 +1144,39 @@ class SmartParkChatService:
             },
 
             # ==================================================
+            # Receipt Verification
+            # ==================================================
+
+            {
+                "type": "function",
+                "name": "verify_receipt",
+                "description": (
+                    "Verify a SmartPark receipt using the existing authoritative "
+                    "receipt verification service. Use this after extracting the "
+                    "receipt number and verification code/token from an uploaded "
+                    "receipt. Do not call this tool with invented values."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "receipt_number": {
+                            "type": "string",
+                            "description": "The SmartPark receipt number printed on the receipt.",
+                        },
+                        "verification_token": {
+                            "type": "string",
+                            "description": "The SmartPark receipt verification code/token. It may be shown with formatting hyphens on the receipt.",
+                        },
+                    },
+                    "required": [
+                        "receipt_number",
+                        "verification_token",
+                    ],
+                    "additionalProperties": False,
+                },
+            },
+
+            # ==================================================
             # Reservation Tools
             # ==================================================
 
@@ -1013,6 +1201,292 @@ class SmartParkChatService:
                     "type": "object",
                     "properties": {},
                     "required": [],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Get My Vehicles (Vehicle Management)
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "get_my_vehicles",
+                "description": (
+                    "Retrieve all vehicles belonging to the authenticated SmartPark "
+                    "customer, including inactive vehicles. Use this for vehicle "
+                    "management operations such as setting a default vehicle, "
+                    "deactivating a vehicle, or deleting a vehicle. The result includes "
+                    "actual vehicle IDs, registration numbers, nicknames, active/default "
+                    "status, and numbered selections. Never request a customer ID."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Add Vehicle
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "add_vehicle",
+                "description": (
+                    "Register a new vehicle for the authenticated SmartPark customer. "
+                    "Use only after the customer has supplied the required vehicle "
+                    "details and explicitly confirmed the final details. Country defaults "
+                    "to KE and parking profile defaults to STANDARD when not specified. "
+                    "Do not invent registration number, make, model, or vehicle type."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "plate_country": {
+                            "type": "string",
+                            "description": "Two-letter vehicle plate country code. Defaults to KE.",
+                        },
+                        "registration_number": {
+                            "type": "string",
+                            "description": "Vehicle registration number.",
+                        },
+                        "nickname": {
+                            "type": "string",
+                            "description": "Optional friendly name for the vehicle.",
+                        },
+                        "make": {
+                            "type": "string",
+                            "description": "Vehicle make, for example Toyota or Nissan.",
+                        },
+                        "model": {
+                            "type": "string",
+                            "description": "Vehicle model, for example Corolla or X-Trail.",
+                        },
+                        "colour": {
+                            "type": "string",
+                            "description": "Optional vehicle colour.",
+                        },
+                        "year": {
+                            "type": "integer",
+                            "description": "Optional vehicle manufacture year.",
+                        },
+                        "vehicle_type": {
+                            "type": "string",
+                            "enum": [
+                                "CAR",
+                                "SUV",
+                                "TRUCK",
+                                "MOTORCYCLE",
+                                "BUS",
+                                "ANY",
+                            ],
+                            "description": "Vehicle type.",
+                        },
+                        "parking_profile": {
+                            "type": "string",
+                            "enum": [
+                                "STANDARD",
+                                "ELECTRIC",
+                                "ACCESSIBLE",
+                                "VIP",
+                                "COMMERCIAL",
+                                "EMERGENCY",
+                            ],
+                            "description": "Smart parking profile. Defaults to STANDARD.",
+                        },
+                        "is_default": {
+                            "type": "boolean",
+                            "description": "Whether the new vehicle should become the default vehicle.",
+                        },
+                    },
+                    "required": [
+                        "registration_number",
+                        "make",
+                        "model",
+                        "vehicle_type",
+                    ],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Set Default Vehicle
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "set_default_vehicle",
+                "description": (
+                    "Set one of the authenticated customer's active vehicles as the "
+                    "default vehicle. The vehicle ID must come from get_my_vehicles or "
+                    "another trusted SmartPark vehicle result. Never invent a vehicle ID."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vehicle_id": {
+                            "type": "integer",
+                            "description": "Actual SmartPark vehicle ID returned by a trusted vehicle tool.",
+                        },
+                    },
+                    "required": ["vehicle_id"],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Edit Vehicle
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "edit_vehicle",
+                "description": (
+                    "Edit details of one of the authenticated customer's active vehicles. "
+                    "Use only after the customer has explicitly confirmed the proposed changes. "
+                    "The vehicle ID must come from get_my_vehicles or another trusted SmartPark "
+                    "vehicle result. Only include fields the customer actually wants changed."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vehicle_id": {
+                            "type": "integer",
+                            "description": "Actual SmartPark vehicle ID returned by a trusted vehicle tool.",
+                        },
+                        "plate_country": {
+                            "type": "string",
+                            "description": "Two-letter vehicle plate country code.",
+                        },
+                        "registration_number": {
+                            "type": "string",
+                            "description": "New vehicle registration number.",
+                        },
+                        "nickname": {
+                            "type": "string",
+                            "description": "New friendly name for the vehicle.",
+                        },
+                        "make": {
+                            "type": "string",
+                            "description": "New vehicle make.",
+                        },
+                        "model": {
+                            "type": "string",
+                            "description": "New vehicle model.",
+                        },
+                        "colour": {
+                            "type": "string",
+                            "description": "New vehicle colour.",
+                        },
+                        "year": {
+                            "type": "integer",
+                            "description": "New vehicle manufacture year.",
+                        },
+                        "vehicle_type": {
+                            "type": "string",
+                            "enum": [
+                                "CAR",
+                                "SUV",
+                                "TRUCK",
+                                "MOTORCYCLE",
+                                "BUS",
+                                "ANY",
+                            ],
+                            "description": "New vehicle type.",
+                        },
+                        "parking_profile": {
+                            "type": "string",
+                            "enum": [
+                                "STANDARD",
+                                "ELECTRIC",
+                                "ACCESSIBLE",
+                                "VIP",
+                                "COMMERCIAL",
+                                "EMERGENCY",
+                            ],
+                            "description": "New SmartPark parking profile.",
+                        },
+                    },
+                    "required": ["vehicle_id"],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Activate Vehicle
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "activate_vehicle",
+                "description": (
+                    "Reactivate one of the authenticated customer's inactive vehicles. "
+                    "Use only after the customer explicitly confirms activation. The vehicle "
+                    "ID must come from get_my_vehicles or another trusted SmartPark vehicle result."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vehicle_id": {
+                            "type": "integer",
+                            "description": "Actual SmartPark vehicle ID returned by a trusted vehicle tool.",
+                        },
+                    },
+                    "required": ["vehicle_id"],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Deactivate Vehicle
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "deactivate_vehicle",
+                "description": (
+                    "Deactivate one of the authenticated customer's vehicles. Use only "
+                    "after the customer explicitly confirms the deactivation. The vehicle "
+                    "ID must come from get_my_vehicles or another trusted SmartPark vehicle result."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vehicle_id": {
+                            "type": "integer",
+                            "description": "Actual SmartPark vehicle ID returned by a trusted vehicle tool.",
+                        },
+                    },
+                    "required": ["vehicle_id"],
+                    "additionalProperties": False,
+                },
+            },
+
+            # --------------------------------------------------
+            # Delete Vehicle
+            # --------------------------------------------------
+
+            {
+                "type": "function",
+                "name": "delete_vehicle",
+                "description": (
+                    "Permanently delete one of the authenticated customer's vehicles. "
+                    "Use only after the customer explicitly confirms permanent deletion. "
+                    "The vehicle ID must come from get_my_vehicles or another trusted "
+                    "SmartPark vehicle result. Never invent a vehicle ID."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vehicle_id": {
+                            "type": "integer",
+                            "description": "Actual SmartPark vehicle ID returned by a trusted vehicle tool.",
+                        },
+                    },
+                    "required": ["vehicle_id"],
                     "additionalProperties": False,
                 },
             },
@@ -1059,6 +1533,40 @@ class SmartParkChatService:
                     "active parking session, if any. Use this when "
                     "the customer asks whether they are currently "
                     "parked or asks about their current parking session."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": False,
+                },
+            },
+
+            {
+                "type": "function",
+                "name": "get_user_active_sessions",
+                "description": (
+                    "Retrieve all active parking sessions belonging to the "
+                    "authenticated customer. Use this when the customer wants "
+                    "to pay for an active parking session or needs to choose "
+                    "which active session to pay for."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": False,
+                },
+            },
+
+            {
+                "type": "function",
+                "name": "get_my_loyalty_program",
+                "description": (
+                    "Retrieve the authenticated customer's SmartPark loyalty "
+                    "programme details, including current points balance, "
+                    "lifetime points, loyalty tier, eligible rewards, and "
+                    "reward redemption history."
                 ),
                 "parameters": {
                     "type": "object",
@@ -1558,6 +2066,29 @@ class SmartParkChatService:
             )
 
         # ======================================================
+        # Receipt Verification
+        # ======================================================
+
+        if tool_name == "verify_receipt":
+            receipt_number = arguments.get("receipt_number")
+            verification_token = arguments.get("verification_token")
+
+            if not receipt_number:
+                raise ValueError(
+                    "receipt_number is required for verify_receipt."
+                )
+
+            if not verification_token:
+                raise ValueError(
+                    "verification_token is required for verify_receipt."
+                )
+
+            return await self.tools.verify_receipt(
+                receipt_number=str(receipt_number),
+                verification_token=str(verification_token),
+            )
+
+        # ======================================================
         # Reservation Tools
         # ======================================================
 
@@ -1574,6 +2105,195 @@ class SmartParkChatService:
 
             return await self.tools.get_customer_vehicles(
                 customer_id=customer_id,
+            )
+
+        # ------------------------------------------------------
+        # Vehicle Management
+        # ------------------------------------------------------
+
+        if tool_name == "get_my_vehicles":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for get_my_vehicles."
+                )
+
+            return await self.tools.get_my_vehicles(
+                customer_id=customer_id,
+            )
+
+        if tool_name == "add_vehicle":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for add_vehicle."
+                )
+
+            registration_number = arguments.get("registration_number")
+            make = arguments.get("make")
+            model = arguments.get("model")
+            vehicle_type = arguments.get("vehicle_type")
+
+            if not registration_number:
+                raise ValueError("registration_number is required for add_vehicle.")
+            if not make:
+                raise ValueError("make is required for add_vehicle.")
+            if not model:
+                raise ValueError("model is required for add_vehicle.")
+            if not vehicle_type:
+                raise ValueError("vehicle_type is required for add_vehicle.")
+
+            return await self.tools.add_vehicle(
+                customer_id=customer_id,
+                plate_country=str(arguments.get("plate_country") or "KE"),
+                registration_number=str(registration_number),
+                nickname=(
+                    str(arguments["nickname"])
+                    if arguments.get("nickname") is not None
+                    else None
+                ),
+                make=str(make),
+                model=str(model),
+                colour=(
+                    str(arguments["colour"])
+                    if arguments.get("colour") is not None
+                    else None
+                ),
+                year=(
+                    int(arguments["year"])
+                    if arguments.get("year") is not None
+                    else None
+                ),
+                vehicle_type=str(vehicle_type),
+                parking_profile=str(
+                    arguments.get("parking_profile") or "STANDARD"
+                ),
+                is_default=bool(arguments.get("is_default", False)),
+            )
+
+        if tool_name == "set_default_vehicle":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for set_default_vehicle."
+                )
+
+            vehicle_id = arguments.get("vehicle_id")
+            if vehicle_id is None:
+                raise ValueError("vehicle_id is required for set_default_vehicle.")
+
+            return await self.tools.set_default_vehicle(
+                customer_id=customer_id,
+                vehicle_id=int(vehicle_id),
+            )
+
+        if tool_name == "edit_vehicle":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for edit_vehicle."
+                )
+
+            vehicle_id = arguments.get("vehicle_id")
+            if vehicle_id is None:
+                raise ValueError("vehicle_id is required for edit_vehicle.")
+
+            return await self.tools.edit_vehicle(
+                customer_id=customer_id,
+                vehicle_id=int(vehicle_id),
+                plate_country=(
+                    str(arguments["plate_country"])
+                    if arguments.get("plate_country") is not None
+                    else None
+                ),
+                registration_number=(
+                    str(arguments["registration_number"])
+                    if arguments.get("registration_number") is not None
+                    else None
+                ),
+                nickname=(
+                    str(arguments["nickname"])
+                    if arguments.get("nickname") is not None
+                    else None
+                ),
+                make=(
+                    str(arguments["make"])
+                    if arguments.get("make") is not None
+                    else None
+                ),
+                model=(
+                    str(arguments["model"])
+                    if arguments.get("model") is not None
+                    else None
+                ),
+                colour=(
+                    str(arguments["colour"])
+                    if arguments.get("colour") is not None
+                    else None
+                ),
+                year=(
+                    int(arguments["year"])
+                    if arguments.get("year") is not None
+                    else None
+                ),
+                vehicle_type=(
+                    str(arguments["vehicle_type"])
+                    if arguments.get("vehicle_type") is not None
+                    else None
+                ),
+                parking_profile=(
+                    str(arguments["parking_profile"])
+                    if arguments.get("parking_profile") is not None
+                    else None
+                ),
+            )
+
+        if tool_name == "activate_vehicle":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for activate_vehicle."
+                )
+
+            vehicle_id = arguments.get("vehicle_id")
+            if vehicle_id is None:
+                raise ValueError("vehicle_id is required for activate_vehicle.")
+
+            return await self.tools.activate_vehicle(
+                customer_id=customer_id,
+                vehicle_id=int(vehicle_id),
+            )
+
+        if tool_name == "deactivate_vehicle":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for deactivate_vehicle."
+                )
+
+            vehicle_id = arguments.get("vehicle_id")
+            if vehicle_id is None:
+                raise ValueError("vehicle_id is required for deactivate_vehicle.")
+
+            return await self.tools.deactivate_vehicle(
+                customer_id=customer_id,
+                vehicle_id=int(vehicle_id),
+            )
+
+        if tool_name == "delete_vehicle":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for delete_vehicle."
+                )
+
+            vehicle_id = arguments.get("vehicle_id")
+            if vehicle_id is None:
+                raise ValueError("vehicle_id is required for delete_vehicle.")
+
+            return await self.tools.delete_vehicle(
+                customer_id=customer_id,
+                vehicle_id=int(vehicle_id),
             )
 
         # ------------------------------------------------------
@@ -1607,6 +2327,32 @@ class SmartParkChatService:
                 )
 
             return await self.tools.get_user_active_session(
+                customer_id=customer_id,
+            )
+
+        # ------------------------------------------------------
+        # Get User Active Sessions
+        # ------------------------------------------------------
+
+        if tool_name == "get_user_active_sessions":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for get_user_active_sessions."
+                )
+
+            return await self.tools.get_user_active_sessions(
+                customer_id=customer_id,
+            )
+
+        if tool_name == "get_my_loyalty_program":
+            if customer_id is None:
+                raise ValueError(
+                    "Authenticated customer context is required "
+                    "for get_my_loyalty_program."
+                )
+
+            return await self.tools.get_my_loyalty_program(
                 customer_id=customer_id,
             )
 

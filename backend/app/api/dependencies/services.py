@@ -86,6 +86,14 @@ from app.api.dependencies.receipts import (
     ReceiptServiceDep,
 )
 
+from app.api.dependencies.loyalty import (
+    LoyaltyServiceDep,
+)
+
+from app.api.dependencies.loyalty_reward import (
+    LoyaltyRewardServiceDep,
+)
+
 from app.services.vehicle_service import (
     VehicleService,
 )
@@ -116,7 +124,11 @@ def get_smartpark_ai_tools(
     parking_session_service: ParkingSessionServiceDep,
     pricing_service: PricingServiceDep,
     vehicle_repository: VehicleRepositoryDep,
+    vehicle_service: VehicleServiceDep,
     notification_service: NotificationServiceDep,
+    receipt_service: ReceiptServiceDep,
+    loyalty_service: LoyaltyServiceDep,
+    loyalty_reward_service: LoyaltyRewardServiceDep,
 ) -> SmartParkAITools:
     """
     Return a SmartParkAITools instance using the current
@@ -166,7 +178,11 @@ def get_smartpark_ai_tools(
         db=db,
         reservation_service=reservation_service,
         vehicle_repository=vehicle_repository,
+        vehicle_service=vehicle_service,
         forecast_service=forecast_service,
+        receipt_service=receipt_service,
+        loyalty_service=loyalty_service,
+        loyalty_reward_service=loyalty_reward_service,
     )
 
 SmartParkAIToolsDep = Annotated[
