@@ -60,8 +60,20 @@ class Settings(BaseSettings):
     # ==========================================================
     # CORS
     # ==========================================================
+    #
+    # Comma-separated browser origins allowed to access the
+    # SmartPark AI backend.
+    #
+    # Example:
+    #
+    # BACKEND_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,https://example.ngrok-free.app
+    #
+    # The value is kept as a string here and parsed by the
+    # application entry point when configuring FastAPI's
+    # CORSMiddleware.
+    # ==========================================================
 
-    BACKEND_CORS_ORIGINS: str
+    FRONTEND_URLS: str
 
     # ==========================================================
     # M-Pesa (Daraja API)
@@ -88,11 +100,13 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
 
     # =========================================================================
-    # Storage (Dual Storage - use 'local' for development, 'supabase' for
-    # production)
+    # Storage
+    # =========================================================================
+    #
+    # Use 'local' for development or 'supabase' for production.
     # =========================================================================
 
-    STORAGE_BACKEND: str = "supabase"
+    STORAGE_BACKEND: str = "local" 
     LOCAL_STORAGE_PATH: str = "storage"
 
     SUPABASE_URL: str = ""

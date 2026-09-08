@@ -1,24 +1,19 @@
 import axios from "axios";
 
+import { environment } from "../config/environment";
+
 // ==========================================================
 // API Configuration
 // ==========================================================
 //
-// Vite loads VITE_* variables from frontend/.env.
+// The backend URL is centralized in src/config/environment.ts.
 //
-// Local development:
-//
-// VITE_API_BASE_URL=http://localhost:8000
-//
-// The fallback is intentionally retained so the application
-// remains usable if the .env file is temporarily missing.
+// That file is the single frontend configuration entry point
+// for VITE_API_BASE_URL.
 // ==========================================================
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: environment.apiBaseUrl,
 
   headers: {
     "Content-Type": "application/json",
@@ -92,7 +87,7 @@ api.interceptors.response.use(
  * Useful for diagnostics and development.
  */
 export const getApiBaseUrl = (): string => {
-  return API_BASE_URL;
+  return environment.apiBaseUrl;
 };
 
 /**
@@ -153,5 +148,3 @@ export const getApiErrorMessage = (error: unknown): string => {
 
   return "An unexpected error occurred.";
 };
-
-

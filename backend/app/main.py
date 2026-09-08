@@ -30,15 +30,33 @@ app = FastAPI(
 
 
 # ==========================================================
-# CORS
+# CORS - Cross-Origin Resource Sharing
 # ==========================================================
+#
+# Allowed browser origins are loaded from the centralized
+# BACKEND_CORS_ORIGINS setting in backend/.env.
+#
+# The environment variable is stored as a comma-separated
+# string and converted into a list of origins here.
+#
+# Example:
+#
+# BACKEND_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,https://example.ngrok-free.app
+#
+# This keeps environment-specific hostnames out of the
+# application source code.
+# ==========================================================
+
+cors_origins = [
+    origin.strip()
+    for origin in settings.FRONTEND_URLS.split(",")
+    if origin.strip()
+]
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
