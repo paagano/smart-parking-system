@@ -1,12 +1,70 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
-import { aiApi, getApiErrorMessage } from "../../api";
+import { aiApi, api, getApiErrorMessage } from "../../api";
 import { useAuth } from "../../auth/AuthContext";
 
 // ==========================================================
 // Types
 // ==========================================================
+
+interface SmartParkSpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SmartParkSpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message?: string;
+}
+
+interface SmartParkSpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onstart: ((event: Event) => void) | null;
+  onend: ((event: Event) => void) | null;
+  onresult: ((event: SmartParkSpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SmartParkSpeechRecognitionErrorEvent) => void) | null;
+}
+
+interface SmartParkSpeechRecognitionConstructor {
+  new (): SmartParkSpeechRecognitionInstance;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SmartParkSpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SmartParkSpeechRecognitionConstructor;
+  }
+}
+
+type InteractionMode = "text" | "voice";
+
+type RealtimeToolCallEvent = {
+  type: "response.function_call_arguments.done";
+  call_id: string;
+  name: string;
+  arguments: string;
+};
+
+type RealtimeTranscriptEvent = {
+  type: string;
+  transcript?: string;
+  item_id?: string;
+  delta?: string;
+};
+
+type RealtimeErrorEvent = {
+  type: "error";
+  error?: {
+    message?: string;
+    code?: string;
+  };
+};
 
 type ChatMessage = {
   id: number;
@@ -1287,6 +1345,7 @@ export default function SmartParkChatbot() {
   // ----------------------------------------------------------
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
 
   /*
    * Show a welcome bubble when the authenticated
@@ -1316,6 +1375,9 @@ export default function SmartParkChatbot() {
   const launchGreeting = `${greetingTimeOfDay} ${firstName}, I'm SmartPark AI, your reliable SmartPark Assistant. How may I assist you today?`;
 
   const [input, setInput] = useState("");
+  const [realtimeTextInput, setRealtimeTextInput] = useState("");
+  const [realtimeSelectedAttachment, setRealtimeSelectedAttachment] =
+    useState<ChatAttachment | null>(null);
 
   const [selectedAttachment, setSelectedAttachment] =
     useState<ChatAttachment | null>(null);
@@ -1369,6 +1431,50 @@ export default function SmartParkChatbot() {
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
 
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+
+  const speechRecognitionRef =
+    useRef<SmartParkSpeechRecognitionInstance | null>(null);
+  const speechInputPrefixRef = useRef("");
+  const [speechOutputSupported, setSpeechOutputSupported] = useState(false);
+  const [isSpeakingMessageId, setIsSpeakingMessageId] = useState<number | null>(
+    null,
+  );
+  const [speechOutputError, setSpeechOutputError] = useState<string | null>(
+    null,
+  );
+
+  const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
+  const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const lastSpokenAssistantMessageIdRef = useRef(1);
+
+  // ----------------------------------------------------------
+  // Realtime voice conversation state
+  // ----------------------------------------------------------
+
+  const [interactionMode, setInteractionMode] =
+    useState<InteractionMode>("text");
+  const [isRealtimeConnecting, setIsRealtimeConnecting] = useState(false);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
+  const [realtimeError, setRealtimeError] = useState<string | null>(null);
+
+  const realtimePeerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeDataChannelRef = useRef<RTCDataChannel | null>(null);
+  const realtimeAudioElementRef = useRef<HTMLAudioElement | null>(null);
+  const realtimeAssistantTranscriptRef = useRef("");
+  const realtimeMicStatsIntervalRef = useRef<ReturnType<
+    typeof setInterval
+  > | null>(null);
+  const realtimeMicAudioContextRef = useRef<AudioContext | null>(null);
+  const realtimeMicAnalyserRef = useRef<AnalyserNode | null>(null);
+  const realtimeMicSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const realtimeMicLevelIntervalRef = useRef<ReturnType<
+    typeof setInterval
+  > | null>(null);
+  const realtimeAssistantMessageIdRef = useRef<number | null>(null);
+  const realtimeToolCallsRef = useRef(new Set<string>());
 
   // ----------------------------------------------------------
   // Refs
@@ -1377,6 +1483,8 @@ export default function SmartParkChatbot() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const realtimeTextInputRef = useRef<HTMLInputElement | null>(null);
+  const realtimeAttachmentInputRef = useRef<HTMLInputElement | null>(null);
 
   const attachmentInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -1427,6 +1535,9 @@ export default function SmartParkChatbot() {
       }
 
       if (chatWindowRef.current && !chatWindowRef.current.contains(target)) {
+        // Hiding the chatbot must not terminate an active realtime voice
+        // conversation. The WebRTC session remains alive while the component
+        // stays mounted; the user can reopen the window and continue.
         setIsOpen(false);
       }
     };
@@ -1449,6 +1560,7 @@ export default function SmartParkChatbot() {
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        // Escape hides the UI only; it does not end an active voice session.
         setIsOpen(false);
       }
     };
@@ -1459,6 +1571,1047 @@ export default function SmartParkChatbot() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen]);
+
+  // ----------------------------------------------------------
+  // Request browser location
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setSpeechSupported(false);
+      return;
+    }
+
+    setSpeechSupported(true);
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-KE";
+
+    recognition.onstart = () => {
+      setSpeechError(null);
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+
+      for (
+        let index = event.resultIndex;
+        index < event.results.length;
+        index += 1
+      ) {
+        transcript += event.results[index][0]?.transcript ?? "";
+      }
+
+      const prefix = speechInputPrefixRef.current;
+      setInput(`${prefix}${transcript}`.replace(/\s+/g, " ").trimStart());
+    };
+
+    recognition.onerror = (event) => {
+      if (event.error === "aborted") return;
+
+      const messages: Record<string, string> = {
+        "not-allowed":
+          "Microphone permission was denied. Please allow microphone access in your browser.",
+        "service-not-allowed":
+          "Speech recognition is not allowed by your browser.",
+        "no-speech":
+          "I didn't hear anything. Please tap the microphone and try again.",
+        "audio-capture":
+          "No working microphone was detected. Please check your microphone.",
+        network:
+          "Speech recognition could not connect to the browser speech service.",
+      };
+
+      setSpeechError(
+        messages[event.error] ||
+          "Voice input could not be started. Please try again.",
+      );
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      speechRecognitionRef.current = null;
+    };
+
+    speechRecognitionRef.current = recognition;
+
+    return () => {
+      recognition.onstart = null;
+      recognition.onend = null;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      try {
+        recognition.abort();
+      } catch {
+        // Ignore cleanup errors.
+      }
+      speechRecognitionRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) {
+      setSpeechOutputSupported(false);
+      return;
+    }
+
+    speechSynthesisRef.current = window.speechSynthesis;
+    setSpeechOutputSupported(true);
+
+    return () => {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // Ignore cleanup errors.
+      }
+
+      speechSynthesisRef.current = null;
+    };
+  }, []);
+
+  const stopVoiceInput = () => {
+    const recognition = speechRecognitionRef.current;
+
+    if (!recognition) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      recognition.stop();
+    } catch {
+      setIsListening(false);
+      speechRecognitionRef.current = null;
+    }
+  };
+
+  const toggleVoiceInput = () => {
+    if (isSending) return;
+
+    if (!speechSupported || !speechRecognitionRef.current) {
+      setSpeechError("Voice input is not supported by this browser.");
+      return;
+    }
+
+    if (isListening) {
+      stopVoiceInput();
+      return;
+    }
+
+    setSpeechError(null);
+    speechInputPrefixRef.current = input.trim() ? `${input.trim()} ` : "";
+
+    try {
+      speechRecognitionRef.current.start();
+    } catch {
+      setSpeechError("Voice input could not be started. Please try again.");
+    }
+  };
+
+  const stopSpeech = () => {
+    const synthesis = speechSynthesisRef.current;
+
+    if (synthesis) {
+      synthesis.cancel();
+    }
+
+    speechUtteranceRef.current = null;
+    setIsSpeakingMessageId(null);
+  };
+
+  const prepareSpeechText = (content: string): string => {
+    return content
+      .replace(/\[\[SESSION_PAYMENT:\d+\]\]/gi, "")
+      .replace(/\[\[VEHICLE_ACTION:[^\]]+\]\]/gi, "")
+      .replace(/https?:\/\/\S+/gi, "")
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^\s*[-*]\s+/gm, "")
+      .replace(/^\s*\d+[.)]\s+/gm, "")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/__([^_]+)__/g, "$1")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/\n{2,}/g, ". ")
+      .replace(/\n/g, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  };
+
+  const speakAssistantMessage = (messageId: number, content: string) => {
+    const synthesis = speechSynthesisRef.current;
+
+    if (!synthesis) {
+      setSpeechOutputError(
+        "Voice responses are not supported by this browser.",
+      );
+      return;
+    }
+
+    const speechText = prepareSpeechText(content);
+
+    if (!speechText) {
+      return;
+    }
+
+    synthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(speechText);
+    utterance.lang = "en-KE";
+    utterance.rate = 0.98;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+      setSpeechOutputError(null);
+      setIsSpeakingMessageId(messageId);
+    };
+
+    utterance.onend = () => {
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+        setIsSpeakingMessageId(null);
+      }
+    };
+
+    utterance.onerror = (event) => {
+      if (event.error !== "canceled" && event.error !== "interrupted") {
+        setSpeechOutputError(
+          "SmartPark AI could not play the voice response. Please try again.",
+        );
+      }
+
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+        setIsSpeakingMessageId(null);
+      }
+    };
+
+    speechUtteranceRef.current = utterance;
+    synthesis.speak(utterance);
+  };
+
+  // ----------------------------------------------------------
+  // Realtime voice conversation
+  // ----------------------------------------------------------
+
+  const stopRealtimeVoice = () => {
+    if (realtimeMicStatsIntervalRef.current) {
+      clearInterval(realtimeMicStatsIntervalRef.current);
+      realtimeMicStatsIntervalRef.current = null;
+    }
+
+    if (realtimeMicLevelIntervalRef.current) {
+      clearInterval(realtimeMicLevelIntervalRef.current);
+      realtimeMicLevelIntervalRef.current = null;
+    }
+
+    try {
+      realtimeMicSourceRef.current?.disconnect();
+    } catch {
+      // Ignore cleanup errors.
+    }
+    realtimeMicSourceRef.current = null;
+    realtimeMicAnalyserRef.current = null;
+
+    if (realtimeMicAudioContextRef.current) {
+      void realtimeMicAudioContextRef.current.close().catch(() => {});
+      realtimeMicAudioContextRef.current = null;
+    }
+
+    const dataChannel = realtimeDataChannelRef.current;
+
+    if (dataChannel) {
+      dataChannel.onopen = null;
+      dataChannel.onclose = null;
+      dataChannel.onerror = null;
+      dataChannel.onmessage = null;
+
+      try {
+        dataChannel.close();
+      } catch {
+        // Ignore cleanup errors.
+      }
+    }
+
+    const peerConnection = realtimePeerConnectionRef.current;
+
+    if (peerConnection) {
+      peerConnection.ontrack = null;
+      peerConnection.onconnectionstatechange = null;
+
+      try {
+        peerConnection.getSenders().forEach((sender) => {
+          if (sender.track) {
+            sender.track.stop();
+          }
+        });
+      } catch {
+        // Ignore cleanup errors.
+      }
+
+      try {
+        peerConnection.close();
+      } catch {
+        // Ignore cleanup errors.
+      }
+    }
+
+    realtimeDataChannelRef.current = null;
+    realtimePeerConnectionRef.current = null;
+
+    if (realtimeAudioElementRef.current) {
+      realtimeAudioElementRef.current.srcObject = null;
+    }
+
+    realtimeAssistantTranscriptRef.current = "";
+    realtimeAssistantMessageIdRef.current = null;
+    realtimeToolCallsRef.current.clear();
+
+    setIsRealtimeConnecting(false);
+    setIsRealtimeConnected(false);
+  };
+
+  const appendRealtimeUserTranscript = (transcript: string) => {
+    const cleanTranscript = transcript.trim();
+
+    if (!cleanTranscript) {
+      return;
+    }
+
+    setMessages((previous) => [
+      ...previous,
+      {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        role: "user",
+        content: cleanTranscript,
+      },
+    ]);
+  };
+
+  const appendRealtimeAssistantTranscript = (transcript: string) => {
+    const cleanTranscript = transcript.trim();
+
+    if (!cleanTranscript) {
+      return;
+    }
+
+    setMessages((previous) => {
+      const existingId = realtimeAssistantMessageIdRef.current;
+
+      if (existingId !== null) {
+        const existingIndex = previous.findIndex(
+          (message) => message.id === existingId,
+        );
+
+        if (existingIndex >= 0) {
+          const updated = [...previous];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            content: cleanTranscript,
+          };
+          return updated;
+        }
+      }
+
+      const messageId = Date.now() + Math.floor(Math.random() * 1000);
+      realtimeAssistantMessageIdRef.current = messageId;
+
+      return [
+        ...previous,
+        {
+          id: messageId,
+          role: "assistant",
+          content: cleanTranscript,
+        },
+      ];
+    });
+  };
+
+  // ----------------------------------------------------------
+  // Send typed text inside an active Realtime voice conversation
+  // ----------------------------------------------------------
+
+  const handleRealtimeAttachmentChange = (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = new Set([
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "text/plain",
+      "text/csv",
+      "application/json",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ]);
+
+    if (!allowedTypes.has(file.type.toLowerCase())) {
+      window.alert(
+        "Please attach a PDF, Word, Excel, PowerPoint, text, CSV, JSON, JPEG, PNG, or WebP document.",
+      );
+      event.target.value = "";
+      return;
+    }
+
+    const maxAttachmentBytes = 10 * 1024 * 1024;
+
+    if (file.size > maxAttachmentBytes) {
+      window.alert("Document attachments must not exceed 10 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setRealtimeSelectedAttachment({
+      file,
+      name: file.name,
+      size: file.size,
+    });
+  };
+
+  const removeRealtimeAttachment = () => {
+    setRealtimeSelectedAttachment(null);
+    if (realtimeAttachmentInputRef.current) {
+      realtimeAttachmentInputRef.current.value = "";
+    }
+  };
+
+  const sendRealtimeTextCommand = async () => {
+    const trimmedMessage = realtimeTextInput.trim();
+    const attachment = realtimeSelectedAttachment?.file ?? null;
+    const dataChannel = realtimeDataChannelRef.current;
+
+    if (
+      (!trimmedMessage && !attachment) ||
+      !dataChannel ||
+      dataChannel.readyState !== "open"
+    ) {
+      return;
+    }
+
+    try {
+      let uploadedFileId: string | null = null;
+      let documentContext: string | null = null;
+
+      if (attachment) {
+        const formData = new FormData();
+        formData.append("attachment", attachment);
+
+        const uploadResponse = await api.post<{
+          file_id: string;
+          filename: string;
+          document_context: string;
+        }>("/ai/realtime/file", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          timeout: 30000,
+        });
+
+        uploadedFileId = uploadResponse.data.file_id;
+        documentContext = uploadResponse.data.document_context;
+      }
+
+      const displayContent = trimmedMessage
+        ? attachment
+          ? `${trimmedMessage}\n\n📎 ${attachment.name}`
+          : trimmedMessage
+        : `📎 ${attachment?.name ?? "Document attached"}`;
+
+      setMessages((previous) => [
+        ...previous,
+        {
+          id: Date.now(),
+          role: "user",
+          content: displayContent,
+          attachmentName: attachment?.name,
+        },
+      ]);
+
+      setRealtimeTextInput("");
+      setRealtimeSelectedAttachment(null);
+      if (realtimeAttachmentInputRef.current) {
+        realtimeAttachmentInputRef.current.value = "";
+      }
+
+      // Realtime conversation.item.create supports input_text/input_audio here.
+      // The backend has already analyzed the attachment through the Responses API
+      // and returned a factual document briefing. Inject that briefing as text so
+      // the same live Realtime conversation can continue and answer aloud.
+      const textParts = [
+        trimmedMessage ||
+          "Please review the attached document and tell me what is relevant to my request.",
+      ];
+
+      if (uploadedFileId && documentContext) {
+        textParts.push(
+          `\nAttached document: ${attachment?.name ?? "document"}\n` +
+            "Document briefing from SmartPark document analysis:\n" +
+            documentContext,
+        );
+      }
+
+      dataChannel.send(
+        JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: textParts.join("\n"),
+              },
+            ],
+          },
+        }),
+      );
+
+      dataChannel.send(JSON.stringify({ type: "response.create" }));
+    } catch (error) {
+      setRealtimeError(
+        error instanceof Error
+          ? error.message
+          : "The command or document could not be sent to SmartPark AI.",
+      );
+    }
+  };
+
+  const handleRealtimeEvent = async (
+    event: RealtimeTranscriptEvent | RealtimeToolCallEvent | RealtimeErrorEvent,
+  ) => {
+    if (
+      event.type === "conversation.item.input_audio_transcription.completed"
+    ) {
+      appendRealtimeUserTranscript(event.transcript || "");
+      return;
+    }
+
+    if (
+      event.type === "response.output_audio_transcript.done" ||
+      event.type === "response.audio_transcript.done"
+    ) {
+      const transcript = event.transcript || "";
+      realtimeAssistantTranscriptRef.current = transcript;
+      appendRealtimeAssistantTranscript(transcript);
+      realtimeAssistantMessageIdRef.current = null;
+      return;
+    }
+
+    if (
+      event.type === "response.output_audio_transcript.delta" ||
+      event.type === "response.audio_transcript.delta"
+    ) {
+      if (event.delta) {
+        realtimeAssistantTranscriptRef.current += event.delta;
+        appendRealtimeAssistantTranscript(
+          realtimeAssistantTranscriptRef.current,
+        );
+      }
+      return;
+    }
+
+    if (event.type === "response.function_call_arguments.done") {
+      const toolEvent = event as RealtimeToolCallEvent;
+
+      if (realtimeToolCallsRef.current.has(toolEvent.call_id)) {
+        return;
+      }
+
+      realtimeToolCallsRef.current.add(toolEvent.call_id);
+
+      let argumentsObject: Record<string, unknown> = {};
+
+      try {
+        const parsed = JSON.parse(toolEvent.arguments || "{}");
+        if (parsed && typeof parsed === "object") {
+          argumentsObject = parsed as Record<string, unknown>;
+        }
+      } catch {
+        argumentsObject = {};
+      }
+
+      try {
+        const response = await api.post<{
+          tool_name: string;
+          output: unknown;
+        }>("/ai/realtime/tool", {
+          tool_name: toolEvent.name,
+          arguments: argumentsObject,
+          latitude: coordinates?.latitude ?? null,
+          longitude: coordinates?.longitude ?? null,
+        });
+
+        const dataChannel = realtimeDataChannelRef.current;
+
+        if (!dataChannel || dataChannel.readyState !== "open") {
+          throw new Error("Realtime data channel is not available.");
+        }
+
+        dataChannel.send(
+          JSON.stringify({
+            type: "conversation.item.create",
+            item: {
+              type: "function_call_output",
+              call_id: toolEvent.call_id,
+              output: JSON.stringify(response.data.output ?? {}),
+            },
+          }),
+        );
+
+        dataChannel.send(JSON.stringify({ type: "response.create" }));
+      } catch (error) {
+        const dataChannel = realtimeDataChannelRef.current;
+
+        if (dataChannel && dataChannel.readyState === "open") {
+          dataChannel.send(
+            JSON.stringify({
+              type: "conversation.item.create",
+              item: {
+                type: "function_call_output",
+                call_id: toolEvent.call_id,
+                output: JSON.stringify({
+                  error:
+                    getApiErrorMessage(error) ||
+                    "The requested SmartPark operation could not be completed.",
+                }),
+              },
+            }),
+          );
+
+          dataChannel.send(JSON.stringify({ type: "response.create" }));
+        }
+      }
+
+      return;
+    }
+
+    if (event.type === "input_audio_buffer.speech_started") {
+      console.log("[SmartPark Realtime] Server VAD detected speech.");
+      return;
+    }
+
+    if (event.type === "input_audio_buffer.speech_stopped") {
+      console.log("[SmartPark Realtime] Server VAD detected end of speech.");
+      return;
+    }
+
+    if (event.type === "error") {
+      const realtimeErrorEvent = event as RealtimeErrorEvent;
+      setRealtimeError(
+        realtimeErrorEvent.error?.message ||
+          "SmartPark voice encountered a realtime error.",
+      );
+    }
+  };
+
+  const startRealtimeVoice = async () => {
+    if (isRealtimeConnecting || isRealtimeConnected) {
+      return;
+    }
+
+    if (
+      typeof RTCPeerConnection === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
+      setRealtimeError(
+        "Realtime voice is not supported by this browser. Please use a modern Chrome, Edge, Safari, or Firefox browser.",
+      );
+      return;
+    }
+
+    setRealtimeError(null);
+    setIsRealtimeConnecting(true);
+    stopSpeech();
+    stopVoiceInput();
+
+    try {
+      const currentCoordinates = coordinates || (await requestLocation());
+
+      // IMPORTANT: Some Windows systems expose "Stereo Mix" / loopback
+      // devices as the browser's default audio input. That device captures
+      // system playback rather than the user's microphone, so Realtime VAD
+      // receives silence when the user speaks.
+      //
+      // First obtain permission, enumerate the now-visible audio inputs, and
+      // prefer a physical microphone over known loopback/virtual capture
+      // devices. MDN documents that device labels become available after
+      // media permission is granted and that a specific device can then be
+      // selected with the deviceId constraint.
+      const audioConstraints: MediaTrackConstraints = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      };
+
+      let localStream = await navigator.mediaDevices.getUserMedia({
+        audio: audioConstraints,
+      });
+
+      const initialAudioTrack = localStream.getAudioTracks()[0];
+      const initialLabel = initialAudioTrack?.label || "";
+
+      const loopbackPattern =
+        /stereo\s*mix|what\s*u\s*hear|wave\s*out|loopback|cable\s*(output|input)|virtual\s*(audio|mic|microphone)|voicemeeter|vb-?audio|blackhole|soundflower/i;
+
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(
+          (device) => device.kind === "audioinput",
+        );
+
+        console.log(
+          "[SmartPark Realtime] Available audio inputs:",
+          audioInputs.map((device) => ({
+            deviceId: device.deviceId,
+            label: device.label,
+            groupId: device.groupId,
+          })),
+        );
+
+        const physicalMic = audioInputs.find(
+          (device) =>
+            device.deviceId &&
+            device.deviceId !== "default" &&
+            !loopbackPattern.test(device.label || ""),
+        );
+
+        const initialIsLoopback = loopbackPattern.test(initialLabel);
+
+        if (initialIsLoopback && physicalMic) {
+          console.warn(
+            "[SmartPark Realtime] Browser selected a loopback audio input. Switching to physical microphone:",
+            {
+              selectedByBrowser: initialLabel,
+              selectedPhysicalMic: physicalMic.label,
+              deviceId: physicalMic.deviceId,
+            },
+          );
+
+          localStream.getTracks().forEach((track) => track.stop());
+
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              ...audioConstraints,
+              deviceId: { exact: physicalMic.deviceId },
+            },
+          });
+        } else {
+          console.log("[SmartPark Realtime] Browser audio input accepted:", {
+            label: initialLabel,
+            loopback: initialIsLoopback,
+            physicalMicCandidate: physicalMic?.label || null,
+          });
+        }
+      } catch (deviceSelectionError) {
+        console.warn(
+          "[SmartPark Realtime] Could not enumerate/select a physical microphone; continuing with the browser-selected input:",
+          deviceSelectionError,
+        );
+      }
+
+      const audioTracks = localStream.getAudioTracks();
+
+      if (audioTracks.length === 0) {
+        throw new Error(
+          "No microphone audio track was created by the browser.",
+        );
+      }
+
+      audioTracks.forEach((track) => {
+        track.enabled = true;
+        try {
+          track.contentHint = "speech";
+        } catch {
+          // contentHint is optional and is not supported by every browser.
+        }
+
+        console.log("[SmartPark Realtime] Microphone track:", {
+          id: track.id,
+          label: track.label,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState,
+          settings: track.getSettings(),
+        });
+
+        track.onmute = () => {
+          console.warn("[SmartPark Realtime] Microphone track muted.");
+        };
+
+        track.onunmute = () => {
+          console.log("[SmartPark Realtime] Microphone track unmuted.");
+        };
+      });
+
+      // Diagnostic only: prove that the browser is actually receiving
+      // non-silent microphone samples before we blame WebRTC/OpenAI VAD.
+      try {
+        const AudioContextCtor =
+          window.AudioContext ||
+          (
+            window as typeof window & {
+              webkitAudioContext?: typeof AudioContext;
+            }
+          ).webkitAudioContext;
+
+        if (AudioContextCtor) {
+          const audioContext = new AudioContextCtor();
+          const source = audioContext.createMediaStreamSource(localStream);
+          const analyser = audioContext.createAnalyser();
+          analyser.fftSize = 2048;
+          source.connect(analyser);
+
+          realtimeMicAudioContextRef.current = audioContext;
+          realtimeMicSourceRef.current = source;
+          realtimeMicAnalyserRef.current = analyser;
+
+          const samples = new Uint8Array(analyser.fftSize);
+          realtimeMicLevelIntervalRef.current = setInterval(() => {
+            analyser.getByteTimeDomainData(samples);
+            let sumSquares = 0;
+            for (const sample of samples) {
+              const normalized = (sample - 128) / 128;
+              sumSquares += normalized * normalized;
+            }
+            const rms = Math.sqrt(sumSquares / samples.length);
+            console.log(
+              "[SmartPark Realtime] Local microphone RMS:",
+              Number(rms.toFixed(4)),
+            );
+          }, 1000);
+
+          void audioContext.resume().catch(() => {});
+        } else {
+          console.warn(
+            "[SmartPark Realtime] AudioContext is unavailable; local mic level diagnostic skipped.",
+          );
+        }
+      } catch (audioDiagnosticError) {
+        console.warn(
+          "[SmartPark Realtime] Local microphone level diagnostic failed:",
+          audioDiagnosticError,
+        );
+      }
+
+      const peerConnection = new RTCPeerConnection();
+      realtimePeerConnectionRef.current = peerConnection;
+
+      localStream.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, localStream);
+      });
+
+      const audioElement = new Audio();
+      audioElement.autoplay = true;
+      audioElement.setAttribute("playsinline", "true");
+      realtimeAudioElementRef.current = audioElement;
+
+      peerConnection.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+
+        if (remoteStream) {
+          audioElement.srcObject = remoteStream;
+          void audioElement.play().catch(() => {
+            // The user gesture that started the call normally permits playback.
+          });
+        }
+      };
+
+      peerConnection.onconnectionstatechange = () => {
+        const state = peerConnection.connectionState;
+        console.log("[SmartPark Realtime] Peer connection state:", state);
+
+        if (state === "connected") {
+          setIsRealtimeConnecting(false);
+          setIsRealtimeConnected(true);
+          setRealtimeError(null);
+        }
+
+        if (
+          state === "failed" ||
+          state === "closed" ||
+          state === "disconnected"
+        ) {
+          setIsRealtimeConnected(false);
+        }
+      };
+
+      const dataChannel = peerConnection.createDataChannel("oai-events");
+      realtimeDataChannelRef.current = dataChannel;
+
+      dataChannel.onopen = () => {
+        setIsRealtimeConnecting(false);
+        setIsRealtimeConnected(true);
+        setRealtimeError(null);
+      };
+
+      dataChannel.onclose = () => {
+        setIsRealtimeConnected(false);
+      };
+
+      dataChannel.onerror = () => {
+        setRealtimeError(
+          "The SmartPark realtime voice connection encountered an error.",
+        );
+      };
+
+      dataChannel.onmessage = (messageEvent) => {
+        try {
+          const event = JSON.parse(messageEvent.data) as
+            | RealtimeTranscriptEvent
+            | RealtimeToolCallEvent
+            | RealtimeErrorEvent;
+
+          console.log("[SmartPark Realtime] Server event:", event);
+
+          if (
+            event.type === "input_audio_buffer.speech_started" ||
+            event.type === "input_audio_buffer.speech_stopped" ||
+            event.type ===
+              "conversation.item.input_audio_transcription.completed"
+          ) {
+            console.log("[SmartPark Realtime] AUDIO EVENT:", event.type, event);
+          }
+
+          void handleRealtimeEvent(event);
+        } catch {
+          setRealtimeError("SmartPark returned an invalid realtime event.");
+        }
+      };
+
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+
+      const localDescription = peerConnection.localDescription;
+
+      if (!localDescription?.sdp) {
+        throw new Error("Could not create the WebRTC SDP offer.");
+      }
+
+      console.log(
+        "[SmartPark Realtime] Local audio senders:",
+        peerConnection.getSenders().map((sender) => ({
+          kind: sender.track?.kind,
+          enabled: sender.track?.enabled,
+          muted: sender.track?.muted,
+          readyState: sender.track?.readyState,
+          trackId: sender.track?.id,
+        })),
+      );
+
+      const formData = new FormData();
+      formData.append("sdp", localDescription.sdp);
+
+      if (currentCoordinates) {
+        formData.append("latitude", String(currentCoordinates.latitude));
+        formData.append("longitude", String(currentCoordinates.longitude));
+      }
+
+      const response = await api.post<string>(
+        "/ai/realtime/session",
+        formData,
+        {
+          headers: {
+            Accept: "application/sdp",
+            "Content-Type": "multipart/form-data",
+          },
+          responseType: "text",
+          timeout: 30000,
+        },
+      );
+
+      const answerSdp = response.data;
+
+      if (!answerSdp) {
+        throw new Error("SmartPark returned an empty realtime SDP answer.");
+      }
+
+      await peerConnection.setRemoteDescription({
+        type: "answer",
+        sdp: answerSdp,
+      });
+
+      // Diagnostic only: verify that the RTP sender is actually transmitting
+      // microphone packets after the WebRTC connection is established.
+      realtimeMicStatsIntervalRef.current = setInterval(async () => {
+        try {
+          const stats = await peerConnection.getStats();
+          const outboundAudio = Array.from(stats.values())
+            .filter(
+              (report) =>
+                report.type === "outbound-rtp" && report.kind === "audio",
+            )
+            .map((report) => ({
+              bytesSent: report.bytesSent,
+              packetsSent: report.packetsSent,
+              packetsLost: report.packetsLost,
+              audioLevel: report.audioLevel,
+              trackIdentifier: report.trackIdentifier,
+            }));
+
+          console.log(
+            "[SmartPark Realtime] Outbound audio RTP stats:",
+            outboundAudio,
+          );
+        } catch (statsError) {
+          console.warn(
+            "[SmartPark Realtime] Could not read outbound audio RTP stats:",
+            statsError,
+          );
+        }
+      }, 2000);
+    } catch (error) {
+      stopRealtimeVoice();
+      setRealtimeError(
+        getApiErrorMessage(error) ||
+          "I couldn't start the SmartPark realtime voice conversation. Please try again.",
+      );
+    } finally {
+      setIsRealtimeConnecting(false);
+    }
+  };
+
+  const toggleInteractionMode = (mode: InteractionMode) => {
+    if (mode === interactionMode) {
+      return;
+    }
+
+    if (mode === "text") {
+      stopRealtimeVoice();
+      setRealtimeError(null);
+      setInteractionMode("text");
+      return;
+    }
+
+    stopSpeech();
+    stopVoiceInput();
+    setInteractionMode("voice");
+    void startRealtimeVoice();
+  };
+
+  useEffect(() => {
+    return () => {
+      stopRealtimeVoice();
+    };
+  }, []);
 
   // ----------------------------------------------------------
   // Request browser location
@@ -1548,6 +2701,7 @@ export default function SmartParkChatbot() {
   // ----------------------------------------------------------
 
   const handlePayAndConfirmReservation = (reservationNumber: string) => {
+    stopSpeech();
     setPendingPaymentReservationNumber(null);
     setIsOpen(false);
 
@@ -1557,6 +2711,7 @@ export default function SmartParkChatbot() {
   };
 
   const handlePayActiveSession = (sessionId: number) => {
+    stopSpeech();
     setIsOpen(false);
 
     const params = new URLSearchParams({
@@ -1622,6 +2777,7 @@ export default function SmartParkChatbot() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    stopSpeech();
 
     const trimmedMessage =
       input.trim() || (selectedAttachment ? "Please verify this receipt." : "");
@@ -1960,6 +3116,9 @@ export default function SmartParkChatbot() {
     // Reset both visible messages AND OpenAI conversation state.
     // --------------------------------------------------------
 
+    stopRealtimeVoice();
+    setRealtimeError(null);
+
     setMessages([
       {
         id: Date.now(),
@@ -1978,6 +3137,7 @@ export default function SmartParkChatbot() {
     }
 
     setInput("");
+    setRealtimeTextInput("");
 
     setTimeout(() => {
       inputRef.current?.focus();
@@ -1989,7 +3149,13 @@ export default function SmartParkChatbot() {
   // ----------------------------------------------------------
 
   const minimizeChat = () => {
+    // IMPORTANT: minimizing/hiding the chatbot must preserve the active
+    // conversation, including an ongoing WebRTC voice session.
     setIsOpen(false);
+  };
+
+  const toggleMaximizeChat = () => {
+    setIsMaximized((previous) => !previous);
   };
 
   const openChat = () => {
@@ -2009,7 +3175,20 @@ export default function SmartParkChatbot() {
 
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50 flex items-end gap-2">
-          {showLaunchGreeting && (
+          {isRealtimeConnected && (
+            <button
+              type="button"
+              onClick={openChat}
+              className="mb-1 flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-700 shadow-lg transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-emerald-100"
+              aria-label="Reopen active SmartPark AI voice conversation"
+              title="Reopen active voice conversation"
+            >
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+              Live voice conversation active
+            </button>
+          )}
+
+          {showLaunchGreeting && !isRealtimeConnected && (
             <div className="relative mb-1 flex max-w-[min(360px,calc(100vw-110px))] items-start gap-2">
               <button
                 type="button"
@@ -2214,22 +3393,23 @@ export default function SmartParkChatbot() {
       {isOpen && (
         <div
           ref={chatWindowRef}
-          className="
+          className={`
             fixed
-            bottom-5
-            right-5
             z-50
             flex
-            h-[min(680px,calc(100vh-40px))]
-            w-[min(420px,calc(100vw-40px))]
             flex-col
             overflow-hidden
             rounded-2xl
+            ${
+              isMaximized
+                ? "inset-3 h-[calc(100vh-24px)] w-[calc(100vw-24px)] md:inset-5 md:h-[calc(100vh-40px)] md:w-[calc(100vw-40px)]"
+                : "bottom-5 right-5 h-[min(680px,calc(100vh-40px))] w-[min(420px,calc(100vw-40px))]"
+            }
             border
             border-slate-200
             bg-white
             shadow-[0_20px_60px_rgba(15,23,42,0.25)]
-          "
+          `}
         >
           {/* ==================================================
               Header
@@ -2246,7 +3426,7 @@ export default function SmartParkChatbot() {
               text-white
             "
           >
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               <div
                 className="
                   flex
@@ -2280,8 +3460,10 @@ export default function SmartParkChatbot() {
                 </svg>
               </div>
 
-              <div>
-                <div className="text-sm font-semibold">SmartPark AI</div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">
+                  SmartPark AI
+                </div>
 
                 <div className="mt-0.5 flex items-center gap-1.5 text-xs text-blue-100">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -2294,7 +3476,7 @@ export default function SmartParkChatbot() {
                 Header Controls
                 ================================================== */}
 
-            <div className="flex items-center gap-1">
+            <div className="ml-2 flex shrink-0 items-center gap-0.5">
               {/* Clear Chat */}
 
               <button
@@ -2303,8 +3485,14 @@ export default function SmartParkChatbot() {
                 aria-label="Clear chat history"
                 title="Clear chat"
                 className="
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
                   rounded-lg
-                  p-2
+                  p-1.5
                   text-white/80
                   transition
                   hover:bg-white/10
@@ -2343,6 +3531,73 @@ export default function SmartParkChatbot() {
                 </svg>
               </button>
 
+              {/* Maximize / restore */}
+
+              <button
+                type="button"
+                onClick={toggleMaximizeChat}
+                aria-label={
+                  isMaximized
+                    ? "Restore SmartPark AI size"
+                    : "Maximize SmartPark AI"
+                }
+                title={isMaximized ? "Restore" : "Maximize"}
+                className="
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  p-1.5
+                  text-white/80
+                  transition
+                  hover:bg-white/10
+                  hover:text-white
+                  focus:outline-none
+                "
+              >
+                {isMaximized ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    className="h-5 w-5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 15H5V11M15 9h4v4"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 15l5-5M19 9l-5 5"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    className="h-5 w-5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"
+                    />
+                  </svg>
+                )}
+              </button>
+
               {/* Minimize */}
 
               <button
@@ -2351,8 +3606,14 @@ export default function SmartParkChatbot() {
                 aria-label="Minimize SmartPark AI"
                 title="Minimize"
                 className="
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
                   rounded-lg
-                  p-2
+                  p-1.5
                   text-white/80
                   transition
                   hover:bg-white/10
@@ -2384,8 +3645,14 @@ export default function SmartParkChatbot() {
                 aria-label="Close SmartPark AI"
                 title="Close"
                 className="
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
                   rounded-lg
-                  p-2
+                  p-1.5
                   text-white/80
                   transition
                   hover:bg-white/10
@@ -2409,6 +3676,70 @@ export default function SmartParkChatbot() {
                 </svg>
               </button>
             </div>
+          </div>
+
+          {/* ==================================================
+              Interaction Mode
+              ================================================== */}
+
+          <div className="border-b border-white/10 bg-[#0b2a4a] px-4 pb-3">
+            <div className="flex items-center justify-between gap-3 rounded-xl bg-white/10 p-1">
+              <button
+                type="button"
+                onClick={() => toggleInteractionMode("text")}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition ${
+                  interactionMode === "text"
+                    ? "bg-white text-[#0b2a4a] shadow-sm"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                }`}
+                aria-pressed={interactionMode === "text"}
+              >
+                <span aria-hidden="true">⌨</span>
+                Text
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleInteractionMode("voice")}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold transition ${
+                  interactionMode === "voice"
+                    ? "bg-white text-[#0b2a4a] shadow-sm"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                }`}
+                aria-pressed={interactionMode === "voice"}
+              >
+                <span aria-hidden="true">🎙</span>
+                Voice
+              </button>
+            </div>
+
+            {interactionMode === "voice" && (
+              <div className="mt-2 flex items-center justify-between gap-2 px-1 text-[10px] text-blue-100">
+                <span>
+                  {isRealtimeConnecting
+                    ? "Connecting to SmartPark AI…"
+                    : isRealtimeConnected
+                      ? "Live voice conversation"
+                      : "Voice conversation offline"}
+                </span>
+
+                {isRealtimeConnected && (
+                  <button
+                    type="button"
+                    onClick={() => stopRealtimeVoice()}
+                    className="rounded-md bg-white/10 px-2 py-1 font-semibold text-white hover:bg-white/20"
+                  >
+                    End voice
+                  </button>
+                )}
+              </div>
+            )}
+
+            {realtimeError && interactionMode === "voice" && (
+              <div className="mt-2 rounded-lg bg-red-400/10 px-2.5 py-2 text-[10px] leading-4 text-red-100">
+                {realtimeError}
+              </div>
+            )}
           </div>
 
           {/* ==================================================
@@ -2538,6 +3869,78 @@ export default function SmartParkChatbot() {
                       </div>
                     </div>
                   )}
+
+                  {message.role === "assistant" &&
+                    interactionMode === "text" &&
+                    speechOutputSupported && (
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            isSpeakingMessageId === message.id
+                              ? stopSpeech()
+                              : speakAssistantMessage(
+                                  message.id,
+                                  message.content,
+                                )
+                          }
+                          aria-label={
+                            isSpeakingMessageId === message.id
+                              ? "Stop speaking"
+                              : "Speak this response"
+                          }
+                          title={
+                            isSpeakingMessageId === message.id
+                              ? "Stop speaking"
+                              : "Read response aloud"
+                          }
+                          className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-medium text-slate-400 transition hover:bg-slate-100 hover:text-[#0b2a4a] focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        >
+                          {isSpeakingMessageId === message.id ? (
+                            <>
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M8 7v10M16 7v10"
+                                />
+                              </svg>
+                              Stop speaking
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M11 5 6 9H3v6h3l5 4V5Z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12"
+                                />
+                              </svg>
+                              Listen
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
 
                   {message.role === "assistant" &&
                     message.paymentReservationNumber && (
@@ -2833,12 +4236,13 @@ export default function SmartParkChatbot() {
 
           <form
             onSubmit={handleSubmit}
-            className="
+            className={`
+              ${interactionMode === "voice" ? "hidden" : ""}
               border-t
               border-slate-200
               bg-white
               p-3
-            "
+            `}
           >
             <input
               ref={attachmentInputRef}
@@ -2964,6 +4368,52 @@ export default function SmartParkChatbot() {
               />
 
               <button
+                type="button"
+                onClick={toggleVoiceInput}
+                disabled={isSending || !speechSupported}
+                aria-label={
+                  isListening ? "Stop voice input" : "Start voice input"
+                }
+                title={
+                  !speechSupported
+                    ? "Voice input is not supported by this browser"
+                    : isListening
+                      ? "Stop voice input"
+                      : "Speak to SmartPark AI"
+                }
+                className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${
+                  isListening
+                    ? "bg-red-500 text-white hover:bg-red-600"
+                    : speechSupported
+                      ? "text-slate-500 hover:bg-white hover:text-blue-600"
+                      : "cursor-not-allowed text-slate-300"
+                }`}
+              >
+                {isListening && (
+                  <span className="absolute inset-0 animate-ping rounded-lg bg-red-400/30" />
+                )}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="relative h-5 w-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"
+                  />
+                </svg>
+              </button>
+
+              <button
                 type="submit"
                 disabled={isSending || (!input.trim() && !selectedAttachment)}
                 aria-label="Send message"
@@ -3006,11 +4456,258 @@ export default function SmartParkChatbot() {
               </button>
             </div>
 
+            {speechOutputError ? (
+              <div className="mt-2 text-center text-[10px] text-amber-600">
+                {speechOutputError}
+              </div>
+            ) : speechOutputSupported ? (
+              <div className="mt-2 text-center text-[10px] text-slate-400">
+                SmartPark AI will read new responses aloud. Use “Listen” on any
+                response to replay it.
+              </div>
+            ) : null}
+
             <div className="mt-2 text-center text-[10px] text-slate-400">
               SmartPark AI uses your location only when you allow browser
               location access.
             </div>
           </form>
+
+          {interactionMode === "voice" && (
+            <div className="border-t border-slate-200 bg-white p-4">
+              <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-slate-50 via-white to-blue-50/60 px-5 py-6 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#0b2a4a] text-white shadow-lg">
+                  {isRealtimeConnecting ? (
+                    <span className="h-7 w-7 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  ) : (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      className="h-7 w-7"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"
+                      />
+                    </svg>
+                  )}
+                </div>
+
+                <h3 className="mt-4 text-sm font-semibold text-slate-900">
+                  {isRealtimeConnecting
+                    ? "Connecting to SmartPark AI…"
+                    : isRealtimeConnected
+                      ? "SmartPark AI is listening"
+                      : "Start a voice conversation"}
+                </h3>
+
+                <p className="mx-auto mt-1.5 max-w-sm text-xs leading-5 text-slate-500">
+                  {isRealtimeConnected
+                    ? "Speak naturally. SmartPark AI will listen, respond aloud, and keep the conversation visible as text."
+                    : "Use natural speech to ask questions, find parking, manage vehicles, make reservations, check sessions, and use the same SmartPark AI capabilities available in text mode."}
+                </p>
+
+                {!isRealtimeConnected && !isRealtimeConnecting && (
+                  <button
+                    type="button"
+                    onClick={() => void startRealtimeVoice()}
+                    className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#0b2a4a] px-5 py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-[#123b63] focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 10v2a7 7 0 0 1-14 0v-2"
+                      />
+                    </svg>
+                    Start Voice Conversation
+                  </button>
+                )}
+
+                {isRealtimeConnected && (
+                  <button
+                    type="button"
+                    onClick={stopRealtimeVoice}
+                    className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  >
+                    End Voice Conversation
+                  </button>
+                )}
+
+                {isRealtimeConnected && (
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void sendRealtimeTextCommand();
+                    }}
+                    className="mt-5 text-left"
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <label
+                        htmlFor="smartpark-realtime-text-input"
+                        className="text-[11px] font-semibold text-slate-600"
+                      >
+                        Type a command
+                      </label>
+                      <span className="text-[10px] text-slate-400">
+                        Voice response enabled
+                      </span>
+                    </div>
+
+                    <input
+                      ref={realtimeAttachmentInputRef}
+                      type="file"
+                      accept="application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.json,image/jpeg,image/png,image/webp"
+                      onChange={handleRealtimeAttachmentChange}
+                      className="hidden"
+                      aria-label="Attach document to live conversation"
+                    />
+
+                    {realtimeSelectedAttachment && (
+                      <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm">
+                            📎
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium text-slate-700">
+                              {realtimeSelectedAttachment.name}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              Document attached •{" "}
+                              {(
+                                realtimeSelectedAttachment.size /
+                                1024 /
+                                1024
+                              ).toFixed(2)}{" "}
+                              MB
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={removeRealtimeAttachment}
+                          className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-slate-500 hover:bg-white hover:text-slate-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          realtimeAttachmentInputRef.current?.click()
+                        }
+                        aria-label="Attach document"
+                        title="Attach document"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-700"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          className="h-5 w-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m15.5 5.5-7.8 7.8a3 3 0 1 0 4.2 4.2l8-8a5 5 0 1 0-7.1-7.1l-8 8a7 7 0 1 0 9.9 9.9l6.2-6.2"
+                          />
+                        </svg>
+                      </button>
+
+                      <input
+                        ref={realtimeTextInputRef}
+                        id="smartpark-realtime-text-input"
+                        type="text"
+                        value={realtimeTextInput}
+                        onChange={(event) =>
+                          setRealtimeTextInput(event.target.value)
+                        }
+                        placeholder="Type if you'd rather not speak…"
+                        maxLength={4000}
+                        className="min-w-0 flex-1 bg-transparent px-2 py-2 text-xs text-slate-700 outline-none placeholder:text-slate-400"
+                      />
+
+                      <button
+                        type="submit"
+                        disabled={
+                          !realtimeTextInput.trim() &&
+                          !realtimeSelectedAttachment
+                        }
+                        aria-label="Send typed command"
+                        title="Send typed command"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0b2a4a] text-white transition hover:bg-[#123b63] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M22 2 11 13"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m22 2-7 20-4-9-9-4 20-7Z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <p className="mt-2 text-center text-[10px] leading-4 text-slate-400">
+                      Type a command or attach a document whenever speaking is
+                      difficult. SmartPark AI will review the document, answer
+                      aloud, and keep the exchange in this conversation.
+                    </p>
+                  </form>
+                )}
+
+                {realtimeError && (
+                  <p className="mt-3 text-[10px] leading-4 text-red-600">
+                    {realtimeError}
+                  </p>
+                )}
+
+                <p className="mt-4 text-[10px] text-slate-400">
+                  Your microphone stays active only while the realtime voice
+                  conversation is connected.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>

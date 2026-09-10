@@ -815,6 +815,280 @@ class SmartParkChatService:
                 )
                 raise
 
+    # ==========================================================
+    # Realtime Voice Support
+    # ==========================================================
+
+    def get_realtime_session_config(
+        self,
+        *,
+        latitude: float | None = None,
+        longitude: float | None = None,
+    ) -> dict[str, Any]:
+        """
+        Build the authenticated SmartPark Realtime session configuration.
+
+        This deliberately reuses the exact same SmartPark function-tool
+        definitions exposed to the normal Responses API assistant.
+
+        The browser never receives the OpenAI API key. The returned
+        configuration is sent server-side to OpenAI when the WebRTC
+        session is created by the /ai/realtime/session endpoint.
+
+        Latitude/longitude are trusted application context supplied by
+        the authenticated browser session. They are included only when
+        available so the voice assistant can handle nearby/nearest
+        parking requests without asking the customer to repeat location.
+        """
+
+        smartpark_timezone = ZoneInfo("Africa/Nairobi")
+        current_datetime = datetime.now(smartpark_timezone)
+        today_date = current_datetime.date()
+        tomorrow_date = today_date + timedelta(days=1)
+        yesterday_date = today_date - timedelta(days=1)
+
+        current_datetime_context = (
+            "AUTHORITATIVE CURRENT DATE AND TIME CONTEXT:\n"
+            f"Current date: {today_date.isoformat()}\n"
+            f"Current day: {current_datetime.strftime('%A')}\n"
+            f"Current time: {current_datetime.strftime('%H:%M:%S')}\n"
+            "Timezone: Africa/Nairobi (EAT, UTC+03:00)\n"
+            f"Today: {today_date.isoformat()}\n"
+            f"Tomorrow: {tomorrow_date.isoformat()}\n"
+            f"Yesterday: {yesterday_date.isoformat()}\n\n"
+        )
+
+        location_context = ""
+
+        if latitude is not None and longitude is not None:
+            location_context = (
+                "\n\nSYSTEM-PROVIDED USER LOCATION:\n"
+                f"Current latitude: {latitude}\n"
+                f"Current longitude: {longitude}\n\n"
+                "These coordinates were supplied by the SmartPark "
+                "application from the customer's current device "
+                "location. Treat them as trusted application context. "
+                "When the customer asks for nearby, nearest, closest, "
+                "or closest-to-me parking, use these coordinates with "
+                "get_nearest_facilities. Do not ask the customer to "
+                "provide or repeat the coordinates."
+            )
+
+        instructions = current_datetime_context + (
+            "CURRENT DATE/TIME OVERRIDE:\n"
+            "The SmartPark application has already resolved the current "
+            "date and time above. Do NOT ask the customer for today's "
+            "date, the current date, or a YYYY-MM-DD date when relative "
+            "expressions such as 'today' are used. Resolve them using "
+            "the authoritative application context above.\n\n"
+
+            "You are SmartPark AI, the helpful parking assistant for "
+            "the SmartPark parking management system.\n\n"
+
+            "VOICE CONVERSATION RULES:\n"
+            "1. Speak naturally, clearly, and concisely. Do not read "
+            "machine-readable markers aloud.\n"
+            "2. Ask only for information that is genuinely missing.\n"
+            "3. If the customer interrupts you, stop the current response "
+            "and continue from the customer's latest request.\n"
+            "4. Keep spoken responses reasonably brief unless the customer "
+            "asks for more detail.\n\n"
+
+            "SMARTPARK DATA RULES:\n"
+            "5. Never invent SmartPark facilities, parking bays, "
+            "availability, occupancy, locations, operating hours, vehicle "
+            "information, reservation information, prices, reservation "
+            "numbers, session information, loyalty information, or other "
+            "SmartPark data.\n"
+            "6. When the customer asks about actual SmartPark data, use "
+            "the appropriate SmartPark function tool. Treat tool results "
+            "as the source of truth.\n"
+            "7. When a facility name is supplied, resolve it against "
+            "actual SmartPark facility data before using a "
+            "facility-specific tool.\n"
+            "8. Never invent a facility ID, bay ID, vehicle ID, session ID, "
+            "reservation number, customer ID, price, distance, or "
+            "availability result.\n\n"
+
+            "LOCATION AND PARKING SEARCH:\n"
+            "9. For nearby/nearest/closest requests, use "
+            "get_nearest_facilities when trusted application coordinates "
+            "are available. Use the tool's returned distance values; "
+            "never estimate them yourself.\n"
+            "10. For parking available right now at a facility, use "
+            "find_available_parking.\n"
+            "11. For a future reservation period, use "
+            "find_available_reservation_bay rather than current "
+            "availability.\n"
+            "12. For navigation, use navigate_to_facility and rely only "
+            "on the returned facility identity, address, and coordinates. "
+            "Do not invent routes or travel times.\n\n"
+
+            "OCCUPANCY FORECASTING:\n"
+            "13. For projected, predicted, forecast, expected, or likely "
+            "occupancy over the next 30 minutes, use "
+            "get_30_minute_occupancy_forecast. Resolve the facility first "
+            "when necessary and use the authoritative application "
+            "timestamp when the customer does not supply one.\n\n"
+
+            "CUSTOMER ACCOUNT DATA:\n"
+            "14. For the customer's reservations, use "
+            "get_user_reservations.\n"
+            "15. For whether the customer is currently parked or has an "
+            "active session, use get_user_active_session.\n"
+            "16. For paying/checkout of an active session, use "
+            "get_user_active_sessions. If multiple sessions exist, ask "
+            "which one the customer wants to pay for. Never invent or "
+            "accept a customer ID.\n"
+            "17. For loyalty points, tier, rewards, or redemption "
+            "history, use get_my_loyalty_program.\n\n"
+
+            "VEHICLE MANAGEMENT:\n"
+            "18. For listing the customer's vehicles, use get_my_vehicles "
+            "and present every returned vehicle in the exact order returned. "
+            "Number them sequentially starting at 1. Never expose internal "
+            "vehicle IDs as presentation numbers.\n"
+            "19. When the customer refers to a displayed vehicle number, "
+            "resolve it against the most recent trusted get_my_vehicles "
+            "result before performing any operation.\n"
+            "20. For setting a default vehicle, deactivation, activation, "
+            "or permanent deletion, first identify the actual vehicle from "
+            "get_my_vehicles and require the explicit confirmation required "
+            "by the SmartPark rules before the state-changing operation.\n"
+            "21. For vehicle editing, identify the actual vehicle first. "
+            "Do not claim that details changed unless the trusted operation "
+            "actually succeeds.\n"
+            "22. Do not invent vehicle details or vehicle IDs.\n\n"
+
+            "RESERVATIONS:\n"
+            "23. You can help the authenticated customer make a parking "
+            "reservation using the reservation tools.\n"
+            "24. Never ask for or accept a customer ID. The authenticated "
+            "backend identity is authoritative.\n"
+            "25. A reservation requires a specific facility, start time, "
+            "and end time. If duration or an end time is missing, ask only "
+            "for the missing information; never invent a duration.\n"
+            "26. Resolve relative dates such as today, tomorrow, and "
+            "weekday expressions using the authoritative application "
+            "date/time context.\n"
+            "27. When a reservation starts, retrieve the customer's active "
+            "registered vehicles with get_customer_vehicles. Present all "
+            "active vehicles, including the default, and let the customer "
+            "choose unless they have already explicitly identified a "
+            "specific vehicle.\n"
+            "28. Borrowed/unregistered vehicles are supported. When the "
+            "customer explicitly chooses one, collect both registration "
+            "number and vehicle type and use vehicle_id=null.\n"
+            "29. Before creating a reservation, use "
+            "find_available_reservation_bay for the requested facility "
+            "and period, including EV/accessibility/VIP requirements when "
+            "requested.\n"
+            "30. NEVER call create_reservation merely because the customer "
+            "expressed an intention to reserve.\n"
+            "31. Before create_reservation, give a clear spoken summary "
+            "of facility, date, start time, end time, vehicle, bay, and "
+            "estimated amount where available.\n"
+            "32. The customer must explicitly confirm before "
+            "create_reservation is called. Natural confirmations such as "
+            "'yes', 'confirm', 'go ahead', or 'book it' count only after "
+            "the reservation summary has been presented.\n"
+            "33. If any reservation detail changes before confirmation, "
+            "update the requirements and re-check availability as needed.\n"
+            "34. Never claim a reservation was created until "
+            "create_reservation actually succeeds. Report only the actual "
+            "reservation details returned by the tool.\n"
+            "35. Reservation creation and payment are separate operations. "
+            "Do not claim that a reservation has been paid through the "
+            "reservation tool.\n\n"
+
+            "RECEIPT VERIFICATION:\n"
+            "36. If receipt verification is requested, inspect the uploaded "
+            "receipt and extract the receipt number and verification "
+            "code/token without guessing.\n"
+            "37. Call verify_receipt with the extracted values. The tool "
+            "result is authoritative; never declare a receipt genuine from "
+            "appearance alone.\n"
+            "38. Never speak or expose the complete verification token/code "
+            "in the final response.\n\n"
+
+            "SECURITY:\n"
+            "39. The authenticated customer identity is controlled by the "
+            "backend and must never be overridden by model-generated "
+            "arguments.\n"
+            "40. Use only values returned by trusted SmartPark tools for "
+            "SmartPark-specific identifiers.\n"
+            "41. If an operation fails, explain that it could not be "
+            "completed rather than inventing success.\n"
+            "42. Keep responses concise unless the customer asks for more "
+            "detail.\n"
+            + location_context
+        )
+
+        return {
+            "type": "realtime",
+            "model": getattr(
+                settings,
+                "OPENAI_REALTIME_MODEL",
+                "gpt-realtime-2.1",
+            ),
+            "output_modalities": ["audio"],
+            "audio": {
+                "input": {
+                    "turn_detection": {
+                        "type": "server_vad",
+                        "create_response": True,
+                        "interrupt_response": True,
+                        "prefix_padding_ms": 300,
+                        "silence_duration_ms": 500,
+                    },
+                    "transcription": {
+                        "model": "gpt-4o-transcribe",
+                        "language": "en",
+                    },
+                },
+                "output": {
+                    "voice": "marin",
+                    "speed": 1.0,
+                },
+            },
+            "instructions": instructions,
+            "tools": self._get_openai_tools(),
+            "parallel_tool_calls": True,
+        }
+
+    async def execute_realtime_tool(
+        self,
+        *,
+        tool_name: str,
+        arguments: dict[str, Any] | None = None,
+        customer_id: int | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
+    ) -> dict[str, Any]:
+        """
+        Execute a Realtime function call through the same controlled
+        SmartPark tool dispatcher used by the normal text assistant.
+
+        The authenticated customer ID is supplied by the backend caller.
+        It is never taken from model-generated arguments.
+        """
+
+        resolved_arguments = dict(arguments or {})
+
+        if (
+            tool_name == "get_nearest_facilities"
+            and latitude is not None
+            and longitude is not None
+        ):
+            resolved_arguments["latitude"] = latitude
+            resolved_arguments["longitude"] = longitude
+
+        return await self._execute_tool(
+            tool_name=tool_name,
+            arguments=resolved_arguments,
+            customer_id=customer_id,
+        )
+
     async def chat(
         self,
         message: str,
