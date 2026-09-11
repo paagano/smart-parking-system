@@ -1458,21 +1458,18 @@ export default function SmartParkChatbot() {
     useState<InteractionMode>("text");
   const [isRealtimeConnecting, setIsRealtimeConnecting] = useState(false);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
+  const [isRealtimePaused, setIsRealtimePaused] = useState(false);
   const [realtimeError, setRealtimeError] = useState<string | null>(null);
 
   const realtimePeerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const realtimeDataChannelRef = useRef<RTCDataChannel | null>(null);
   const realtimeAudioElementRef = useRef<HTMLAudioElement | null>(null);
   const realtimeAssistantTranscriptRef = useRef("");
-  const realtimeMicStatsIntervalRef = useRef<ReturnType<
-    typeof setInterval
-  > | null>(null);
+  const realtimeMicStatsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const realtimeMicAudioContextRef = useRef<AudioContext | null>(null);
   const realtimeMicAnalyserRef = useRef<AnalyserNode | null>(null);
   const realtimeMicSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const realtimeMicLevelIntervalRef = useRef<ReturnType<
-    typeof setInterval
-  > | null>(null);
+  const realtimeMicLevelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const realtimeAssistantMessageIdRef = useRef<number | null>(null);
   const realtimeToolCallsRef = useRef(new Set<string>());
 
@@ -1877,6 +1874,75 @@ export default function SmartParkChatbot() {
 
     setIsRealtimeConnecting(false);
     setIsRealtimeConnected(false);
+    setIsRealtimePaused(false);
+  };
+
+  // ----------------------------------------------------------
+  // Pause/resume microphone without ending the Realtime session
+  // ----------------------------------------------------------
+
+  const pauseRealtimeVoice = () => {
+    if (!isRealtimeConnected || isRealtimePaused) {
+      return;
+    }
+
+    const peerConnection = realtimePeerConnectionRef.current;
+
+    if (!peerConnection) {
+      return;
+    }
+
+    // Disable the existing microphone track instead of stopping it. This
+    // keeps the same RTCPeerConnection, data channel, and conversation alive.
+    peerConnection.getSenders().forEach((sender) => {
+      if (sender.track?.kind === "audio") {
+        sender.track.enabled = false;
+      }
+    });
+
+    // Discard any audio buffered at the moment pause is requested. The
+    // Realtime session itself remains open.
+    const dataChannel = realtimeDataChannelRef.current;
+    if (dataChannel?.readyState === "open") {
+      try {
+        dataChannel.send(
+          JSON.stringify({ type: "input_audio_buffer.clear" }),
+        );
+      } catch {
+        // Ignore a transient data-channel error; the microphone is disabled.
+      }
+    }
+
+    setIsRealtimePaused(true);
+    console.log(
+      "[SmartPark Realtime] Voice input paused; existing Realtime session remains active.",
+    );
+  };
+
+  const resumeRealtimeVoice = () => {
+    if (!isRealtimeConnected || !isRealtimePaused) {
+      return;
+    }
+
+    const peerConnection = realtimePeerConnectionRef.current;
+
+    if (!peerConnection) {
+      return;
+    }
+
+    // Re-enable the same microphone track. No new WebRTC/Realtime session is
+    // created, so the existing conversation context is preserved.
+    peerConnection.getSenders().forEach((sender) => {
+      if (sender.track?.kind === "audio") {
+        sender.track.enabled = true;
+      }
+    });
+
+    setIsRealtimePaused(false);
+    setRealtimeError(null);
+    console.log(
+      "[SmartPark Realtime] Voice input resumed; existing Realtime session remains active.",
+    );
   };
 
   const appendRealtimeUserTranscript = (transcript: string) => {
@@ -1939,9 +2005,7 @@ export default function SmartParkChatbot() {
   // Send typed text inside an active Realtime voice conversation
   // ----------------------------------------------------------
 
-  const handleRealtimeAttachmentChange = (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleRealtimeAttachmentChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (!file) {
@@ -2020,10 +2084,13 @@ export default function SmartParkChatbot() {
           filename: string;
           document_context: string;
         }>("/ai/realtime/file", formData, {
+          // The shared Axios client defaults to application/json.
+          // Remove that default for this FormData request so the browser
+          // supplies the correct multipart/form-data boundary.
           headers: {
-            "Content-Type": "multipart/form-data",
+            "Content-Type": undefined,
           },
-          timeout: 30000,
+          timeout: 90000,
         });
 
         uploadedFileId = uploadResponse.data.file_id;
@@ -2239,6 +2306,7 @@ export default function SmartParkChatbot() {
     }
 
     setRealtimeError(null);
+    setIsRealtimePaused(false);
     setIsRealtimeConnecting(true);
     stopSpeech();
     stopVoiceInput();
@@ -2274,9 +2342,7 @@ export default function SmartParkChatbot() {
 
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioInputs = devices.filter(
-          (device) => device.kind === "audioinput",
-        );
+        const audioInputs = devices.filter((device) => device.kind === "audioinput");
 
         console.log(
           "[SmartPark Realtime] Available audio inputs:",
@@ -2315,11 +2381,14 @@ export default function SmartParkChatbot() {
             },
           });
         } else {
-          console.log("[SmartPark Realtime] Browser audio input accepted:", {
-            label: initialLabel,
-            loopback: initialIsLoopback,
-            physicalMicCandidate: physicalMic?.label || null,
-          });
+          console.log(
+            "[SmartPark Realtime] Browser audio input accepted:",
+            {
+              label: initialLabel,
+              loopback: initialIsLoopback,
+              physicalMicCandidate: physicalMic?.label || null,
+            },
+          );
         }
       } catch (deviceSelectionError) {
         console.warn(
@@ -2331,9 +2400,7 @@ export default function SmartParkChatbot() {
       const audioTracks = localStream.getAudioTracks();
 
       if (audioTracks.length === 0) {
-        throw new Error(
-          "No microphone audio track was created by the browser.",
-        );
+        throw new Error("No microphone audio track was created by the browser.");
       }
 
       audioTracks.forEach((track) => {
@@ -2367,11 +2434,8 @@ export default function SmartParkChatbot() {
       try {
         const AudioContextCtor =
           window.AudioContext ||
-          (
-            window as typeof window & {
-              webkitAudioContext?: typeof AudioContext;
-            }
-          ).webkitAudioContext;
+          (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext;
 
         if (AudioContextCtor) {
           const audioContext = new AudioContextCtor();
@@ -2393,23 +2457,15 @@ export default function SmartParkChatbot() {
               sumSquares += normalized * normalized;
             }
             const rms = Math.sqrt(sumSquares / samples.length);
-            console.log(
-              "[SmartPark Realtime] Local microphone RMS:",
-              Number(rms.toFixed(4)),
-            );
+            console.log("[SmartPark Realtime] Local microphone RMS:", Number(rms.toFixed(4)));
           }, 1000);
 
           void audioContext.resume().catch(() => {});
         } else {
-          console.warn(
-            "[SmartPark Realtime] AudioContext is unavailable; local mic level diagnostic skipped.",
-          );
+          console.warn("[SmartPark Realtime] AudioContext is unavailable; local mic level diagnostic skipped.");
         }
       } catch (audioDiagnosticError) {
-        console.warn(
-          "[SmartPark Realtime] Local microphone level diagnostic failed:",
-          audioDiagnosticError,
-        );
+        console.warn("[SmartPark Realtime] Local microphone level diagnostic failed:", audioDiagnosticError);
       }
 
       const peerConnection = new RTCPeerConnection();
@@ -2451,6 +2507,7 @@ export default function SmartParkChatbot() {
           state === "disconnected"
         ) {
           setIsRealtimeConnected(false);
+          setIsRealtimePaused(false);
         }
       };
 
@@ -2465,6 +2522,7 @@ export default function SmartParkChatbot() {
 
       dataChannel.onclose = () => {
         setIsRealtimeConnected(false);
+        setIsRealtimePaused(false);
       };
 
       dataChannel.onerror = () => {
@@ -2485,10 +2543,13 @@ export default function SmartParkChatbot() {
           if (
             event.type === "input_audio_buffer.speech_started" ||
             event.type === "input_audio_buffer.speech_stopped" ||
-            event.type ===
-              "conversation.item.input_audio_transcription.completed"
+            event.type === "conversation.item.input_audio_transcription.completed"
           ) {
-            console.log("[SmartPark Realtime] AUDIO EVENT:", event.type, event);
+            console.log(
+              "[SmartPark Realtime] AUDIO EVENT:",
+              event.type,
+              event,
+            );
           }
 
           void handleRealtimeEvent(event);
@@ -2506,8 +2567,7 @@ export default function SmartParkChatbot() {
         throw new Error("Could not create the WebRTC SDP offer.");
       }
 
-      console.log(
-        "[SmartPark Realtime] Local audio senders:",
+      console.log("[SmartPark Realtime] Local audio senders:",
         peerConnection.getSenders().map((sender) => ({
           kind: sender.track?.kind,
           enabled: sender.track?.enabled,
@@ -2557,7 +2617,8 @@ export default function SmartParkChatbot() {
           const outboundAudio = Array.from(stats.values())
             .filter(
               (report) =>
-                report.type === "outbound-rtp" && report.kind === "audio",
+                report.type === "outbound-rtp" &&
+                report.kind === "audio",
             )
             .map((report) => ({
               bytesSent: report.bytesSent,
@@ -2567,15 +2628,9 @@ export default function SmartParkChatbot() {
               trackIdentifier: report.trackIdentifier,
             }));
 
-          console.log(
-            "[SmartPark Realtime] Outbound audio RTP stats:",
-            outboundAudio,
-          );
+          console.log("[SmartPark Realtime] Outbound audio RTP stats:", outboundAudio);
         } catch (statsError) {
-          console.warn(
-            "[SmartPark Realtime] Could not read outbound audio RTP stats:",
-            statsError,
-          );
+          console.warn("[SmartPark Realtime] Could not read outbound audio RTP stats:", statsError);
         }
       }, 2000);
     } catch (error) {
@@ -3397,6 +3452,7 @@ export default function SmartParkChatbot() {
             fixed
             z-50
             flex
+            min-h-0
             flex-col
             overflow-hidden
             rounded-2xl
@@ -3417,7 +3473,11 @@ export default function SmartParkChatbot() {
 
           <div
             className="
+              sticky
+              top-0
+              z-40
               flex
+              shrink-0
               items-center
               justify-between
               bg-[#0b2a4a]
@@ -3682,7 +3742,7 @@ export default function SmartParkChatbot() {
               Interaction Mode
               ================================================== */}
 
-          <div className="border-b border-white/10 bg-[#0b2a4a] px-4 pb-3">
+          <div className="sticky top-0 z-30 shrink-0 border-b border-white/10 bg-[#0b2a4a] px-4 pb-3">
             <div className="flex items-center justify-between gap-3 rounded-xl bg-white/10 p-1">
               <button
                 type="button"
@@ -3719,18 +3779,33 @@ export default function SmartParkChatbot() {
                   {isRealtimeConnecting
                     ? "Connecting to SmartPark AI…"
                     : isRealtimeConnected
-                      ? "Live voice conversation"
+                      ? isRealtimePaused
+                        ? "Voice conversation paused"
+                        : "Live voice conversation"
                       : "Voice conversation offline"}
                 </span>
 
                 {isRealtimeConnected && (
-                  <button
-                    type="button"
-                    onClick={() => stopRealtimeVoice()}
-                    className="rounded-md bg-white/10 px-2 py-1 font-semibold text-white hover:bg-white/20"
-                  >
-                    End voice
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={
+                        isRealtimePaused
+                          ? resumeRealtimeVoice
+                          : pauseRealtimeVoice
+                      }
+                      className="rounded-md bg-white/10 px-2 py-1 font-semibold text-white hover:bg-white/20"
+                    >
+                      {isRealtimePaused ? "Resume voice" : "Pause voice"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => stopRealtimeVoice()}
+                      className="rounded-md bg-white/10 px-2 py-1 font-semibold text-white hover:bg-white/20"
+                    >
+                      End voice
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -3749,6 +3824,7 @@ export default function SmartParkChatbot() {
           <div
             className="
               flex
+              shrink-0
               items-center
               justify-between
               border-b
@@ -3802,6 +3878,7 @@ export default function SmartParkChatbot() {
 
           <div
             className="
+              min-h-0
               flex-1
               space-y-4
               overflow-y-auto
@@ -4474,94 +4551,158 @@ export default function SmartParkChatbot() {
           </form>
 
           {interactionMode === "voice" && (
-            <div className="border-t border-slate-200 bg-white p-4">
-              <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-slate-50 via-white to-blue-50/60 px-5 py-6 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#0b2a4a] text-white shadow-lg">
-                  {isRealtimeConnecting ? (
-                    <span className="h-7 w-7 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  ) : (
+            <div className="border-t border-slate-200 bg-white">
+              <details open className="group">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-2.5 select-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-100">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      Voice controls
+                    </p>
+                    <p className="mt-0.5 truncate text-[10px] text-slate-400">
+                      {isRealtimeConnecting
+                        ? "Connecting to SmartPark AI…"
+                        : isRealtimeConnected
+                          ? isRealtimePaused
+                            ? "Conversation paused"
+                            : "Conversation active"
+                          : "Voice conversation offline"}
+                    </p>
+                  </div>
+
+                  <span
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 shadow-sm transition group-hover:bg-slate-50"
+                    aria-hidden="true"
+                  >
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="1.8"
-                      className="h-7 w-7"
-                      aria-hidden="true"
+                      className="h-3.5 w-3.5 transition-transform group-open:rotate-180"
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"
+                        d="m6 9 6 6 6-6"
                       />
                     </svg>
-                  )}
+                    <span>Minimize / Expand</span>
+                  </span>
+                </summary>
+
+                <div className="p-4">
+                  <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-slate-50 via-white to-blue-50/60 px-5 py-6 text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#0b2a4a] text-white shadow-lg">
+                      {isRealtimeConnecting ? (
+                        <span className="h-7 w-7 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      ) : (
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          className="h-7 w-7"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"
+                          />
+                        </svg>
+                      )}
+                    </div>
+
+                    <h3 className="mt-4 text-sm font-semibold text-slate-900">
+                      {isRealtimeConnecting
+                        ? "Connecting to SmartPark AI…"
+                        : isRealtimeConnected
+                          ? isRealtimePaused
+                            ? "SmartPark AI is paused"
+                            : "SmartPark AI is listening"
+                          : "Start a voice conversation"}
+                    </h3>
+
+                    <p className="mx-auto mt-1.5 max-w-sm text-xs leading-5 text-slate-500">
+                      {isRealtimeConnected
+                        ? isRealtimePaused
+                          ? "Voice input is paused. Your conversation remains active, and you can resume without starting a new conversation."
+                          : "Speak naturally. SmartPark AI will listen, respond aloud, and keep the conversation visible as text."
+                        : "Use natural speech to ask questions, find parking, manage vehicles, make reservations, check sessions, and use the same SmartPark AI capabilities available in text mode."}
+                    </p>
+
+                    {!isRealtimeConnected && !isRealtimeConnecting && (
+                      <button
+                        type="button"
+                        onClick={() => void startRealtimeVoice()}
+                        className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#0b2a4a] px-5 py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-[#123b63] focus:outline-none focus:ring-4 focus:ring-blue-100"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 10v2a7 7 0 0 1-14 0v-2"
+                          />
+                        </svg>
+                        Start Voice Conversation
+                      </button>
+                    )}
+
+                    {isRealtimeConnected && (
+                      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={
+                            isRealtimePaused
+                              ? resumeRealtimeVoice
+                              : pauseRealtimeVoice
+                          }
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                        >
+                          <span aria-hidden="true">
+                            {isRealtimePaused ? "▶" : "⏸"}
+                          </span>
+                          {isRealtimePaused ? "Resume Voice" : "Pause Voice"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={stopRealtimeVoice}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                        >
+                          End Voice Conversation
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </details>
 
-                <h3 className="mt-4 text-sm font-semibold text-slate-900">
-                  {isRealtimeConnecting
-                    ? "Connecting to SmartPark AI…"
-                    : isRealtimeConnected
-                      ? "SmartPark AI is listening"
-                      : "Start a voice conversation"}
-                </h3>
-
-                <p className="mx-auto mt-1.5 max-w-sm text-xs leading-5 text-slate-500">
-                  {isRealtimeConnected
-                    ? "Speak naturally. SmartPark AI will listen, respond aloud, and keep the conversation visible as text."
-                    : "Use natural speech to ask questions, find parking, manage vehicles, make reservations, check sessions, and use the same SmartPark AI capabilities available in text mode."}
-                </p>
-
-                {!isRealtimeConnected && !isRealtimeConnecting && (
-                  <button
-                    type="button"
-                    onClick={() => void startRealtimeVoice()}
-                    className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#0b2a4a] px-5 py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-[#123b63] focus:outline-none focus:ring-4 focus:ring-blue-100"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      className="h-4 w-4"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 10v2a7 7 0 0 1-14 0v-2"
-                      />
-                    </svg>
-                    Start Voice Conversation
-                  </button>
-                )}
-
-                {isRealtimeConnected && (
-                  <button
-                    type="button"
-                    onClick={stopRealtimeVoice}
-                    className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                  >
-                    End Voice Conversation
-                  </button>
-                )}
-
-                {isRealtimeConnected && (
+              {isRealtimeConnected && (
+                <div className="px-4 pb-4">
                   <form
                     onSubmit={(event) => {
                       event.preventDefault();
                       void sendRealtimeTextCommand();
                     }}
-                    className="mt-5 text-left"
+                    className="text-left"
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <label
@@ -4605,6 +4746,7 @@ export default function SmartParkChatbot() {
                             </p>
                           </div>
                         </div>
+
                         <button
                           type="button"
                           onClick={removeRealtimeAttachment}
@@ -4693,19 +4835,19 @@ export default function SmartParkChatbot() {
                       aloud, and keep the exchange in this conversation.
                     </p>
                   </form>
-                )}
+                </div>
+              )}
 
-                {realtimeError && (
-                  <p className="mt-3 text-[10px] leading-4 text-red-600">
-                    {realtimeError}
-                  </p>
-                )}
-
-                <p className="mt-4 text-[10px] text-slate-400">
-                  Your microphone stays active only while the realtime voice
-                  conversation is connected.
+              {realtimeError && (
+                <p className="px-4 pb-2 text-[10px] leading-4 text-red-600">
+                  {realtimeError}
                 </p>
-              </div>
+              )}
+
+              <p className="px-4 pb-4 text-center text-[10px] text-slate-400">
+                Your microphone stays active only while the realtime voice
+                conversation is connected.
+              </p>
             </div>
           )}
         </div>

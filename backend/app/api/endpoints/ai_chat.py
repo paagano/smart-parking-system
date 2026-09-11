@@ -9,7 +9,10 @@ from __future__ import annotations
 import json
 from typing import Annotated, Any
 
+from io import BytesIO
+
 import httpx
+from openai import AsyncOpenAI
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Response, status
 from pydantic import BaseModel, Field
 
@@ -225,11 +228,6 @@ async def chat_with_smartpark_ai_attachment(
 
 
 # ==========================================================
-# Realtime Voice Session
-# ==========================================================
-
-
-# ==========================================================
 # Realtime Voice Document Upload
 # ==========================================================
 
@@ -237,19 +235,19 @@ async def chat_with_smartpark_ai_attachment(
 @router.post(
     "/realtime/file",
     status_code=status.HTTP_200_OK,
-    summary="Upload a document for an active SmartPark Realtime conversation",
+    summary="Upload and analyze a document for an active SmartPark Realtime conversation",
 )
 async def upload_realtime_file(
     current_user: CurrentUserDep,
     attachment: UploadFile = File(...),
 ) -> dict[str, str]:
     """
-    Upload one user-provided document to OpenAI Files so the browser can
-    reference it from the already-established Realtime data channel.
+    Upload a document to OpenAI Files, analyze it through the Responses API,
+    and return a concise factual briefing to the browser.
 
-    The API key remains server-side. The returned file_id is short-lived
-    application data used only to attach the document to the current
-    Realtime conversation.
+    The browser then injects that briefing as input_text into the already
+    established Realtime conversation. The live WebRTC session is therefore
+    not interrupted and the OpenAI API key never reaches the browser.
     """
 
     allowed_content_types = {
@@ -269,6 +267,31 @@ async def upload_realtime_file(
     }
 
     content_type = (attachment.content_type or "").lower().strip()
+    filename = (attachment.filename or "document").strip()
+
+    # Some browsers/proxies occasionally send application/octet-stream for a
+    # known extension. Normalize those common cases rather than rejecting a
+    # valid receipt/document unnecessarily.
+    if content_type == "application/octet-stream":
+        extension_map = {
+            ".pdf": "application/pdf",
+            ".doc": "application/msword",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls": "application/vnd.ms-excel",
+            ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".ppt": "application/vnd.ms-powerpoint",
+            ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ".txt": "text/plain",
+            ".csv": "text/csv",
+            ".json": "application/json",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".webp": "image/webp",
+        }
+        suffix = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+        content_type = extension_map.get(suffix, content_type)
+
     if content_type not in allowed_content_types:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -281,58 +304,42 @@ async def upload_realtime_file(
     max_attachment_bytes = 10 * 1024 * 1024
     attachment_bytes = await attachment.read(max_attachment_bytes + 1)
 
+    if not attachment_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The selected document is empty.",
+        )
+
     if len(attachment_bytes) > max_attachment_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="Document attachments must not exceed 10 MB.",
         )
 
-    filename = (attachment.filename or "document").strip()
+    openai_client = AsyncOpenAI(
+        api_key=settings.OPENAI_API_KEY,
+        timeout=90.0,
+    )
+
+    file_id: str | None = None
 
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
-            openai_response = await client.post(
-                "https://api.openai.com/v1/files",
-                headers={
-                    "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
-                },
-                files={
-                    "file": (filename, attachment_bytes, content_type),
-                },
-                data={
-                    "purpose": "user_data",
-                    "expires_after[anchor]": "created_at",
-                    "expires_after[seconds]": "86400",
-                },
-            )
+        # Use the official OpenAI SDK here rather than manually constructing
+        # the multipart request. This avoids multipart encoding differences
+        # between httpx and the current Files API contract.
+        uploaded_file = await openai_client.files.create(
+            file=(filename, BytesIO(attachment_bytes), content_type),
+            purpose="user_data",
+        )
+        file_id = uploaded_file.id
 
-        if openai_response.status_code >= 400:
-            print(
-                "[SmartPark AI] Realtime document upload failed: "
-                f"status={openai_response.status_code} "
-                f"body={openai_response.text[:1000]}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="SmartPark could not upload the document for the live conversation.",
-            )
+        print(
+            "[SmartPark AI] Realtime document uploaded to OpenAI "
+            f"| customer_id={current_user.id} "
+            f"| filename={filename} "
+            f"| file_id={file_id}"
+        )
 
-        payload = openai_response.json()
-        file_id = payload.get("id")
-
-        if not file_id:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="OpenAI returned no file identifier for the uploaded document.",
-            )
-
-        # IMPORTANT: Realtime conversation.item.create currently accepts
-        # input_text / input_audio here, not input_file. Therefore the
-        # uploaded file is analyzed through the Responses API first, and
-        # only the resulting document context is injected into the already
-        # established Realtime conversation as input_text. This preserves
-        # the live WebRTC voice session while still allowing documents to
-        # participate in the conversation.
         analysis_prompt = (
             "Review the attached document for a SmartPark AI voice assistant. "
             "Extract the important factual information contained in the document. "
@@ -343,70 +350,42 @@ async def upload_realtime_file(
             "the user's question."
         )
 
-        try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
-                analysis_response = await client.post(
-                    "https://api.openai.com/v1/responses",
-                    headers={
-                        "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": settings.OPENAI_MODEL,
-                        "input": [
-                            {
-                                "role": "user",
-                                "content": [
-                                    {
-                                        "type": "input_file",
-                                        "file_id": file_id,
-                                    },
-                                    {
-                                        "type": "input_text",
-                                        "text": analysis_prompt,
-                                    },
-                                ],
-                            }
-                        ],
-                    },
-                )
+        # File inputs are supported by the Responses API. The Realtime data
+        # channel itself will receive only input_text; it does not receive an
+        # input_file item directly.
+        response = await openai_client.responses.create(
+            model=settings.OPENAI_MODEL,
+            input=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": analysis_prompt,
+                        },
+                        {
+                            "type": "input_file",
+                            "file_id": file_id,
+                        },
+                    ],
+                }
+            ],
+        )
 
-            if analysis_response.status_code >= 400:
-                print(
-                    "[SmartPark AI] Realtime document analysis failed: "
-                    f"status={analysis_response.status_code} "
-                    f"body={analysis_response.text[:1000]}"
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail="SmartPark could not analyze the attached document.",
-                )
-
-            analysis_payload = analysis_response.json()
-            document_context = (
-                analysis_payload.get("output_text") or ""
-            ).strip()
-
-        except HTTPException:
-            raise
-        except Exception as exc:
-            print(
-                "[SmartPark AI] Realtime document analysis exception: "
-                f"{type(exc).__name__}: {exc}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="SmartPark could not analyze the attached document.",
-            ) from exc
+        document_context = (getattr(response, "output_text", None) or "").strip()
 
         if not document_context:
+            print(
+                "[SmartPark AI] Realtime document analysis returned no output "
+                f"| file_id={file_id}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="SmartPark could not extract usable information from the document.",
             )
 
         print(
-            "[SmartPark AI] Realtime document uploaded and analyzed "
+            "[SmartPark AI] Realtime document analyzed successfully "
             f"| customer_id={current_user.id} "
             f"| filename={filename} "
             f"| file_id={file_id}"
@@ -422,13 +401,35 @@ async def upload_realtime_file(
         raise
     except Exception as exc:
         print(
-            "[SmartPark AI] Realtime document upload exception: "
+            "[SmartPark AI] Realtime document upload/analysis failed: "
             f"{type(exc).__name__}: {exc}"
         )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="SmartPark could not upload the document for the live conversation.",
+            detail=(
+                "SmartPark could not process the attached document. "
+                "Please try again with a PDF or image receipt."
+            ),
         ) from exc
+    finally:
+        # These uploaded files are only needed long enough to analyze the
+        # current attachment. Delete them after processing to avoid accumulating
+        # user documents in the OpenAI project.
+        if file_id:
+            try:
+                await openai_client.files.delete(file_id)
+            except Exception as cleanup_exc:
+                print(
+                    "[SmartPark AI] Realtime document cleanup failed: "
+                    f"file_id={file_id} "
+                    f"error={type(cleanup_exc).__name__}: {cleanup_exc}"
+                )
+
+
+
+# ==========================================================
+# Realtime Voice Session
+# ==========================================================
 
 
 @router.post(
