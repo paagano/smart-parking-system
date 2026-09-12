@@ -60,23 +60,28 @@ export default function MobileNav({ role }: MobileNavProps) {
       : role === "operator"
         ? [
             {
-              label: "Home",
+              label: "Dashboard",
               path: "/operator",
               icon: LayoutDashboard,
             },
             {
-              label: "Facilities",
-              path: "/operator/facilities",
-              icon: Building2,
-            },
-            {
-              label: "Bookings",
-              path: "/reservations",
+              label: "Reservations",
+              path: "/operator/reservations",
               icon: ParkingCircle,
             },
             {
-              label: "Forecast",
-              path: "/forecast",
+              label: "Check In/Out",
+              path: "/operator/access",
+              icon: CarFront,
+            },
+            {
+              label: "Occupancy",
+              path: "/operator/occupancy",
+              icon: Building2,
+            },
+            {
+              label: "Reports",
+              path: "/operator/reports",
               icon: BrainCircuit,
             },
           ]
@@ -122,6 +127,10 @@ export default function MobileNav({ role }: MobileNavProps) {
 
     if (path === "/payments/wallet") {
       return location.pathname.startsWith("/payments");
+    }
+
+    if (path.startsWith("/operator/")) {
+      return location.pathname.startsWith(path);
     }
 
     if (path === "/operator/facilities") {

@@ -149,6 +149,28 @@ class ChangePasswordRequest(BaseModel):
         return value
 
 
+class AdminAttendantCreate(BaseModel):
+    """Administrator-only request for provisioning an operator."""
+
+    first_name: str = Field(..., max_length=100)
+    last_name: str = Field(..., max_length=100)
+    email: EmailStr
+    phone_number: str = Field(..., max_length=20)
+    password: str = Field(..., min_length=8)
+    facility_id: int = Field(..., gt=0)
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value: str) -> str:
+        return normalize_kenyan_phone(value)
+
+
+class AttendantFacilityUpdate(BaseModel):
+    """Administrator-only request for moving an operator."""
+
+    facility_id: int = Field(..., gt=0)
+
+
 class UserResponse(BaseModel):
     """
     Public representation of a user.
@@ -162,6 +184,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     phone_number: str
     profile_picture_url: str | None = None
+    facility_id: int | None = None
     role: UserRole
     is_active: bool
     is_verified: bool

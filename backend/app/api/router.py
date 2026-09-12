@@ -1,3 +1,7 @@
+from app.api.endpoints.admin_operators import (
+    router as admin_operators_router,
+)
+
 from fastapi import APIRouter
 
 from app.api.endpoints.auth import (
@@ -90,6 +94,10 @@ router = APIRouter()
 
 router.include_router(
     auth_router,
+)
+
+router.include_router(
+    admin_operators_router,
 )
 
 

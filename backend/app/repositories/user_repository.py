@@ -1,4 +1,6 @@
 from sqlalchemy import select
+
+from app.models.enums import UserRole
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
@@ -36,3 +38,15 @@ class UserRepository(BaseRepository[User]):
         )
 
         return result.scalar_one_or_none()
+    async def list_attendants(
+        self,
+    ) -> list[User]:
+        """Return all attendant/operator accounts."""
+
+        result = await self.db.execute(
+            select(User)
+            .where(User.role == UserRole.ATTENDANT)
+            .order_by(User.last_name.asc(), User.first_name.asc())
+        )
+
+        return list(result.scalars().all())

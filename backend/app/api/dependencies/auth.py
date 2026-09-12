@@ -175,3 +175,55 @@ async def require_driver(
     """
 
     return current_user
+
+async def require_facility_attendant(
+    current_user: Annotated[
+        User,
+        Depends(get_current_active_user),
+    ],
+) -> User:
+    """Require an active operator assigned to a parking facility."""
+
+    if current_user.role != UserRole.ATTENDANT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operator privileges required.",
+        )
+
+    if current_user.facility_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your operator account is not assigned to a parking facility.",
+        )
+
+    return current_user
+
+
+# =============================================================================
+# Facility Resource Authorization
+# =============================================================================
+
+def ensure_operator_facility_access(
+    current_user: User,
+    resource_facility_id: int | None,
+) -> None:
+    """Ensure an Operator can only access resources in their assigned facility.
+
+    Administrators remain unrestricted. Drivers and other existing callers are
+    intentionally unaffected; this guard applies only to ATTENDANT users.
+    """
+
+    if current_user.role != UserRole.ATTENDANT:
+        return
+
+    if current_user.facility_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your operator account is not assigned to a parking facility.",
+        )
+
+    if resource_facility_id != current_user.facility_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to access this parking facility.",
+        )

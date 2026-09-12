@@ -3,9 +3,18 @@ import type React from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
   Activity,
+  AlertTriangle,
+  BarChart3,
   BrainCircuit,
   Building2,
   CalendarPlus,
+  ClipboardCheck,
+  FileBarChart,
+  FileWarning,
+  MapPinned,
+  ScanLine,
+  SlidersHorizontal,
+  UserRound,
   CarFront,
   ChevronDown,
   CreditCard,
@@ -13,8 +22,13 @@ import {
   History,
   LayoutDashboard,
   ParkingCircle,
+  QrCode,
+  Radio,
   Search,
+  ShieldAlert,
   Timer,
+  TrendingUp,
+  Wrench,
   Users,
   Wallet,
   X,
@@ -56,12 +70,10 @@ export default function Sidebar({ role, open, setOpen }: SidebarProps) {
     }
 
     if (role === "operator") {
-      return [
-        ["Dashboard", "/operator", LayoutDashboard],
-        ["Facilities", "/operator/facilities", Building2],
-        ["Reservations", "/reservations", ParkingCircle],
-        ["AI Forecasting", "/forecast", BrainCircuit],
-      ];
+      // Operator navigation is facility-focused.
+      // Detailed operator modules are rendered in OperatorNavigationGroups below.
+      // Driver navigation above remains unchanged.
+      return [["Dashboard", "/operator", LayoutDashboard]];
     }
 
     return [
@@ -260,6 +272,22 @@ export default function Sidebar({ role, open, setOpen }: SidebarProps) {
 
           <nav className="space-y-1" aria-label="Workspace">
             {items.map(([title, path, Icon]) => {
+              if (role === "operator") {
+                const operatorActive = location.pathname === path;
+
+                return (
+                  <Link
+                    key={path}
+                    to={path}
+                    onClick={closeSidebar}
+                    className={navItemClass(operatorActive)}
+                  >
+                    <Icon size={18} className="shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">{title}</span>
+                  </Link>
+                );
+              }
+
               if (role === "driver" && title === "Reservations") {
                 return (
                   <div key={path}>
@@ -411,6 +439,13 @@ export default function Sidebar({ role, open, setOpen }: SidebarProps) {
               );
             })}
           </nav>
+
+          {role === "operator" && (
+            <OperatorNavigationGroups
+              closeSidebar={closeSidebar}
+              pathname={location.pathname}
+            />
+          )}
         </div>
 
         {/* Footer */}
@@ -467,4 +502,143 @@ export default function Sidebar({ role, open, setOpen }: SidebarProps) {
       </aside>
     </>
   );
+}
+
+function OperatorNavigationGroups({
+  closeSidebar,
+  pathname,
+}: {
+  closeSidebar: () => void;
+  pathname: string;
+}) {
+  const groups = [
+    {
+      title: "Reservations",
+      items: [
+        ["Approve Reservations", "/operator/reservations", ClipboardCheck],
+        ["Today's Arrivals", "/operator/reservations/arrivals", CalendarPlus],
+        ["Reservation History", "/operator/reservations/history", History],
+      ],
+    },
+    {
+      title: "Check-In / Check-Out",
+      items: [
+        ["Manual Entry", "/operator/access/manual", UserRound],
+        ["QR Code", "/operator/access/qr", QrCode],
+        ["ANPR Simulator", "/operator/access/anpr", Radio],
+        ["RFID Simulator", "/operator/access/rfid", Radio],
+        ["Sensor / Scanner", "/operator/access/sensor", Activity],
+        ["Mobile App Access", "/operator/access/mobile", CarFront],
+      ],
+    },
+    {
+      title: "Parking Operations",
+      items: [
+        ["Currently Parked Vehicles", "/operator/vehicles", CarFront],
+        ["Release Parking Slot", "/operator/release-slots", Wrench],
+        ["Vehicle Search", "/operator/vehicles/search", Search],
+      ],
+    },
+    {
+      title: "Occupancy",
+      items: [
+        ["Live Occupancy", "/operator/occupancy", BarChart3],
+        ["Live Slot Map", "/operator/occupancy/map", MapPinned],
+        ["Occupancy Statistics", "/operator/occupancy/statistics", TrendingUp],
+        ["Facility Status", "/operator/facility-status", Building2],
+      ],
+    },
+    {
+      title: "Payments & Exceptions",
+      items: [
+        ["Payment Verification", "/operator/payments", CreditCard],
+        ["Exceptions & Incidents", "/operator/exceptions", FileWarning],
+      ],
+    },
+    {
+      title: "Reports",
+      items: [
+        ["Daily Operations", "/operator/reports/daily", FileBarChart],
+        ["Occupancy", "/operator/reports/occupancy", BarChart3],
+        ["Vehicle Movements", "/operator/reports/vehicles", CarFront],
+        ["Reservations", "/operator/reports/reservations", ClipboardCheck],
+        ["Revenue", "/operator/reports/revenue", Wallet],
+        ["Exceptions", "/operator/reports/exceptions", FileWarning],
+      ],
+    },
+    {
+      title: "Smart Insights",
+      items: [
+        ["Operational Alerts", "/operator/insights/alerts", AlertTriangle],
+        ["Occupancy Trends", "/operator/insights/trends", TrendingUp],
+        ["Peak Periods", "/operator/insights/peaks", BarChart3],
+        ["Capacity Forecast", "/operator/insights/capacity", BrainCircuit],
+        ["Anomalies", "/operator/insights/anomalies", ShieldAlert],
+      ],
+    },
+  ] as const;
+
+  const nestedItemClass = (active: boolean) =>
+    [
+      "group flex items-center gap-2.5 rounded-lg px-3 py-2.5",
+      "text-[13px] font-medium transition-all duration-200",
+      active
+        ? "bg-white/[0.10] text-emerald-300"
+        : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100",
+    ].join(" ");
+
+  return (
+    <div className="mt-6 space-y-5 border-t border-white/[0.06] pt-5">
+      {groups.map((group) => (
+        <div key={group.title}>
+          <p className="mb-1.5 px-2 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">
+            {group.title}
+          </p>
+          <div className="ml-1 space-y-0.5 border-l border-white/[0.08] pl-2">
+            {group.items.map(([label, path, Icon]) => (
+              <Link
+                key={path}
+                to={path}
+                onClick={closeSidebar}
+                className={nestedItemClass(
+                  pathname === path || pathname.startsWith(`${path}/`),
+                )}
+              >
+                <Icon size={14} className="shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div>
+        <p className="mb-1.5 px-2 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">
+          Account
+        </p>
+        <div className="ml-1 space-y-0.5 border-l border-white/[0.08] pl-2">
+          <Link
+            to="/operator/profile"
+            onClick={closeSidebar}
+            className={nestedItemClass(pathname === "/operator/profile")}
+          >
+            <UserRound size={14} className="shrink-0" />
+            <span>My Profile</span>
+          </Link>
+          <Link
+            to="/settings"
+            onClick={closeSidebar}
+            className={nestedItemClass(pathname === "/settings")}
+          >
+            <SlidersHorizontal size={14} className="shrink-0" />
+            <span>Settings</span>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GaugeIcon(props: React.ComponentProps<typeof ParkingCircle>) {
+  return <ParkingCircle {...props} />;
 }

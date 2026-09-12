@@ -8,10 +8,12 @@ if TYPE_CHECKING:
     from app.models.parking_session import ParkingSession
     from app.models.wallet import Wallet
     from app.models.vehicle import Vehicle
+    from app.models.parking_facility import ParkingFacility
 
 from sqlalchemy import (
     Boolean,
     Enum,
+    ForeignKey,
     Integer,
     String,
 )
@@ -65,6 +67,16 @@ class User(BaseModel):
     )
 
     # ==========================================================
+    # Operator Facility Assignment
+    # ==========================================================
+
+    facility_id: Mapped[int | None] = mapped_column(
+        ForeignKey("parking_facilities.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # ==========================================================
     # Authentication
     # ==========================================================
 
@@ -107,6 +119,13 @@ class User(BaseModel):
     # ==========================================================
     # Relationships
     # ==========================================================
+
+    # Assigned Parking Facility (primarily for attendants/operators)
+    facility: Mapped["ParkingFacility | None"] = relationship(
+        "ParkingFacility",
+        foreign_keys=[facility_id],
+        back_populates="assigned_users",
+    )
 
     # Parking Reservations
     parking_reservations: Mapped[

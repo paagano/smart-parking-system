@@ -23,12 +23,16 @@ from app.exceptions.auth import (
     InvalidCurrentPasswordException,
     PhoneAlreadyExistsException,
 )
+from app.models.enums import UserRole
 from app.models.user import User
+from app.repositories.parking_facility_repository import ParkingFacilityRepository
 from app.repositories.revoked_token_repository import (
     RevokedTokenRepository,
 )
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import (
+    AdminAttendantCreate,
+    AttendantFacilityUpdate,
     ChangePasswordRequest,
     UserCreate,
     UserUpdate,
@@ -47,12 +51,14 @@ class AuthService:
         self,
         user_repository: UserRepository,
         wallet_service: WalletService,
+        parking_facility_repository: ParkingFacilityRepository,
         revoked_token_repository: RevokedTokenRepository,
         storage_service: StorageService,
         email_service: EmailService,
     ) -> None:
         self.user_repository = user_repository
         self.wallet_service = wallet_service
+        self.parking_facility_repository = parking_facility_repository
         self.revoked_token_repository = revoked_token_repository
         self.storage_service = storage_service
         self.email_service = email_service
@@ -149,6 +155,75 @@ class AuthService:
             pass
 
         return user
+
+    # ==========================================================
+    # Administrator Operator Provisioning
+    # ==========================================================
+
+    async def create_attendant(
+        self,
+        data: AdminAttendantCreate,
+    ) -> User:
+        """Provision an operator and bind the account to a facility."""
+
+        if await self.user_repository.get_by_email(data.email):
+            raise EmailAlreadyExistsException()
+
+        if await self.user_repository.get_by_phone(data.phone_number):
+            raise PhoneAlreadyExistsException()
+
+        facility = await self.parking_facility_repository.get_by_id(
+            data.facility_id,
+        )
+        if facility is None:
+            raise ValueError("Parking facility not found.")
+
+        user = User(
+            first_name=data.first_name.strip(),
+            last_name=data.last_name.strip(),
+            email=data.email,
+            phone_number=data.phone_number,
+            password_hash=hash_password(data.password),
+            role=UserRole.ATTENDANT,
+            facility_id=facility.id,
+            is_active=True,
+            is_verified=True,
+        )
+
+        await self.user_repository.save(user)
+        await self.user_repository.commit()
+        await self.user_repository.refresh(user)
+        return user
+
+    async def assign_attendant_facility(
+        self,
+        *,
+        user_id: int,
+        data: AttendantFacilityUpdate,
+    ) -> User:
+        """Move an existing operator to another facility."""
+
+        user = await self.user_repository.get_by_id(user_id)
+        if user is None or user.role != UserRole.ATTENDANT:
+            raise ValueError("Attendant not found.")
+
+        facility = await self.parking_facility_repository.get_by_id(
+            data.facility_id,
+        )
+        if facility is None:
+            raise ValueError("Parking facility not found.")
+
+        user.facility_id = facility.id
+        user.token_version += 1
+
+        await self.user_repository.commit()
+        await self.user_repository.refresh(user)
+        return user
+
+    async def list_attendants(self) -> list[User]:
+        """List all operator accounts for administrator management."""
+
+        return await self.user_repository.list_attendants()
 
     # ==========================================================
     # Email Verification

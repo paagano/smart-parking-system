@@ -137,6 +137,13 @@ class ParkingFacility(BaseModel):
     # Relationships
     # ==========================================================
 
+    # Users assigned to this facility (currently attendants/operators).
+    assigned_users: Mapped[list["User"]] = relationship(
+        "User",
+        foreign_keys="User.facility_id",
+        back_populates="facility",
+    )
+
     zones: Mapped[list["ParkingZone"]] = relationship(
         "ParkingZone",
         back_populates="facility",

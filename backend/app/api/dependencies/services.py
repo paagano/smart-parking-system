@@ -217,6 +217,7 @@ def get_smartpark_chat_service(
 def get_auth_service(
     repository: UserRepositoryDep,
     wallet_service: WalletServiceDep,
+    parking_facility_repository: ParkingFacilityRepositoryDep,
     revoked_token_repository: RevokedTokenRepositoryDep,
     profile_picture_storage_service: ProfilePictureStorageServiceDep,
     email_service: Annotated[
@@ -231,6 +232,7 @@ def get_auth_service(
     return AuthService(
         user_repository=repository,
         wallet_service=wallet_service,
+        parking_facility_repository=parking_facility_repository,
         revoked_token_repository=revoked_token_repository,
         storage_service=profile_picture_storage_service,
         email_service=email_service,

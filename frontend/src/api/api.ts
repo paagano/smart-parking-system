@@ -319,6 +319,9 @@ export interface CurrentUser {
 
   profile_picture_url: string | null;
 
+  // Assigned facility for operators; null for drivers/admins.
+  facility_id: number | null;
+
   role: "DRIVER" | "ATTENDANT" | "ADMIN";
 
   is_active: boolean;

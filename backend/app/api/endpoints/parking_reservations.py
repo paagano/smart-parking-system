@@ -19,10 +19,13 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.api.dependencies.auth import (
+    ensure_operator_facility_access,
     get_current_active_user,
+    require_admin,
 )
 
 from app.models.user import User
+from app.models.enums import UserRole
 
 from fastapi import (
     APIRouter,
@@ -47,6 +50,56 @@ router = APIRouter(
     tags=["Parking Reservations"],
 )
 
+
+async def _ensure_reservation_access(
+    current_user: User,
+    reservation,
+    service: ParkingReservationServiceDep,
+) -> None:
+    """Enforce facility scope for Operator access to a reservation."""
+    if current_user.role != UserRole.ATTENDANT or reservation is None:
+        return
+    facility_id = await service.parking_bay_repository.get_facility_id(
+        reservation.parking_bay_id,
+    )
+    ensure_operator_facility_access(current_user, facility_id)
+
+
+async def _filter_reservations_for_user(
+    current_user: User,
+    reservations,
+    service: ParkingReservationServiceDep,
+):
+    """Filter Operator reservation collections to their assigned facility."""
+    if current_user.role != UserRole.ATTENDANT:
+        return reservations
+    if current_user.facility_id is None:
+        ensure_operator_facility_access(current_user, None)
+    bay_ids = list({
+        reservation.parking_bay_id for reservation in reservations
+        if reservation.parking_bay_id is not None
+    })
+    facility_ids = await service.parking_bay_repository.get_facility_ids(bay_ids)
+    return [
+        reservation for reservation in reservations
+        if facility_ids.get(reservation.parking_bay_id) == current_user.facility_id
+    ]
+
+
+async def _get_reservation_for_access(
+    reservation_id: int,
+    current_user: User,
+    service: ParkingReservationServiceDep,
+):
+    reservation = await service.get_by_id(reservation_id)
+    if reservation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Parking reservation not found.",
+        )
+    await _ensure_reservation_access(current_user, reservation, service)
+    return reservation
+
 # ==========================================================
 # Create Reservation
 # ==========================================================
@@ -69,6 +122,11 @@ async def create_parking_reservation(
     Create a new parking reservation.
     """
 
+    facility_id = await service.parking_bay_repository.get_facility_id(
+        reservation_data.parking_bay_id,
+    )
+    ensure_operator_facility_access(current_user, facility_id)
+
     reservation = await service.create_reservation(
         data=reservation_data,
         customer_id=current_user.id,
@@ -88,6 +146,7 @@ async def create_parking_reservation(
     summary="List Parking Reservations",
 )
 async def get_parking_reservations(
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationListResponse:
     """
@@ -95,6 +154,7 @@ async def get_parking_reservations(
     """
 
     reservations = await service.get_all()
+    reservations = await _filter_reservations_for_user(current_user, reservations, service)
 
     return ParkingReservationListResponse(
         items=reservations,
@@ -113,6 +173,7 @@ async def get_parking_reservations(
     summary="Search Parking Reservations",
 )
 async def search_parking_reservations(
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
     search_term: str = Query(
         ...,
@@ -130,6 +191,7 @@ async def search_parking_reservations(
     reservations = await service.search(
         search_term=search_term,
     )
+    reservations = await _filter_reservations_for_user(current_user, reservations, service)
 
     return ParkingReservationListResponse(
         items=reservations,
@@ -238,6 +300,7 @@ async def reservation_health() -> dict[str, str]:
 )
 async def get_customer_reservations(
     customer_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationListResponse:
     """
@@ -247,6 +310,7 @@ async def get_customer_reservations(
     reservations = await service.get_customer_reservations(
         customer_id,
     )
+    reservations = await _filter_reservations_for_user(current_user, reservations, service)
 
     return ParkingReservationListResponse(
         items=reservations,
@@ -261,6 +325,7 @@ async def get_customer_reservations(
 )
 async def get_active_customer_reservations(
     customer_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationListResponse:
     """
@@ -393,23 +458,18 @@ async def get_active_parking_bay_reservations(
 )
 async def get_parking_reservation(
     reservation_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
     Retrieve a parking reservation by its identifier.
     """
 
-    reservation = await service.get_by_id(
+    return await _get_reservation_for_access(
         reservation_id,
+        current_user,
+        service,
     )
-
-    if reservation is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Parking reservation not found.",
-        )
-
-    return reservation
 
 # ==========================================================
 # Update Reservation
@@ -424,11 +484,18 @@ async def get_parking_reservation(
 async def update_parking_reservation(
     reservation_id: int,
     reservation_data: ParkingReservationUpdate,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
     Update an existing parking reservation.
     """
+
+    await _get_reservation_for_access(
+        reservation_id,
+        current_user,
+        service,
+    )
 
     reservation = await service.update_reservation(
         reservation_id=reservation_id,
@@ -456,11 +523,18 @@ async def update_parking_reservation(
 )
 async def delete_parking_reservation(
     reservation_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> None:
     """
     Delete a parking reservation.
     """
+
+    await _get_reservation_for_access(
+        reservation_id,
+        current_user,
+        service,
+    )
 
     deleted = await service.delete_reservation(
         reservation_id,
@@ -487,11 +561,18 @@ async def delete_parking_reservation(
 )
 async def confirm_parking_reservation(
     reservation_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
     Confirm a parking reservation.
     """
+
+    await _get_reservation_for_access(
+        reservation_id,
+        current_user,
+        service,
+    )
 
     reservation = await service.confirm_reservation(
         reservation_id,
@@ -518,11 +599,18 @@ async def confirm_parking_reservation(
 )
 async def cancel_parking_reservation(
     reservation_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
     Cancel a parking reservation.
     """
+
+    await _get_reservation_for_access(
+        reservation_id,
+        current_user,
+        service,
+    )
 
     reservation = await service.cancel_reservation(
         reservation_id,
@@ -549,11 +637,18 @@ async def cancel_parking_reservation(
 )
 async def expire_parking_reservation(
     reservation_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
     Mark a parking reservation as expired.
     """
+
+    await _get_reservation_for_access(
+        reservation_id,
+        current_user,
+        service,
+    )
 
     reservation = await service.expire_reservation(
         reservation_id,
@@ -577,6 +672,7 @@ async def expire_parking_reservation(
     summary="Expire Overdue Reservations",
 )
 async def expire_overdue_reservations(
+    current_user: Annotated[User, Depends(require_admin)],
     service: ParkingReservationServiceDep,
 ) -> dict:
     """
@@ -599,6 +695,7 @@ async def expire_overdue_reservations(
 )
 async def get_customer_reservations(
     customer_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationListResponse:
     """
@@ -608,6 +705,7 @@ async def get_customer_reservations(
     reservations = await service.get_customer_reservations(
         customer_id,
     )
+    reservations = await _filter_reservations_for_user(current_user, reservations, service)
 
     return ParkingReservationListResponse(
         items=reservations,
@@ -627,6 +725,7 @@ async def get_customer_reservations(
 )
 async def get_active_customer_reservations(
     customer_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationListResponse:
     """
@@ -636,6 +735,7 @@ async def get_active_customer_reservations(
     reservations = await service.get_active_customer_reservations(
         customer_id,
     )
+    reservations = await _filter_reservations_for_user(current_user, reservations, service)
 
     return ParkingReservationListResponse(
         items=reservations,
@@ -655,11 +755,18 @@ async def get_active_customer_reservations(
 )
 async def check_in_reservation(
     reservation_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
 ) -> ParkingReservationResponse:
     """
     Check in a reservation and create an active parking session.
     """
+
+    await _get_reservation_for_access(
+        reservation_id,
+        current_user,
+        service,
+    )
 
     reservation = await service.check_in(
         reservation_id,

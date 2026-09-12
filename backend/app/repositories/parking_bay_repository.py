@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.parking_bay import ParkingBay
+from app.models.parking_zone import ParkingZone
 
 from app.exceptions.handlers import NotFoundException
 
@@ -43,6 +44,32 @@ class ParkingBayRepository:
     # ==========================================================
     # Read
     # ==========================================================
+
+    async def get_facility_id(
+        self,
+        bay_id: int,
+    ) -> int | None:
+        """Return the facility ID owning the parking bay."""
+        result = await self.db.execute(
+            select(ParkingZone.facility_id)
+            .join(ParkingBay, ParkingBay.zone_id == ParkingZone.id)
+            .where(ParkingBay.id == bay_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_facility_ids(
+        self,
+        bay_ids: list[int],
+    ) -> dict[int, int]:
+        """Return bay-to-facility mappings for a collection of bays."""
+        if not bay_ids:
+            return {}
+        result = await self.db.execute(
+            select(ParkingBay.id, ParkingZone.facility_id)
+            .join(ParkingZone, ParkingBay.zone_id == ParkingZone.id)
+            .where(ParkingBay.id.in_(bay_ids))
+        )
+        return {bay_id: facility_id for bay_id, facility_id in result.all()}
 
     async def get_by_id(
         self,

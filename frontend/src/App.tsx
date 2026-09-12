@@ -56,6 +56,7 @@ import Profile from "./pages/driver/Profile/Profile";
 
 import OperatorDashboard from "./pages/operator/Dashboard/OperatorDashboard";
 import Facilities from "./pages/operator/Facilities/Facilities";
+import OperatorModulePlaceholder from "./pages/operator/OperatorModulePlaceholder";
 
 // ==========================================================
 // ADMIN
@@ -497,6 +498,22 @@ function AuthenticatedApplication() {
           element={
             <RoleRoute allowedRoles={["operator", "admin"]}>
               <Facilities />
+            </RoleRoute>
+          }
+        />
+
+        {/* ==================================================
+            OPERATOR — WORKSPACE MODULES
+
+            These routes establish the operator navigation shell.
+            Individual operational workflows are implemented next.
+        ================================================== */}
+
+        <Route
+          path="/operator/*"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <OperatorModulePlaceholder />
             </RoleRoute>
           }
         />

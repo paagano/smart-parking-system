@@ -13,8 +13,11 @@ from fastapi import (
 )
 
 from app.api.dependencies.auth import (
+    ensure_operator_facility_access,
     get_current_active_user,
 )
+
+from app.models.enums import UserRole
 
 from app.api.dependencies.services import (
     get_parking_session_service,
@@ -40,6 +43,41 @@ router = APIRouter(
 )
 
 
+async def _ensure_session_access(
+    current_user,
+    session,
+    service: ParkingSessionService,
+) -> None:
+    """Enforce facility scope for Operator access to a session."""
+    if current_user.role != UserRole.ATTENDANT or session is None:
+        return
+    facility_id = await service.parking_bay_repository.get_facility_id(
+        session.parking_bay_id,
+    )
+    ensure_operator_facility_access(current_user, facility_id)
+
+
+async def _filter_sessions_for_user(
+    current_user,
+    items,
+    service: ParkingSessionService,
+):
+    """Filter Operator session collections to the assigned facility."""
+    if current_user.role != UserRole.ATTENDANT:
+        return items
+    if current_user.facility_id is None:
+        ensure_operator_facility_access(current_user, None)
+    bay_ids = list({
+        item.parking_bay_id for item in items
+        if item.parking_bay_id is not None
+    })
+    facility_ids = await service.parking_bay_repository.get_facility_ids(bay_ids)
+    return [
+        item for item in items
+        if facility_ids.get(item.parking_bay_id) == current_user.facility_id
+    ]
+
+
 # ==========================================================
 # Vehicle Check-In
 # ==========================================================
@@ -53,6 +91,7 @@ router = APIRouter(
 )
 async def check_in_vehicle(
     payload: ParkingSessionCreate,
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -60,6 +99,11 @@ async def check_in_vehicle(
     """
     Check a vehicle into the parking facility.
     """
+
+    facility_id = await service.parking_bay_repository.get_facility_id(
+        payload.parking_bay_id,
+    )
+    ensure_operator_facility_access(current_user, facility_id)
 
     return await service.check_in_vehicle(
         payload
@@ -78,6 +122,7 @@ async def check_in_vehicle(
 )
 async def check_out_vehicle(
     payload: ParkingSessionCheckout,
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -88,6 +133,17 @@ async def check_out_vehicle(
     The caller specifies how the vehicle exited
     (Manual, RFID, ANPR, QR Code, Mobile App, etc.).
     """
+
+    if current_user.role == UserRole.ATTENDANT:
+        registration = payload.vehicle_registration.strip().upper()
+        sessions = await service.repository.get_by_registration(registration)
+        pending = [
+            session for session in sessions
+            if session.status.value == "COMPLETED"
+            and session.exit_time is None
+        ]
+        if len(pending) == 1:
+            await _ensure_session_access(current_user, pending[0], service)
 
     return await service.check_out_vehicle(
         payload
@@ -120,9 +176,19 @@ async def list_active_sessions(
     user rather than being supplied by the client.
     """
 
-    items = await service.list_active(
-        customer_id=current_user.id,
-    )
+    if current_user.role == UserRole.ATTENDANT:
+        # Operators need the active sessions for their assigned facility,
+        # while Drivers must retain the existing customer-scoped behaviour.
+        items = await service.list_active()
+        items = await _filter_sessions_for_user(
+            current_user,
+            items,
+            service,
+        )
+    else:
+        items = await service.list_active(
+            customer_id=current_user.id,
+        )
 
     return ParkingSessionListResponse(
         total=len(items),
@@ -175,6 +241,7 @@ async def search_sessions(
         ...,
         min_length=1,
     ),
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -186,6 +253,7 @@ async def search_sessions(
     items = await service.search_registration(
         registration
     )
+    items = await _filter_sessions_for_user(current_user, items, service)
 
     return ParkingSessionListResponse(
         total=len(items),
@@ -200,6 +268,7 @@ async def search_sessions(
 )
 async def get_vehicle_history(
     registration: str,
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -211,6 +280,7 @@ async def get_vehicle_history(
     items = await service.get_vehicle_history(
         registration
     )
+    items = await _filter_sessions_for_user(current_user, items, service)
 
     return ParkingSessionListResponse(
         total=len(items),
@@ -225,6 +295,7 @@ async def get_vehicle_history(
 )
 async def get_by_session_number(
     session_number: str,
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -233,9 +304,11 @@ async def get_by_session_number(
     Retrieve a parking session using its session number.
     """
 
-    return await service.get_by_session_number(
+    session = await service.get_by_session_number(
         session_number
     )
+    await _ensure_session_access(current_user, session, service)
+    return session
 
 
 # ==========================================================
@@ -250,6 +323,7 @@ async def get_by_session_number(
 )
 async def get_parking_session_quote(
     session_id: int,
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -262,9 +336,9 @@ async def get_parking_session_quote(
     complete the session or persist the calculated amount.
     """
 
-    return await service.get_quote(
-        session_id
-    )
+    session = await service.get_by_id(session_id)
+    await _ensure_session_access(current_user, session, service)
+    return await service.get_quote(session_id)
 
 
 @router.get(
@@ -274,6 +348,7 @@ async def get_parking_session_quote(
 )
 async def get_parking_session(
     session_id: int,
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -282,9 +357,9 @@ async def get_parking_session(
     Retrieve a parking session by ID.
     """
 
-    return await service.get_by_id(
-        session_id
-    )
+    session = await service.get_by_id(session_id)
+    await _ensure_session_access(current_user, session, service)
+    return session
 
 
 # ==========================================================
@@ -300,6 +375,7 @@ async def get_parking_session(
 async def update_parking_session(
     session_id: int,
     payload: ParkingSessionUpdate,
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -308,10 +384,17 @@ async def update_parking_session(
     Update an existing parking session.
     """
 
-    return await service.update(
-        session_id,
-        payload,
-    )
+    session = await service.get_by_id(session_id)
+    await _ensure_session_access(current_user, session, service)
+    if (
+        current_user.role == UserRole.ATTENDANT
+        and payload.parking_bay_id is not None
+    ):
+        facility_id = await service.parking_bay_repository.get_facility_id(
+            payload.parking_bay_id,
+        )
+        ensure_operator_facility_access(current_user, facility_id)
+    return await service.update(session_id, payload)
 
 
 # ==========================================================
@@ -326,6 +409,7 @@ async def update_parking_session(
 )
 async def delete_parking_session(
     session_id: int,
+    current_user=Depends(get_current_active_user),
     service: ParkingSessionService = Depends(
         get_parking_session_service,
     ),
@@ -334,9 +418,9 @@ async def delete_parking_session(
     Delete a completed parking session.
     """
 
-    await service.delete(
-        session_id
-    )
+    session = await service.get_by_id(session_id)
+    await _ensure_session_access(current_user, session, service)
+    await service.delete(session_id)
 
     return Response(
         status_code=status.HTTP_204_NO_CONTENT,
