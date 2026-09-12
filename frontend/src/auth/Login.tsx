@@ -83,7 +83,7 @@ export default function Login() {
         setError("Your account is not permitted to access SmartPark AI.");
       } else {
         setError(
-          "Unable to sign in. Please contact your system administrator for assistance.",
+          "Unable to sign you in. Please contact your system administrator for assistance.",
         );
       }
     } finally {
