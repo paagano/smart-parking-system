@@ -28,6 +28,11 @@ Future
 from __future__ import annotations
 
 from typing import Annotated
+from datetime import datetime, timezone
+from decimal import Decimal
+import re
+
+from pydantic import BaseModel, Field
 
 from fastapi import (
     APIRouter,
@@ -53,6 +58,15 @@ from app.repositories.parking_session_repository import (
     ParkingSessionRepository,
 )
 
+from app.models.enums import (
+    Currency,
+    PaymentMethod,
+    PaymentProvider,
+    PaymentPurpose,
+    PaymentType,
+    SessionStatus,
+)
+
 from app.schemas.payment import (
     PaymentResponse,
     RefundCreate,
@@ -69,12 +83,117 @@ from app.services.payment_service import (
 from app.api.dependencies.services import (
     PaymentServiceDep,
 )
+from app.api.dependencies.pricing import PricingServiceDep
 
 from app.api.dependencies.wallet import WalletServiceDep
+
+from app.api.dependencies.auth import require_facility_attendant
+from app.api.dependencies.repositories import (
+    ParkingBayRepositoryDep,
+    ParkingSessionRepositoryDep,
+    UserRepositoryDep,
+    VehicleRepositoryDep,
+)
+from app.models.user import User
 
 from app.schemas.mpesa_callback import (
     MpesaCallbackRequest,
 )
+
+# ==========================================================
+# Operator M-Pesa STK Push
+# ==========================================================
+
+class OperatorSessionStkPushRequest(BaseModel):
+    """
+    Request used by an authenticated parking Operator to initiate
+    an M-Pesa STK Push for an active parking session.
+
+    The payable amount is deliberately NOT accepted from the client.
+    It is recalculated by PaymentService from the authoritative
+    pricing service at the moment the STK Push is initiated.
+    """
+
+    parking_session_id: int = Field(gt=0)
+
+    use_registered_number: bool = Field(
+        default=True,
+        description=(
+            "Use the registered driver's phone number associated "
+            "with the parking session."
+        ),
+    )
+
+    mobile_number: str | None = Field(
+        default=None,
+        max_length=20,
+        description=(
+            "Alternative Kenyan Safaricom number. Required when "
+            "use_registered_number is false."
+        ),
+    )
+
+    notes: str | None = Field(
+        default=None,
+        max_length=1000,
+    )
+
+
+class OperatorSessionStkPushResponse(BaseModel):
+    """
+    Result returned after the Operator STK Push has been accepted
+    by Safaricom.
+
+    The amount is the authoritative current parking charge calculated
+    by the backend PaymentService.
+    """
+
+    payment_id: int
+    transaction_number: str
+    parking_session_id: int
+    amount: Decimal
+    currency: str
+    status: str
+    phone_number: str
+    checkout_request_id: str | None = None
+    message: str
+    duration_minutes: int
+    billable_minutes: int
+    grace_period_applied: bool
+    tariff_name: str
+
+
+class OperatorSessionPaymentOptionsResponse(BaseModel):
+    """Payment options available for an Operator at the vehicle exit."""
+
+    parking_session_id: int
+    registered_driver_available: bool
+    registered_driver_name: str | None = None
+    registered_mobile_masked: str | None = None
+
+
+class OperatorSessionCashPaymentRequest(BaseModel):
+    """Request used by an Operator to record a cash parking payment."""
+
+    parking_session_id: int = Field(gt=0)
+    notes: str | None = Field(default=None, max_length=1000)
+
+
+class OperatorSessionCashPaymentResponse(BaseModel):
+    """Result of an Operator-recorded cash parking payment."""
+
+    payment_id: int
+    transaction_number: str
+    parking_session_id: int
+    amount: Decimal
+    currency: str
+    status: str
+    message: str
+    duration_minutes: int
+    billable_minutes: int
+    grace_period_applied: bool
+    tariff_name: str
+
 
 # Router Definition
 router = APIRouter(
@@ -140,6 +259,378 @@ async def process_reservation_payment(
 # ==========================================================
 # Parking Session Payment
 # ==========================================================
+
+# ==========================================================
+# Operator Parking Session M-Pesa STK Push
+# ==========================================================
+
+def _normalize_operator_mpesa_phone(value: str) -> str:
+    """
+    Normalize a Kenyan M-Pesa number to 2547XXXXXXXX format.
+
+    The existing Mpesa schema/client requires the normalized
+    12-digit international representation.
+    """
+    digits = re.sub(r"\D", "", value or "")
+
+    if digits.startswith("00"):
+        digits = digits[2:]
+
+    if digits.startswith("0"):
+        digits = "254" + digits[1:]
+    elif digits.startswith("7") and len(digits) == 9:
+        digits = "254" + digits
+
+    if not re.fullmatch(r"2547\d{8}", digits):
+        raise ValueError(
+            "Please provide a valid Kenyan Safaricom number, "
+            "for example 0712345678 or 254712345678."
+        )
+
+    return digits
+
+
+def _mask_operator_mpesa_phone(phone: str) -> str:
+    """Mask a normalized Kenyan phone number for the UI."""
+    return f"{phone[:6]}****{phone[-2:]}"
+
+
+
+async def _get_registered_driver_for_session(
+    *,
+    parking_session,
+    vehicle_repository: VehicleRepositoryDep,
+    user_repository: UserRepositoryDep,
+):
+    """
+    Resolve registration -> registered Vehicle -> registered User.
+
+    This deliberately does not use parking_session.customer_id because a
+    manual drive-in session can be anonymous even when its registration
+    belongs to a registered SmartPark customer.
+    """
+    vehicle = await vehicle_repository.get_by_registration_number(
+        parking_session.vehicle_registration,
+    )
+
+    if vehicle is None or not vehicle.is_active or vehicle.customer_id is None:
+        return None, None
+
+    registered_user = await user_repository.get_by_id(vehicle.customer_id)
+
+    if (
+        registered_user is None
+        or not registered_user.is_active
+        or not registered_user.phone_number
+    ):
+        return vehicle, None
+
+    return vehicle, registered_user
+
+
+@router.get(
+    "/operator/session/{parking_session_id}/payment-options",
+    response_model=OperatorSessionPaymentOptionsResponse,
+    summary="Get Operator Parking Session Payment Options",
+)
+async def operator_session_payment_options(
+    parking_session_id: int,
+    session_repository: ParkingSessionRepositoryDep,
+    parking_bay_repository: ParkingBayRepositoryDep,
+    vehicle_repository: VehicleRepositoryDep,
+    user_repository: UserRepositoryDep,
+    operator: User = Depends(require_facility_attendant),
+) -> OperatorSessionPaymentOptionsResponse:
+    """
+    Determine whether the vehicle registration is tied to a registered
+    SmartPark customer with a usable registered mobile number.
+
+    Cash is always available to the Operator and is intentionally not
+    represented as a customer-registration-dependent option.
+    """
+    parking_session = await session_repository.get_by_id(parking_session_id)
+
+    if parking_session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Parking session not found.",
+        )
+
+    facility_id = await parking_bay_repository.get_facility_id(
+        parking_session.parking_bay_id,
+    )
+
+    if facility_id != operator.facility_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This parking session does not belong to your assigned facility.",
+        )
+
+    _, registered_user = await _get_registered_driver_for_session(
+        parking_session=parking_session,
+        vehicle_repository=vehicle_repository,
+        user_repository=user_repository,
+    )
+
+    if registered_user is None:
+        return OperatorSessionPaymentOptionsResponse(
+            parking_session_id=parking_session.id,
+            registered_driver_available=False,
+        )
+
+    payer_phone = _normalize_operator_mpesa_phone(registered_user.phone_number)
+
+    return OperatorSessionPaymentOptionsResponse(
+        parking_session_id=parking_session.id,
+        registered_driver_available=True,
+        registered_driver_name=(
+            f"{registered_user.first_name or ''} "
+            f"{registered_user.last_name or ''}"
+        ).strip() or None,
+        registered_mobile_masked=_mask_operator_mpesa_phone(payer_phone),
+    )
+
+
+@router.post(
+    "/operator/session/cash",
+    response_model=OperatorSessionCashPaymentResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Record Operator Cash Parking Session Payment",
+)
+async def operator_session_cash_payment(
+    request: OperatorSessionCashPaymentRequest,
+    service: PaymentServiceDep,
+    pricing_service: PricingServiceDep,
+    session_repository: ParkingSessionRepositoryDep,
+    parking_bay_repository: ParkingBayRepositoryDep,
+    operator: User = Depends(require_facility_attendant),
+) -> OperatorSessionCashPaymentResponse:
+    """
+    Record cash payment for an ACTIVE parking session.
+
+    The amount is calculated by the backend at the moment the Operator
+    records the cash payment. The client never supplies the amount.
+
+    The session is transitioned to COMPLETED / PAID, but its physical
+    exit_time remains unset. The existing physical checkout workflow then
+    records the vehicle's actual exit and releases the bay.
+    """
+    try:
+        parking_session = await session_repository.get_by_id(
+            request.parking_session_id,
+        )
+
+        if parking_session is None:
+            raise ValueError("Parking session not found.")
+
+        facility_id = await parking_bay_repository.get_facility_id(
+            parking_session.parking_bay_id,
+        )
+
+        if facility_id != operator.facility_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This parking session does not belong to your assigned facility.",
+            )
+
+        if parking_session.status != SessionStatus.ACTIVE:
+            raise ValueError(
+                "Only ACTIVE parking sessions can be settled by cash."
+            )
+
+        if parking_session.is_paid:
+            raise ValueError("This parking session has already been paid.")
+
+        pricing_exit_time = datetime.now(timezone.utc)
+        pricing_result = await pricing_service.calculate_for_session(
+            vehicle_type=parking_session.vehicle_type,
+            billing_type=parking_session.billing_type,
+            entry_time=parking_session.entry_time,
+            exit_time=pricing_exit_time,
+        )
+
+        expected_amount = pricing_result.total_amount.quantize(
+            Decimal("0.01"),
+        )
+
+        # Persist the authoritative pricing snapshot used by this payment.
+        parking_session.calculated_amount = expected_amount
+        parking_session.duration_minutes = pricing_result.duration_minutes
+
+        # Mark the billing lifecycle complete before invoking the existing
+        # PaymentService workflow. exit_time remains NULL until physical exit.
+        parking_session.status = SessionStatus.COMPLETED
+
+        await session_repository.save(parking_session)
+
+        payment = SessionPaymentCreate(
+            payment_method=PaymentMethod.CASH,
+            payment_provider=PaymentProvider.INTERNAL,
+            payment_purpose=PaymentPurpose.PARKING_SESSION,
+            payment_type=PaymentType.PAYMENT,
+            currency=Currency.KES,
+            subtotal_amount=expected_amount,
+            discount_amount=Decimal("0.00"),
+            tax_amount=Decimal("0.00"),
+            total_amount=expected_amount,
+            parking_session_id=parking_session.id,
+            customer_id=parking_session.customer_id,
+            payer_name=None,
+            payer_phone=None,
+            payer_email=None,
+            notes=(
+                request.notes.strip()
+                if request.notes and request.notes.strip()
+                else "Operator-recorded cash payment"
+            ),
+            loyalty_points_to_redeem=0,
+        )
+
+        # Reuse the existing production payment workflow. Because the
+        # provider is INTERNAL, it completes immediately without Safaricom.
+        payment_transaction = await service.process_session_payment(payment)
+
+        return OperatorSessionCashPaymentResponse(
+            payment_id=payment_transaction.id,
+            transaction_number=payment_transaction.transaction_number,
+            parking_session_id=parking_session.id,
+            amount=payment_transaction.total_amount,
+            currency=payment_transaction.currency.value,
+            status=payment_transaction.status.value,
+            message=(
+                "Cash payment recorded successfully. "
+                "The parking session is paid and ready for physical vehicle exit."
+            ),
+            duration_minutes=pricing_result.duration_minutes,
+            billable_minutes=pricing_result.billable_minutes,
+            grace_period_applied=pricing_result.grace_period_applied,
+            tariff_name=pricing_result.tariff_name,
+        )
+
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
+@router.post(
+    "/operator/session/stk-push",
+    response_model=OperatorSessionStkPushResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Operator Initiated Parking Session M-Pesa STK Push",
+)
+async def operator_session_stk_push(
+    request: OperatorSessionStkPushRequest,
+    service: PaymentServiceDep,
+    session_repository: ParkingSessionRepositoryDep,
+    parking_bay_repository: ParkingBayRepositoryDep,
+    user_repository: UserRepositoryDep,
+    vehicle_repository: VehicleRepositoryDep,
+    operator: User = Depends(require_facility_attendant),
+) -> OperatorSessionStkPushResponse:
+    """
+    Allow a facility Operator to initiate an M-Pesa STK Push for
+    an active parking session at their assigned facility.
+
+    Security:
+        - Operator must have an assigned facility.
+        - The parking session's bay must belong to that facility.
+        - The amount is calculated exclusively by the backend.
+        - The client cannot supply or override the payable amount.
+    """
+
+    try:
+        parking_session = await session_repository.get_by_id(
+            request.parking_session_id,
+        )
+
+        if parking_session is None:
+            raise ValueError("Parking session not found.")
+
+        facility_id = await parking_bay_repository.get_facility_id(
+            parking_session.parking_bay_id,
+        )
+
+        if facility_id != operator.facility_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This parking session does not belong to your assigned facility.",
+            )
+
+        if parking_session.status.value.upper() != "ACTIVE":
+            raise ValueError(
+                "Only ACTIVE parking sessions can receive an Operator-initiated payment."
+            )
+
+        if parking_session.is_paid:
+            raise ValueError("This parking session has already been paid.")
+
+        if request.use_registered_number:
+            _, registered_user = await _get_registered_driver_for_session(
+                parking_session=parking_session,
+                vehicle_repository=vehicle_repository,
+                user_repository=user_repository,
+            )
+
+            if registered_user is None:
+                raise ValueError(
+                    "This vehicle registration is not tied to an active registered "
+                    "SmartPark driver with a usable registered mobile number."
+                )
+
+            payer_phone = registered_user.phone_number
+            payer_name = (
+                f"{registered_user.first_name or ''} "
+                f"{registered_user.last_name or ''}"
+            ).strip()
+            payer_email = registered_user.email
+        else:
+            if not request.mobile_number:
+                raise ValueError(
+                    "An alternative Safaricom mobile number is required."
+                )
+
+            payer_phone = request.mobile_number
+            payer_name = None
+            payer_email = None
+
+        payer_phone = _normalize_operator_mpesa_phone(payer_phone)
+
+        result = await service.initiate_operator_mpesa_session_payment(
+            parking_session_id=parking_session.id,
+            payer_phone=payer_phone,
+            payer_name=payer_name,
+            payer_email=payer_email,
+            notes=request.notes,
+        )
+
+        return OperatorSessionStkPushResponse(
+            payment_id=result["payment_id"],
+            transaction_number=result["transaction_number"],
+            parking_session_id=result["parking_session_id"],
+            amount=result["amount"],
+            currency=result["currency"],
+            status=result["status"],
+            phone_number=_mask_operator_mpesa_phone(payer_phone),
+            checkout_request_id=result["checkout_request_id"],
+            message=result["message"],
+            duration_minutes=result["duration_minutes"],
+            billable_minutes=result["billable_minutes"],
+            grace_period_applied=result["grace_period_applied"],
+            tariff_name=result["tariff_name"],
+        )
+
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
 
 @router.post(
     "/session",
@@ -773,3 +1264,4 @@ async def mpesa_callback(
         "ResultCode": 0,
         "ResultDesc": "Accepted",
     }
+

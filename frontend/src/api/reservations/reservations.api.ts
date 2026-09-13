@@ -17,6 +17,7 @@ export interface ParkingReservation {
   estimated_amount: number | string | null;
   currency: string;
   status: string;
+  payment_status?: string;
   expires_at: string | null;
   confirmed_at: string | null;
   checked_in_at: string | null;
@@ -36,18 +37,50 @@ export interface ParkingReservationListResponse {
 }
 
 export const parkingReservationsApi = {
-  activeByCustomer: async (customerId: number): Promise<ParkingReservationListResponse> => {
+  list: async (): Promise<ParkingReservationListResponse> => {
+    const response = await api.get<ParkingReservationListResponse>(
+      "/parking-reservations",
+    );
+    return response.data;
+  },
+
+  search: async (
+    searchTerm: string,
+  ): Promise<ParkingReservationListResponse> => {
+    const response = await api.get<ParkingReservationListResponse>(
+      "/parking-reservations/search",
+      { params: { search_term: searchTerm } },
+    );
+    return response.data;
+  },
+
+  checkIn: async (
+    reservationId: number,
+    entryMethod = "MANUAL",
+  ): Promise<ParkingReservation> => {
+    const response = await api.patch<ParkingReservation>(
+      `/parking-reservations/${reservationId}/check-in`,
+      null,
+      { params: { entry_method: entryMethod } },
+    );
+    return response.data;
+  },
+
+  activeByCustomer: async (
+    customerId: number,
+  ): Promise<ParkingReservationListResponse> => {
     const response = await api.get<ParkingReservationListResponse>(
       `/parking-reservations/customer/${customerId}/active`,
     );
     return response.data;
   },
 
-  byCustomer: async (customerId: number): Promise<ParkingReservationListResponse> => {
+  byCustomer: async (
+    customerId: number,
+  ): Promise<ParkingReservationListResponse> => {
     const response = await api.get<ParkingReservationListResponse>(
       `/parking-reservations/customer/${customerId}`,
     );
     return response.data;
   },
 };
-

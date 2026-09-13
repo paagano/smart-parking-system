@@ -56,7 +56,12 @@ import Profile from "./pages/driver/Profile/Profile";
 
 import OperatorDashboard from "./pages/operator/Dashboard/OperatorDashboard";
 import Facilities from "./pages/operator/Facilities/Facilities";
+import LiveSlotMap from "./pages/operator/Occupancy/LiveSlotMap";
+import LiveOccupancy from "./pages/operator/Occupancy/LiveOccupancy";
+import OccupancyStatistics from "./pages/operator/Occupancy/OccupancyStatistics";
 import OperatorModulePlaceholder from "./pages/operator/OperatorModulePlaceholder";
+import ManualEntryExit from "./pages/operator/Access/ManualEntryExit";
+import ANPRSimulator from "./pages/operator/Access/ANPRSimulator";
 
 // ==========================================================
 // ADMIN
@@ -77,7 +82,7 @@ import Settings from "./pages/shared/Settings";
 export default function App() {
   return (
     <Routes>
-      {/* ==================================================
+      {/* ==================================================*
           LOGIN
       ================================================== */}
 
@@ -503,11 +508,60 @@ function AuthenticatedApplication() {
         />
 
         {/* ==================================================
+            OPERATOR — MANUAL CHECK-IN / CHECK-OUT
+        ================================================== */}
+
+        <Route
+          path="/operator/access/manual"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <ManualEntryExit />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/operator/access/anpr"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <ANPRSimulator />
+            </RoleRoute>
+          }
+        />
+
+        {/* ==================================================
             OPERATOR — WORKSPACE MODULES
 
             These routes establish the operator navigation shell.
             Individual operational workflows are implemented next.
         ================================================== */}
+
+        <Route
+          path="/operator/occupancy"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <LiveOccupancy />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/operator/occupancy/map"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <LiveSlotMap />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/operator/occupancy/statistics"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <OccupancyStatistics />
+            </RoleRoute>
+          }
+        />
 
         <Route
           path="/operator/*"

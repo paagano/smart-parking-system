@@ -673,10 +673,82 @@ export interface ParkingSessionListResponse {
   total: number;
 }
 
+export interface ParkingSessionCreatePayload {
+  parking_bay_id: number;
+  customer_id?: number | null;
+  vehicle_id?: number | null;
+  vehicle_registration?: string | null;
+  vehicle_type?: string | null;
+  billing_type: string;
+  session_source: string;
+  entry_method: string;
+  expected_exit_time?: string | null;
+  notes?: string | null;
+}
+
+export interface ParkingSessionCheckoutPayload {
+  vehicle_registration: string;
+  exit_method: string;
+  notes?: string | null;
+}
+
+export interface ParkingSessionQuoteResponse {
+  tariff_id: number;
+  tariff_name: string;
+  billing_type: string;
+  duration_minutes: number;
+  billable_minutes: number;
+  grace_period_applied: boolean;
+  base_amount: number | string;
+  discount_amount: number | string;
+  tax_amount: number | string;
+  total_amount: number | string;
+  calculated_at: string;
+}
+
 export const parkingSessionsApi = {
   active: async (): Promise<ParkingSessionListResponse> => {
     const response =
       await api.get<ParkingSessionListResponse>("/parking-sessions");
+
+    return response.data;
+  },
+
+  search: async (registration: string): Promise<ParkingSessionListResponse> => {
+    const response = await api.get<ParkingSessionListResponse>(
+      "/parking-sessions/search",
+      { params: { registration } },
+    );
+
+    return response.data;
+  },
+
+  checkIn: async (
+    payload: ParkingSessionCreatePayload,
+  ): Promise<ParkingSession> => {
+    const response = await api.post<ParkingSession>(
+      "/parking-sessions/check-in",
+      payload,
+    );
+
+    return response.data;
+  },
+
+  checkOut: async (
+    payload: ParkingSessionCheckoutPayload,
+  ): Promise<ParkingSession> => {
+    const response = await api.post<ParkingSession>(
+      "/parking-sessions/check-out",
+      payload,
+    );
+
+    return response.data;
+  },
+
+  quote: async (sessionId: number): Promise<ParkingSessionQuoteResponse> => {
+    const response = await api.get<ParkingSessionQuoteResponse>(
+      `/parking-sessions/${sessionId}/quote`,
+    );
 
     return response.data;
   },
@@ -728,6 +800,38 @@ export interface ParkingReservationListResponse {
 }
 
 export const parkingReservationsApi = {
+  list: async (): Promise<ParkingReservationListResponse> => {
+    const response = await api.get<ParkingReservationListResponse>(
+      "/parking-reservations",
+    );
+
+    return response.data;
+  },
+
+  search: async (
+    searchTerm: string,
+  ): Promise<ParkingReservationListResponse> => {
+    const response = await api.get<ParkingReservationListResponse>(
+      "/parking-reservations/search",
+      { params: { search_term: searchTerm } },
+    );
+
+    return response.data;
+  },
+
+  checkIn: async (
+    reservationId: number,
+    entryMethod = "MANUAL",
+  ): Promise<ParkingReservation> => {
+    const response = await api.patch<ParkingReservation>(
+      `/parking-reservations/${reservationId}/check-in`,
+      null,
+      { params: { entry_method: entryMethod } },
+    );
+
+    return response.data;
+  },
+
   activeByCustomer: async (
     customerId: number,
   ): Promise<ParkingReservationListResponse> => {

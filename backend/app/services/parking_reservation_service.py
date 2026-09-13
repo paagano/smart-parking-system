@@ -34,6 +34,7 @@ from app.models.enums import (
     NotificationPriority,
     NotificationType,
     ReservationStatus,
+    EntryMethod,
 )
 
 from app.models.parking_reservation import ParkingReservation
@@ -1121,6 +1122,7 @@ class ParkingReservationService:
     async def check_in(
         self,
         reservation_id: int,
+        entry_method: EntryMethod = EntryMethod.QR_CODE,
     ) -> ParkingReservation | None:
         """
         Check in a reservation.
@@ -1164,6 +1166,7 @@ class ParkingReservationService:
 
         await self.parking_session_service.create_from_reservation(
             reservation,
+            entry_method=entry_method,
         )
 
         reservation.status = (

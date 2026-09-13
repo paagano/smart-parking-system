@@ -25,7 +25,7 @@ from app.api.dependencies.auth import (
 )
 
 from app.models.user import User
-from app.models.enums import UserRole
+from app.models.enums import EntryMethod, ReservationPaymentStatus, ReservationStatus, UserRole
 
 from fastapi import (
     APIRouter,
@@ -757,19 +757,41 @@ async def check_in_reservation(
     reservation_id: int,
     current_user: Annotated[User, Depends(get_current_active_user)],
     service: ParkingReservationServiceDep,
+    entry_method: EntryMethod = Query(
+        EntryMethod.QR_CODE,
+        description="Physical access method used for reservation check-in.",
+    ),
 ) -> ParkingReservationResponse:
     """
     Check in a reservation and create an active parking session.
     """
 
-    await _get_reservation_for_access(
+    reservation_for_access = await _get_reservation_for_access(
         reservation_id,
         current_user,
         service,
     )
 
+    # Operators admit vehicles on behalf of the facility. A reservation
+    # must therefore have completed the approval/payment stage before an
+    # operator can convert it into a live parking session. Driver-side
+    # reservation behaviour is intentionally unchanged.
+    if current_user.role == UserRole.ATTENDANT:
+        if reservation_for_access.status != ReservationStatus.CONFIRMED:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only confirmed reservations can be manually checked in by an operator.",
+            )
+
+        if reservation_for_access.payment_status != ReservationPaymentStatus.PAID:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Reservation payment must be completed before the operator can check in the vehicle.",
+            )
+
     reservation = await service.check_in(
         reservation_id,
+        entry_method=entry_method,
     )
 
     if reservation is None:

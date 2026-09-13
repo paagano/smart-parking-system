@@ -38,6 +38,8 @@ from app.models.enums import (
     PaymentPurpose,
     PaymentStatus,
     PaymentProvider,
+    PaymentType,
+    Currency,
     ReservationPaymentStatus,
     ReservationStatus,
     SessionPaymentStatus,
@@ -571,13 +573,13 @@ class PaymentService:
         Workflow
         --------
         Validate Request
-              ↓
+              â†“
         Retrieve Customer Wallet
-              ↓
+              â†“
         Create PaymentTransaction
-              ↓
+              â†“
         Credit Wallet
-              ↓
+              â†“
         Commit Transaction
         """
         if payment.customer_id is None:
@@ -702,17 +704,17 @@ class PaymentService:
         Workflow
         --------
         Parking Session
-                ↓
+                â†“
         Validate
-                ↓
+                â†“
         Validate Amount
-                ↓
+                â†“
         Create Payment
-                ↓
+                â†“
         Debit Wallet (if wallet payment)
-                ↓
+                â†“
         Mark Session Paid
-                ↓
+                â†“
         Commit Transaction
         """
         if payment.parking_session_id is None:
@@ -969,23 +971,23 @@ class PaymentService:
         Workflow
         --------
         Reservation
-            ↓
+            â†“
         Validate Reservation
-            ↓
+            â†“
         Validate Amount
-            ↓
+            â†“
         Resolve Payment Provider
-            ↓
+            â†“
         Process Provider Payment
-            ↓
+            â†“
         Create Payment Transaction
-            ↓
+            â†“
         Debit Wallet (if wallet payment)
-            ↓
+            â†“
         Mark Reservation Paid
-            ↓
+            â†“
         Confirm Reservation
-            ↓
+            â†“
         Commit Transaction
         """
         if payment.reservation_id is None:
@@ -1193,6 +1195,255 @@ class PaymentService:
         except Exception:
             await self.repository.rollback()
             raise
+
+
+    # ==========================================================
+    # Operator M-Pesa STK Push for Active Session
+    # ==========================================================
+
+    async def initiate_operator_mpesa_session_payment(
+        self,
+        *,
+        parking_session_id: int,
+        payer_phone: str,
+        payer_name: str | None = None,
+        payer_email: str | None = None,
+        notes: str | None = None,
+    ) -> dict:
+        """
+        Initiate an Operator-originated M-Pesa STK Push for an ACTIVE
+        parking session.
+
+        Critical financial rule
+        -----------------------
+        The payable amount is NEVER supplied by the frontend.
+
+        The PaymentService recalculates the current parking charge from
+        PricingService at the exact moment the Operator requests the
+        STK Push. The same authoritative amount is persisted into the
+        payment transaction and sent to Safaricom through MpesaProvider.
+
+        Workflow
+        --------
+        ACTIVE SESSION
+             ↓
+        RECALCULATE CURRENT CHARGE
+             ↓
+        CREATE PENDING PAYMENT
+             ↓
+        COMMIT PAYMENT BEFORE STK REQUEST
+             ↓
+        SAFARICOM STK PUSH
+             ↓
+        RETURN PENDING PAYMENT
+             ↓
+        M-Pesa CALLBACK
+             ↓
+        EXISTING CALLBACK COMPLETION WORKFLOW
+             ↓
+        SESSION = COMPLETED / PAID
+        """
+        if not payer_phone:
+            raise ValueError("M-Pesa payer phone number is required.")
+
+        parking_session = await self.session_repository.get_by_id(
+            parking_session_id,
+        )
+
+        if parking_session is None:
+            raise ValueError("Parking session not found.")
+
+        if parking_session.status != SessionStatus.ACTIVE:
+            raise ValueError(
+                "Only ACTIVE parking sessions can receive an Operator-initiated payment."
+            )
+
+        if parking_session.is_paid:
+            raise ValueError("This parking session has already been paid.")
+
+        #
+        # Prevent multiple outstanding STK requests for the same session.
+        #
+        existing_payments = await self.repository.get_session_payments(
+            parking_session_id=parking_session.id,
+            limit=100,
+            offset=0,
+        )
+
+        for existing_payment in existing_payments:
+            if (
+                existing_payment.status == PaymentStatus.PENDING
+                and existing_payment.payment_provider == PaymentProvider.SAFARICOM
+                and existing_payment.provider_transaction_id
+            ):
+                raise ValueError(
+                    "An M-Pesa payment request is already pending for this parking session. "
+                    "Please wait for the current request to complete before sending another."
+                )
+
+        #
+        # ======================================================
+        # AUTHORITATIVE CURRENT PARKING CHARGE
+        # ======================================================
+        #
+        pricing_exit_time = datetime.now(timezone.utc)
+
+        pricing_result = await self.pricing_service.calculate_for_session(
+            vehicle_type=parking_session.vehicle_type,
+            billing_type=parking_session.billing_type,
+            entry_time=parking_session.entry_time,
+            exit_time=pricing_exit_time,
+        )
+
+        expected_amount = pricing_result.total_amount.quantize(
+            Decimal("0.01"),
+        )
+
+        if expected_amount <= Decimal("0.00"):
+            raise ValueError(
+                "The current parking charge is not payable yet."
+            )
+
+        #
+        # Stamp the authoritative current calculation onto the session.
+        # This is the same pricing basis used for the STK Push amount.
+        #
+        parking_session.calculated_amount = expected_amount
+        parking_session.duration_minutes = pricing_result.duration_minutes
+
+        await self.session_repository.save(parking_session)
+
+        #
+        # Build the payment transaction using ONLY the backend-calculated
+        # current charge. No client amount is accepted by this method.
+        #
+        payment = PaymentCreate(
+            payment_method=PaymentMethod.MPESA,
+            payment_provider=PaymentProvider.SAFARICOM,
+            payment_purpose=PaymentPurpose.PARKING_SESSION,
+            payment_type=PaymentType.PAYMENT,
+            currency=Currency.KES,
+            subtotal_amount=expected_amount,
+            discount_amount=Decimal("0.00"),
+            tax_amount=Decimal("0.00"),
+            total_amount=expected_amount,
+            payer_name=payer_name,
+            payer_phone=payer_phone,
+            payer_email=payer_email,
+            parking_session_id=parking_session.id,
+            customer_id=parking_session.customer_id,
+            notes=(
+                notes.strip()
+                if notes and notes.strip()
+                else "Operator-initiated M-Pesa payment"
+            ),
+        )
+
+        try:
+            #
+            # Persist the pending payment BEFORE calling Safaricom.
+            # This prevents a fast Safaricom callback from arriving before
+            # SmartPark has a PaymentTransaction to resolve.
+            #
+            payment_transaction = await self._create_payment(
+                payment,
+                status=PaymentStatus.PENDING,
+            )
+
+            await self.repository.commit()
+
+            #
+            # Resolve the existing production M-Pesa provider.
+            #
+            provider = PaymentProviderFactory.get_provider(
+                PaymentProvider.SAFARICOM,
+            )
+
+            provider_response = await provider.process_payment(
+                payment=payment_transaction,
+            )
+
+            if not provider_response.success:
+                payment_transaction.status = PaymentStatus.FAILED
+                payment_transaction.provider_status_message = (
+                    provider_response.message
+                )
+                payment_transaction.provider_response = (
+                    provider_response.raw_response
+                )
+
+                await self.repository.save(payment_transaction)
+                await self.repository.commit()
+                await self.repository.refresh(payment_transaction)
+
+                raise ValueError(
+                    provider_response.message
+                    or "Safaricom rejected the STK Push request."
+                )
+
+            #
+            # Safaricom accepted the request. Store the CheckoutRequestID
+            # so the existing callback can resolve this payment.
+            #
+            payment_transaction.provider_transaction_id = (
+                provider_response.provider_reference
+            )
+            payment_transaction.provider_status_message = (
+                provider_response.message
+            )
+            payment_transaction.provider_response = (
+                provider_response.raw_response
+            )
+            payment_transaction.status = provider_response.status
+
+            await self.repository.save(payment_transaction)
+            await self.repository.commit()
+            await self.repository.refresh(payment_transaction)
+
+            #
+            # Notification is intentionally best-effort, as in the
+            # existing Driver payment workflow.
+            #
+            if payment_transaction.status == PaymentStatus.PENDING:
+                await self._create_payment_notification(
+                    payment=payment_transaction,
+                    notification_type=NotificationType.PAYMENT_INITIATED,
+                    title="M-Pesa Payment Request Sent",
+                    message=(
+                        f"Your parking session payment "
+                        f"{payment_transaction.transaction_number} "
+                        f"has been initiated and is awaiting confirmation."
+                    ),
+                )
+
+            return {
+                "payment_id": payment_transaction.id,
+                "transaction_number": payment_transaction.transaction_number,
+                "parking_session_id": parking_session.id,
+                "amount": expected_amount,
+                "currency": Currency.KES.value,
+                "status": payment_transaction.status.value,
+                "checkout_request_id": payment_transaction.provider_transaction_id,
+                "message": (
+                    provider_response.message
+                    or "M-Pesa payment request sent. Complete the prompt on the driver's phone."
+                ),
+                "duration_minutes": pricing_result.duration_minutes,
+                "billable_minutes": pricing_result.billable_minutes,
+                "grace_period_applied": pricing_result.grace_period_applied,
+                "tariff_name": pricing_result.tariff_name,
+            }
+
+        except Exception:
+            #
+            # If the exception occurred before the provider request was
+            # persisted, rollback the local transaction state.
+            #
+            # If a pending transaction was already committed, preserve it
+            # because it may already have reached Safaricom.
+            #
+            raise
+
 
     # ==========================================================
     # M-Pesa Callback
@@ -1827,3 +2078,4 @@ class PaymentService:
         Return unreconciled payment count.
         """
         return await self.repository.count_unreconciled()
+

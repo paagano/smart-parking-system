@@ -9,7 +9,11 @@ import {
   MapPinned,
   QrCode,
   ScanLine,
+  Search,
+  ChevronLeft,
+  ChevronRight,
   BrainCircuit,
+  Banknote,
   CarFront,
   CheckCircle2,
   Clock3,
@@ -40,6 +44,112 @@ function asNumber(value: number | string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+interface LiveSessionQuote {
+  amount: number | null;
+  currency: string;
+}
+
+function isActiveSession(session: ParkingSession): boolean {
+  return (
+    String(session.status ?? "")
+      .trim()
+      .toUpperCase() === "ACTIVE"
+  );
+}
+
+function getLiveDurationMinutes(
+  session: ParkingSession,
+  now = Date.now(),
+): number | null {
+  if (!session.entry_time) {
+    return null;
+  }
+
+  const start = new Date(session.entry_time).getTime();
+
+  if (!Number.isFinite(start)) {
+    return null;
+  }
+
+  const end = isActiveSession(session)
+    ? now
+    : session.exit_time
+      ? new Date(session.exit_time).getTime()
+      : now;
+
+  if (!Number.isFinite(end)) {
+    return null;
+  }
+
+  return Math.max(0, Math.floor((end - start) / 60000));
+}
+
+function formatDate(value: string | null | undefined): string {
+  if (!value) return "—";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return new Intl.DateTimeFormat("en-KE", {
+    dateStyle: "medium",
+  }).format(date);
+}
+
+function formatDuration(minutes: number | null): string {
+  if (minutes === null || !Number.isFinite(minutes)) {
+    return "—";
+  }
+
+  const totalMinutes = Math.max(0, Math.floor(minutes));
+  const hours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+
+  if (hours === 0) {
+    return `${remainingMinutes} min`;
+  }
+
+  if (remainingMinutes === 0) {
+    return `${hours} hr${hours === 1 ? "" : "s"}`;
+  }
+
+  return `${hours} hr${hours === 1 ? "" : "s"} ${remainingMinutes} min`;
+}
+
+function extractQuoteAmount(quote: {
+  amount?: number | string | null;
+  total_amount?: number | string | null;
+  calculated_amount?: number | string | null;
+  current_amount?: number | string | null;
+  outstanding_amount?: number | string | null;
+  payable_amount?: number | string | null;
+  currency?: string | null;
+  duration_minutes?: number | null;
+  [key: string]: unknown;
+}): number | null {
+  const candidates = [
+    quote.outstanding_amount,
+    quote.payable_amount,
+    quote.total_amount,
+    quote.calculated_amount,
+    quote.current_amount,
+    quote.amount,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate === null || candidate === undefined || candidate === "") {
+      continue;
+    }
+
+    const numeric = Number(candidate);
+
+    if (Number.isFinite(numeric)) {
+      return numeric;
+    }
+  }
+
+  return null;
+}
+
 function formatTime(value: string | null | undefined): string {
   if (!value) return "—";
 
@@ -50,6 +160,32 @@ function formatTime(value: string | null | undefined): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatCurrency(
+  value: number | string | null | undefined,
+  currency = "KES",
+): string {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) {
+    return "—";
+  }
+
+  try {
+    return new Intl.NumberFormat("en-KE", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2)}`;
+  }
 }
 
 export default function OperatorDashboard() {
@@ -65,6 +201,14 @@ export default function OperatorDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [liveNow, setLiveNow] = useState(() => Date.now());
+  const [liveQuotes, setLiveQuotes] = useState<
+    Record<number, LiveSessionQuote>
+  >({});
+  const [vehicleSearch, setVehicleSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const PAGE_SIZE = 10;
 
   const loadDashboard = useCallback(
     async (silent = false) => {
@@ -187,13 +331,135 @@ export default function OperatorDashboard() {
 
   const recentSessions = useMemo(
     () =>
-      [...sessions]
-        .sort(
-          (a, b) =>
-            new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime(),
-        )
-        .slice(0, 6),
+      [...sessions].sort(
+        (a, b) =>
+          new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime(),
+      ),
     [sessions],
+  );
+
+  const filteredSessions = useMemo(() => {
+    const query = vehicleSearch.trim().toLowerCase();
+
+    if (!query) {
+      return recentSessions;
+    }
+
+    return recentSessions.filter((session) =>
+      [
+        session.vehicle_registration,
+        session.session_number,
+        String(session.parking_bay_id),
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query)),
+    );
+  }, [recentSessions, vehicleSearch]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredSessions.length / PAGE_SIZE),
+  );
+
+  const paginatedSessions = useMemo(() => {
+    const safePage = Math.min(currentPage, totalPages);
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filteredSessions.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredSessions, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [vehicleSearch]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const refreshLiveQuotes = useCallback(
+    async (sessionList: ParkingSession[]) => {
+      const activeSessions = sessionList.filter(isActiveSession);
+
+      if (activeSessions.length === 0) {
+        setLiveQuotes({});
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        activeSessions.map(async (session) => {
+          const quote = await parkingSessionsApi.quote(session.id);
+
+          return {
+            sessionId: session.id,
+            quote: {
+              amount: extractQuoteAmount(quote),
+              currency: quote.currency ?? "KES",
+            },
+          };
+        }),
+      );
+
+      setLiveQuotes((current) => {
+        const next: Record<number, LiveSessionQuote> = {};
+
+        for (const session of activeSessions) {
+          const previous = current[session.id];
+          if (previous) {
+            next[session.id] = previous;
+          }
+        }
+
+        for (const result of results) {
+          if (result.status === "fulfilled") {
+            next[result.value.sessionId] = result.value.quote;
+          }
+        }
+
+        return next;
+      });
+    },
+    [],
+  );
+
+  // Refresh the display clock independently of backend polling so
+  // parking duration remains visibly live between data refreshes.
+  useEffect(() => {
+    if (paginatedSessions.length === 0) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setLiveNow(Date.now());
+    }, 10_000);
+
+    return () => window.clearInterval(interval);
+  }, [paginatedSessions.length]);
+
+  // Retrieve the authoritative current parking charge immediately and
+  // re-price the visible active sessions every 30 seconds as billable time increases.
+  useEffect(() => {
+    void refreshLiveQuotes(paginatedSessions);
+
+    if (paginatedSessions.length === 0) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void refreshLiveQuotes(paginatedSessions);
+    }, 30_000);
+
+    return () => window.clearInterval(interval);
+  }, [paginatedSessions, refreshLiveQuotes]);
+
+  const zoneById = useMemo(
+    () => new Map(zones.map((zone) => [zone.id, zone])),
+    [zones],
+  );
+
+  const bayById = useMemo(
+    () => new Map(bays.map((bay) => [bay.id, bay])),
+    [bays],
   );
 
   const zoneSummary = useMemo(() => {
@@ -578,43 +844,209 @@ export default function OperatorDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-6">
         <Card
           title="Vehicles currently parked"
-          sub="Latest active parking sessions"
+          sub="Live parking status, duration and estimated amount due"
         >
           {loading ? (
             <LoadingRows />
           ) : recentSessions.length === 0 ? (
             <EmptyState text="No vehicles are currently recorded as parked." />
           ) : (
-            <div className="divide-y divide-slate-100">
-              {recentSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
-                      <CarFront size={17} />
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative w-full sm:max-w-md">
+                  <Search
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    type="search"
+                    value={vehicleSearch}
+                    onChange={(event) => setVehicleSearch(event.target.value)}
+                    placeholder="Search vehicle, parking session or bay..."
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  />
+                </div>
+                <p className="text-xs font-semibold text-slate-500">
+                  {filteredSessions.length} vehicle
+                  {filteredSessions.length === 1 ? "" : "s"}
+                  {vehicleSearch.trim() ? " found" : " parked"}
+                </p>
+              </div>
+
+              {filteredSessions.length === 0 ? (
+                <EmptyState
+                  text={`No parked vehicles match "${vehicleSearch.trim()}".`}
+                />
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                  <table className="min-w-[900px] w-full border-collapse text-left">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        {[
+                          "Vehicle",
+                          "Parking session",
+                          "Check-in date",
+                          "Check-in time",
+                          "Duration parked",
+                          "Estimated amount due",
+                        ].map((heading) => (
+                          <th
+                            key={heading}
+                            scope="col"
+                            className="border-b border-slate-200 px-4 py-3 text-[10px] font-extrabold uppercase tracking-[0.1em] text-slate-400"
+                          >
+                            {heading}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {paginatedSessions.map((session) => {
+                        const liveQuote = liveQuotes[session.id];
+                        const durationMinutes = getLiveDurationMinutes(
+                          session,
+                          liveNow,
+                        );
+                        const estimatedAmount =
+                          liveQuote?.amount ??
+                          (asNumber(session.calculated_amount) > 0
+                            ? asNumber(session.calculated_amount)
+                            : null);
+
+                        return (
+                          <tr
+                            key={session.id}
+                            className="transition hover:bg-slate-50/80"
+                          >
+                            <td className="px-4 py-4 align-middle">
+                              <div className="flex items-center gap-3">
+                                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
+                                  <CarFront size={16} />
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="font-extrabold text-slate-900">
+                                    {session.vehicle_registration}
+                                  </p>
+                                  <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-emerald-700">
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                                    Parked
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 align-middle">
+                              <div>
+                                <p className="text-xs font-extrabold text-slate-800">
+                                  {session.session_number}
+                                </p>
+                                <p className="mt-1 text-[11px] font-semibold text-slate-500">
+                                  Bay {session.parking_bay_id}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 align-middle whitespace-nowrap">
+                              <p className="text-xs font-bold text-slate-800">
+                                {formatDate(session.entry_time)}
+                              </p>
+                            </td>
+                            <td className="px-4 py-4 align-middle whitespace-nowrap">
+                              <p className="text-xs font-bold text-slate-800">
+                                {formatTime(session.entry_time)}
+                              </p>
+                            </td>
+                            <td className="px-4 py-4 align-middle whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-black text-slate-900">
+                                  {formatDuration(durationMinutes)}
+                                </span>
+                                <span
+                                  className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                  title="Live duration"
+                                />
+                              </div>
+                              <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                                Live
+                              </p>
+                            </td>
+                            <td className="px-4 py-4 align-middle whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-black text-slate-900">
+                                  {estimatedAmount === null
+                                    ? "Updating..."
+                                    : formatCurrency(
+                                        estimatedAmount,
+                                        liveQuote?.currency ?? "KES",
+                                      )}
+                                </span>
+                                <span
+                                  className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                  title="Live estimated amount"
+                                />
+                              </div>
+                              <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                                Live estimate
+                              </p>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {filteredSessions.length > 0 && (
+                <div className="flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs font-semibold text-slate-500">
+                    Showing{" "}
+                    <span className="font-extrabold text-slate-700">
+                      {(currentPage - 1) * PAGE_SIZE + 1}
+                    </span>{" "}
+                    to{" "}
+                    <span className="font-extrabold text-slate-700">
+                      {Math.min(
+                        currentPage * PAGE_SIZE,
+                        filteredSessions.length,
+                      )}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-extrabold text-slate-700">
+                      {filteredSessions.length}
                     </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-extrabold text-slate-900">
-                        {session.vehicle_registration}
-                      </p>
-                      <p className="truncate text-[11px] font-semibold text-slate-500">
-                        {session.session_number} · Bay {session.parking_bay_id}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-xs font-bold text-emerald-700">Parked</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
-                      {formatTime(session.entry_time)}
-                    </p>
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCurrentPage((page) => Math.max(1, page - 1))
+                      }
+                      disabled={currentPage === 1}
+                      className="inline-flex h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronLeft size={14} />
+                      Previous
+                    </button>
+                    <span className="min-w-[72px] text-center text-xs font-extrabold text-slate-700">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCurrentPage((page) => Math.min(totalPages, page + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="inline-flex h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                      <ChevronRight size={14} />
+                    </button>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </Card>
@@ -719,6 +1151,34 @@ function LegendRow({
         {label}
       </span>
       <span className="font-black text-slate-900">{value}</span>
+    </div>
+  );
+}
+
+function SessionDetail({
+  icon: Icon,
+  label,
+  value,
+  live = false,
+}: {
+  icon: typeof Clock3;
+  label: string;
+  value: string;
+  live?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-3.5 py-3">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        <Icon size={13} />
+        <span>{label}</span>
+        {live && (
+          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        )}
+      </div>
+      <p className="mt-1.5 text-sm font-black text-slate-900">{value}</p>
+      {live && (
+        <p className="mt-0.5 text-[10px] font-semibold text-slate-400">Live</p>
+      )}
     </div>
   );
 }

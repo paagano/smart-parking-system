@@ -523,11 +523,11 @@ function OperatorNavigationGroups({
     {
       title: "Check-In / Check-Out",
       items: [
-        ["Manual Entry", "/operator/access/manual", UserRound],
+        ["Manual Entry | Exit", "/operator/access/manual", UserRound],
         ["QR Code", "/operator/access/qr", QrCode],
         ["ANPR Simulator", "/operator/access/anpr", Radio],
         ["RFID Simulator", "/operator/access/rfid", Radio],
-        ["Sensor / Scanner", "/operator/access/sensor", Activity],
+        ["Sensor | Scanner", "/operator/access/sensor", Activity],
         ["Mobile App Access", "/operator/access/mobile", CarFront],
       ],
     },

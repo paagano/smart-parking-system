@@ -1,7 +1,3 @@
-from app.api.endpoints.admin_operators import (
-    router as admin_operators_router,
-)
-
 from fastapi import APIRouter
 
 from app.api.endpoints.auth import (
@@ -10,6 +6,10 @@ from app.api.endpoints.auth import (
 
 from app.api.endpoints.ai_chat import (
     router as ai_chat_router,
+)
+
+from app.api.endpoints.anpr import (
+    router as anpr_router,
 )
 
 from app.api.endpoints.users import (
@@ -96,10 +96,6 @@ router.include_router(
     auth_router,
 )
 
-router.include_router(
-    admin_operators_router,
-)
-
 
 # ==========================================================
 # SmartPark AI
@@ -107,6 +103,10 @@ router.include_router(
 
 router.include_router(
     ai_chat_router,
+)
+
+router.include_router(
+    anpr_router,
 )
 
 

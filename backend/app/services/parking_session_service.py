@@ -38,6 +38,7 @@ from app.exceptions.handlers import (
 )
 
 from app.models.enums import (
+    BillingType,
     EntryMethod,
     NotificationChannel,
     NotificationPriority,
@@ -619,6 +620,7 @@ class ParkingSessionService:
     async def create_from_reservation(
         self,
         reservation: ParkingReservation,
+        entry_method: EntryMethod = EntryMethod.QR_CODE,
     ) -> ParkingSession:
         """
         Convert a reservation into an active parking session.
@@ -647,9 +649,10 @@ class ParkingSessionService:
             reservation_id=reservation.id,
             vehicle_registration=reservation.vehicle_registration,
             vehicle_type=reservation.vehicle_type,
+            billing_type=BillingType.HOURLY,
             status=SessionStatus.ACTIVE,
             session_source=SessionSource.RESERVATION,
-            entry_method=EntryMethod.QR_CODE,
+            entry_method=entry_method,
             entry_time=utc_now(),
             expected_exit_time=reservation.reserved_until,
             notes=reservation.notes,
