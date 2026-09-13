@@ -13,8 +13,7 @@
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-router": "latest",
-    "tesseract.js": "^7.0.0"
+    "react-router": "latest"
   },
   "devDependencies": {
     "@tailwindcss/vite": "latest",
