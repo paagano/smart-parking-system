@@ -3,6 +3,7 @@ import {
   AlertCircle,
   ArrowDownToLine,
   ArrowUpFromLine,
+  Banknote,
   Camera,
   CameraOff,
   CarFront,
@@ -15,7 +16,9 @@ import {
   ParkingCircle,
   RefreshCw,
   ScanLine,
+  Send,
   ShieldCheck,
+  Smartphone,
   Square,
 } from "lucide-react";
 
@@ -124,6 +127,45 @@ function formatConfidence(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
 
+function formatMoney(value: number | string | null | undefined): string {
+  const amount = Number(value ?? 0);
+
+  return new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(amount) ? amount : 0);
+}
+
+function isSessionSettled(session: ParkingSession): boolean {
+  const paymentStatus = String(session.payment_status ?? "").toUpperCase();
+
+  return ["PAID", "SUCCESSFUL"].includes(paymentStatus);
+}
+
+function isUnsettledActiveSession(session: ParkingSession): boolean {
+  return isActiveSession(session) && !isSessionSettled(session);
+}
+
+function normalizeMpesaNumber(value: string): string {
+  const digits = value.replace(/\D/g, "");
+
+  if (digits.startsWith("254")) {
+    return digits;
+  }
+
+  if (digits.startsWith("0")) {
+    return `254${digits.slice(1)}`;
+  }
+
+  return digits;
+}
+
+function CreditCardIconFallback() {
+  return <span className="text-sm">💳</span>;
+}
+
 function getBayLabel(bay: ParkingBay): string {
   return bay.code || bay.bay_number || `Bay #${bay.id}`;
 }
@@ -159,6 +201,40 @@ type AnprApiResponse = {
     variant: string;
     agreement_count: number;
   }>;
+};
+
+type ParkingChargeQuote = {
+  total_amount: number | string;
+  duration_minutes: number;
+  billable_minutes: number;
+  grace_period_applied: boolean;
+  tariff_name: string;
+};
+
+type RegisteredDriverInfo = {
+  available: boolean;
+  name: string | null;
+  mobileMasked: string | null;
+};
+
+type ExitPaymentMethod = "MPESA" | "CASH";
+
+type MpesaTarget = "REGISTERED" | "OTHER";
+
+type OperatorStkPayment = {
+  payment_id: number;
+  transaction_number: string;
+  parking_session_id: number;
+  amount: number | string;
+  currency: string;
+  status: string;
+  phone_number: string;
+  checkout_request_id?: string | null;
+  message: string;
+  duration_minutes: number;
+  billable_minutes: number;
+  grace_period_applied: boolean;
+  tariff_name: string;
 };
 
 export default function ANPRSimulator() {
@@ -197,6 +273,31 @@ export default function ANPRSimulator() {
 
   const [entrySession, setEntrySession] = useState<ParkingSession | null>(null);
   const [exitSession, setExitSession] = useState<ParkingSession | null>(null);
+
+  // ==========================================================
+  // Operator exit-payment state
+  // ==========================================================
+
+  const [paymentPanelOpen, setPaymentPanelOpen] = useState(false);
+
+  const [quote, setQuote] = useState<ParkingChargeQuote | null>(null);
+  const [quoting, setQuoting] = useState(false);
+
+  const [exitPaymentMethod, setExitPaymentMethod] =
+    useState<ExitPaymentMethod>("MPESA");
+
+  const [registeredDriver, setRegisteredDriver] =
+    useState<RegisteredDriverInfo | null>(null);
+
+  const [mpesaTarget, setMpesaTarget] = useState<MpesaTarget>("OTHER");
+
+  const [alternativeMpesaNumber, setAlternativeMpesaNumber] = useState("");
+
+  const [stkPayment, setStkPayment] = useState<OperatorStkPayment | null>(null);
+
+  const [stkInitiating, setStkInitiating] = useState(false);
+  const [stkPolling, setStkPolling] = useState(false);
+  const [cashProcessing, setCashProcessing] = useState(false);
 
   // Once an entry workflow has successfully created/admitted a session,
   // disable further entry capture actions until the operator resets the scan.
@@ -904,7 +1005,7 @@ export default function ANPRSimulator() {
       setEntrySession(response.data);
       setEntryCompleted(true);
       setSuccess(
-        `ANPR Drive-In admission accepted. ${response.data.vehicle_registration} was checked in and parking session ${response.data.session_number} is now ACTIVE.`,
+        `ANPR Drive-In admission accepted. ${response.data.vehicle_registration} was successfully checked in and parking session ${response.data.session_number} is now ACTIVE.`,
       );
 
       await loadFacilityData(true);
@@ -914,6 +1015,55 @@ export default function ANPRSimulator() {
       setSubmitting(false);
     }
   };
+
+  // ==========================================================
+  // Exit detection / payment / physical checkout
+  // ==========================================================
+
+  const refreshExitSession = useCallback(async (plate: string) => {
+    const result = await api.get<{
+      items: ParkingSession[];
+      total: number;
+    }>("/parking-sessions/search", {
+      params: { registration: plate },
+    });
+
+    const sessions = result.data.items ?? [];
+
+    /*
+     * Payment settlement changes the session to COMPLETED while physical
+     * checkout remains pending until the vehicle actually leaves.
+     *
+     * Therefore:
+     * 1. Prefer COMPLETED awaiting physical exit.
+     * 2. Otherwise use the ACTIVE session.
+     */
+    const session =
+      sessions.find(isCompletedAwaitingExit) ??
+      sessions.find(isActiveSession) ??
+      null;
+
+    if (!session) {
+      setExitSession(null);
+
+      throw new Error(
+        `No active parking session or completed session awaiting physical exit was found for ${plate}.`,
+      );
+    }
+
+    setExitSession(session);
+
+    /*
+     * Once payment has settled and the session is COMPLETED, the payment
+     * panel is no longer required. The physical exit button becomes active.
+     */
+    if (isCompletedAwaitingExit(session)) {
+      setPaymentPanelOpen(false);
+      setStkPayment(null);
+    }
+
+    return session;
+  }, []);
 
   const handleExitDetection = async () => {
     const plate = normalizeRegistration(
@@ -929,38 +1079,20 @@ export default function ANPRSimulator() {
     setError(null);
     setSuccess(null);
     setExitSession(null);
+    setPaymentPanelOpen(false);
+    setQuote(null);
+    setStkPayment(null);
 
     try {
-      const result = await api.get<{
-        items: ParkingSession[];
-        total: number;
-      }>("/parking-sessions/search", {
-        params: { registration: plate },
-      });
-
-      const sessions = result.data.items ?? [];
-
-      const session =
-        sessions.find(isCompletedAwaitingExit) ??
-        sessions.find(isActiveSession) ??
-        null;
-
-      if (!session) {
-        setError(
-          `No active parking session or completed session awaiting physical exit was found for ${plate}.`,
-        );
-        return;
-      }
-
-      setExitSession(session);
+      const session = await refreshExitSession(plate);
 
       if (isCompletedAwaitingExit(session)) {
         setSuccess(
-          `ANPR exit detected for ${plate}. Session ${session.session_number} is already completed by the payment workflow and is ready for physical exit.`,
+          `ANPR exit detected for ${plate}. Session ${session.session_number} is already COMPLETED and settled. The vehicle is ready for physical exit.`,
         );
       } else {
         setSuccess(
-          `ANPR exit detected for ${plate}. Session ${session.session_number} is still ACTIVE and must be settled before physical checkout.`,
+          `ANPR exit detected for ${plate}. Session ${session.session_number} is still ACTIVE and requires payment before physical exit.`,
         );
       }
     } catch (searchError) {
@@ -970,12 +1102,424 @@ export default function ANPRSimulator() {
     }
   };
 
+  const loadCurrentPaymentQuote = async (
+    session: ParkingSession,
+  ): Promise<ParkingChargeQuote> => {
+    const result = await parkingSessionsApi.quote(session.id);
+
+    const currentQuote: ParkingChargeQuote = {
+      total_amount: result.total_amount,
+      duration_minutes: result.duration_minutes,
+      billable_minutes: result.billable_minutes,
+      grace_period_applied: result.grace_period_applied,
+      tariff_name: result.tariff_name,
+    };
+
+    setQuote(currentQuote);
+
+    return currentQuote;
+  };
+
+  const openOperatorPayment = async () => {
+    if (!exitSession) {
+      setError("Locate a vehicle parking session first.");
+      return;
+    }
+
+    if (!isUnsettledActiveSession(exitSession)) {
+      setError(
+        "Operator payment can only be initiated for an ACTIVE and unsettled parking session.",
+      );
+      return;
+    }
+
+    setPaymentPanelOpen(true);
+    setExitPaymentMethod("MPESA");
+    setError(null);
+    setSuccess(null);
+    setQuote(null);
+    setStkPayment(null);
+    setQuoting(true);
+
+    try {
+      /*
+       * IMPORTANT:
+       * The amount is always obtained from the backend quote service.
+       * The operator cannot edit the amount.
+       */
+      await loadCurrentPaymentQuote(exitSession);
+
+      /*
+       * Resolve whether the vehicle registration belongs to a registered
+       * driver. This reuses the existing operator payment-options endpoint.
+       */
+      try {
+        const optionsResponse = await api.get<{
+          parking_session_id: number;
+          registered_driver_available: boolean;
+          registered_driver_name?: string | null;
+          registered_mobile_masked?: string | null;
+        }>(`/payments/operator/session/${exitSession.id}/payment-options`);
+
+        const options = optionsResponse.data;
+
+        const driverInfo: RegisteredDriverInfo = {
+          available: options.registered_driver_available,
+          name: options.registered_driver_name ?? null,
+          mobileMasked: options.registered_mobile_masked ?? null,
+        };
+
+        setRegisteredDriver(driverInfo);
+
+        if (driverInfo.available) {
+          setMpesaTarget("REGISTERED");
+        } else {
+          setMpesaTarget("OTHER");
+        }
+      } catch (optionsError) {
+        /*
+         * Failure to resolve a registered driver must not prevent CASH
+         * payment or an alternative M-Pesa number.
+         */
+        console.error(
+          "[ANPR Operator Payment] Registered-driver lookup failed:",
+          optionsError,
+        );
+
+        setRegisteredDriver({
+          available: false,
+          name: null,
+          mobileMasked: null,
+        });
+
+        setMpesaTarget("OTHER");
+      }
+    } catch (quoteError) {
+      setPaymentPanelOpen(false);
+      setError(getApiErrorMessage(quoteError));
+    } finally {
+      setQuoting(false);
+    }
+  };
+
+  const recordOperatorCashPayment = async () => {
+    if (!exitSession) {
+      setError("Locate a vehicle parking session first.");
+      return;
+    }
+
+    if (!isUnsettledActiveSession(exitSession)) {
+      setError(
+        "Cash payment can only be recorded while the parking session is ACTIVE and unsettled.",
+      );
+      return;
+    }
+
+    setCashProcessing(true);
+    setError(null);
+    setSuccess(null);
+    setStkPayment(null);
+
+    try {
+      /*
+       * Refresh the bill immediately before recording CASH so that the
+       * operator sees and records the current authoritative charge.
+       */
+      const currentQuote = await loadCurrentPaymentQuote(exitSession);
+
+      const response = await api.post<{
+        payment_id: number;
+        transaction_number: string;
+        parking_session_id: number;
+        amount: number | string;
+        currency: string;
+        status: string;
+        message: string;
+        duration_minutes: number;
+        billable_minutes: number;
+        grace_period_applied: boolean;
+        tariff_name: string;
+      }>("/payments/operator/session/cash", {
+        parking_session_id: exitSession.id,
+        notes: "ANPR operator-recorded cash settlement",
+      });
+
+      const data = response.data;
+
+      setQuote({
+        total_amount: data.amount ?? currentQuote.total_amount,
+        duration_minutes: data.duration_minutes,
+        billable_minutes: data.billable_minutes,
+        grace_period_applied: data.grace_period_applied,
+        tariff_name: data.tariff_name,
+      });
+
+      /*
+       * The existing backend payment workflow is authoritative.
+       * Refresh the actual parking session instead of locally forcing
+       * payment_status/status.
+       */
+      const refreshedSession = await refreshExitSession(
+        normalizeRegistration(exitSession.vehicle_registration),
+      );
+
+      if (!isCompletedAwaitingExit(refreshedSession)) {
+        throw new Error(
+          "Cash payment was recorded, but the parking session has not yet transitioned to COMPLETED. Please refresh the session before physical exit.",
+        );
+      }
+
+      setPaymentPanelOpen(false);
+
+      setSuccess(
+        `Cash payment ${data.transaction_number} of ${formatMoney(
+          data.amount,
+        )} recorded successfully. ${refreshedSession.session_number} is now settled and ready for ANPR physical exit.`,
+      );
+    } catch (paymentError) {
+      setError(getApiErrorMessage(paymentError));
+    } finally {
+      setCashProcessing(false);
+    }
+  };
+
+  const initiateOperatorMpesaPayment = async () => {
+    if (!exitSession) {
+      setError("Locate a vehicle parking session first.");
+      return;
+    }
+
+    if (!isUnsettledActiveSession(exitSession)) {
+      setError(
+        "M-Pesa STK Push can only be initiated while the parking session is ACTIVE and unsettled.",
+      );
+      return;
+    }
+
+    if (mpesaTarget === "OTHER") {
+      const normalizedNumber = normalizeMpesaNumber(alternativeMpesaNumber);
+
+      if (!/^2547\d{8}$/.test(normalizedNumber)) {
+        setError(
+          "Enter a valid Safaricom mobile number, for example 0712345678 or 254712345678.",
+        );
+        return;
+      }
+    }
+
+    setStkInitiating(true);
+    setError(null);
+    setSuccess(null);
+    setStkPayment(null);
+
+    try {
+      /*
+       * Refresh the bill immediately before initiating the payment.
+       * The amount is never supplied by the operator.
+       */
+      const currentQuote = await loadCurrentPaymentQuote(exitSession);
+
+      if (Number(currentQuote.total_amount) <= 0) {
+        setError(
+          "The current parking charge is KES 0.00. No M-Pesa payment is required.",
+        );
+        return;
+      }
+
+      const response = await api.post<OperatorStkPayment>(
+        "/payments/operator/session/stk-push",
+        {
+          parking_session_id: exitSession.id,
+          use_registered_number: mpesaTarget === "REGISTERED",
+          mobile_number:
+            mpesaTarget === "OTHER"
+              ? normalizeMpesaNumber(alternativeMpesaNumber)
+              : null,
+          notes: "ANPR operator-initiated parking settlement",
+        },
+      );
+
+      const data = response.data;
+
+      setQuote({
+        total_amount: data.amount,
+        duration_minutes: data.duration_minutes,
+        billable_minutes: data.billable_minutes,
+        grace_period_applied: data.grace_period_applied,
+        tariff_name: data.tariff_name,
+      });
+
+      setStkPayment(data);
+
+      if (String(data.status).toUpperCase() === "SUCCESSFUL") {
+        setStkInitiating(false);
+
+        const refreshedSession = await refreshExitSession(
+          normalizeRegistration(exitSession.vehicle_registration),
+        );
+
+        if (isCompletedAwaitingExit(refreshedSession)) {
+          setPaymentPanelOpen(false);
+          setSuccess(
+            `M-Pesa payment ${data.transaction_number} was completed successfully. ${refreshedSession.session_number} is now settled and ready for ANPR physical exit.`,
+          );
+        }
+
+        return;
+      }
+
+      setSuccess(
+        `STK Push sent to ${data.phone_number}. Ask the driver to complete the M-Pesa prompt on their phone.`,
+      );
+    } catch (paymentError) {
+      setError(getApiErrorMessage(paymentError));
+    } finally {
+      setStkInitiating(false);
+    }
+  };
+
+  /*
+   * Poll the existing payment transaction until the M-Pesa callback has
+   * completed the payment. The parking session itself remains the
+   * authoritative source for whether physical exit is allowed.
+   */
+  useEffect(() => {
+    if (!stkPayment?.payment_id) {
+      setStkPolling(false);
+      return;
+    }
+
+    const initialStatus = String(stkPayment.status).toUpperCase();
+
+    if (!["PENDING", "PROCESSING"].includes(initialStatus)) {
+      setStkPolling(false);
+      return;
+    }
+
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const pollPayment = async () => {
+      if (cancelled) return;
+
+      try {
+        const response = await api.get<{
+          id: number;
+          status: string;
+          total_amount?: number | string | null;
+          provider_transaction_id?: string | null;
+          provider_status_message?: string | null;
+        }>(`/payments/${stkPayment.payment_id}`);
+
+        if (cancelled) return;
+
+        const status = String(response.data.status ?? "PENDING").toUpperCase();
+
+        setStkPayment((current) =>
+          current
+            ? {
+                ...current,
+                status,
+                amount: response.data.total_amount ?? current.amount,
+                checkout_request_id:
+                  response.data.provider_transaction_id ??
+                  current.checkout_request_id,
+                message:
+                  response.data.provider_status_message ?? current.message,
+              }
+            : current,
+        );
+
+        if (status === "SUCCESSFUL") {
+          if (intervalId !== undefined) {
+            window.clearInterval(intervalId);
+          }
+
+          setStkPolling(false);
+
+          const plate = normalizeRegistration(
+            exitSession?.vehicle_registration ||
+              detectedPlate?.registration ||
+              registration,
+          );
+
+          try {
+            const refreshedSession = await refreshExitSession(plate);
+
+            if (isCompletedAwaitingExit(refreshedSession)) {
+              setPaymentPanelOpen(false);
+              setSuccess(
+                `M-Pesa payment was received successfully. ${refreshedSession.session_number} is now settled and ready for ANPR physical exit.`,
+              );
+            } else {
+              setSuccess(
+                "M-Pesa payment was received. SmartPark is finalising the parking session settlement; refresh the session before physical exit.",
+              );
+            }
+          } catch (refreshError) {
+            setSuccess(
+              "M-Pesa payment was received successfully. Refresh the ANPR exit session to confirm that physical exit is now enabled.",
+            );
+            console.error(
+              "[ANPR Operator Payment] Session refresh after payment failed:",
+              refreshError,
+            );
+          }
+        } else if (["FAILED", "CANCELLED"].includes(status)) {
+          if (intervalId !== undefined) {
+            window.clearInterval(intervalId);
+          }
+
+          setStkPolling(false);
+
+          setError(
+            "The M-Pesa payment was not completed. The parking session remains ACTIVE and the vehicle cannot exit yet.",
+          );
+        }
+      } catch (pollError) {
+        console.error(
+          "[ANPR Operator Payment] Payment status check failed:",
+          pollError,
+        );
+      }
+    };
+
+    setStkPolling(true);
+
+    void pollPayment();
+
+    intervalId = window.setInterval(() => {
+      void pollPayment();
+    }, 2000);
+
+    return () => {
+      cancelled = true;
+
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+      }
+
+      setStkPolling(false);
+    };
+  }, [
+    stkPayment?.payment_id,
+    stkPayment?.status,
+    exitSession?.vehicle_registration,
+    detectedPlate?.registration,
+    registration,
+    refreshExitSession,
+  ]);
+
   const handlePhysicalExit = async () => {
     if (!exitSession) {
       setError("Detect the vehicle at the exit first.");
       return;
     }
 
+    /*
+     * Physical exit remains strictly controlled by the existing
+     * COMPLETED + no physical exit rule.
+     */
     if (!isCompletedAwaitingExit(exitSession)) {
       setError(
         "This parking session is still ACTIVE. Complete and settle the parking payment before physical ANPR checkout.",
@@ -1002,6 +1546,9 @@ export default function ANPRSimulator() {
       setExitSession(null);
       setDetectedPlate(null);
       setRegistration("");
+      setQuote(null);
+      setPaymentPanelOpen(false);
+      setStkPayment(null);
 
       setSuccess(
         `ANPR exit completed. ${response.data.vehicle_registration} has physically exited the facility at ${formatDateTime(response.data.exit_time)}.`,
@@ -1072,6 +1619,16 @@ export default function ANPRSimulator() {
     setOcrProgress(null);
     setOcrStatus("Ready for plate capture");
     setImageQuality(null);
+
+    setPaymentPanelOpen(false);
+    setQuote(null);
+    setRegisteredDriver(null);
+    setMpesaTarget("OTHER");
+    setAlternativeMpesaNumber("");
+    setExitPaymentMethod("MPESA");
+    setStkPayment(null);
+    setStkPolling(false);
+
     autoCreateArmedRef.current = false;
     clearCaptureTimer();
     clearAutoCreateTimer();
@@ -1097,7 +1654,21 @@ export default function ANPRSimulator() {
     clearAutoCreateTimer();
     setError(null);
     setSuccess(null);
+    setPaymentPanelOpen(false);
+    setQuote(null);
+    setRegisteredDriver(null);
+    setMpesaTarget("OTHER");
+    setAlternativeMpesaNumber("");
+    setExitPaymentMethod("MPESA");
+    setStkPayment(null);
+    setStkPolling(false);
   };
+
+  const exitNeedsOperatorPayment =
+    exitSession !== null && isUnsettledActiveSession(exitSession);
+
+  const exitPaymentCompleted =
+    exitSession !== null && isCompletedAwaitingExit(exitSession);
 
   const isEntry = operation === "ENTRY";
 
@@ -1133,9 +1704,8 @@ export default function ANPRSimulator() {
             <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">
               Hold a printed vehicle registration in front of the camera.
               SmartPark captures it after a five-second countdown, sends the
-              image to the backend PaddleOCR engine for validated recognition,
-              and automatically routes the result into the correct parking
-              workflow.
+              image to the backend engine for processing, and automatically
+              admits or checks out the vehicle.
             </p>
           </div>
 
@@ -1684,9 +2254,7 @@ export default function ANPRSimulator() {
                         className="mt-0.5 shrink-0 text-blue-600"
                       />
                       <div className="min-w-0 text-xs leading-5 text-blue-800">
-                        <p className="font-black">
-                          What will be sent to SmartPark
-                        </p>
+                        <p className="font-black">Parking Details | Summary</p>
                         <p className="mt-1">
                           Registration{" "}
                           <strong>{detectedPlate?.registration ?? "—"}</strong>
@@ -1846,6 +2414,7 @@ export default function ANPRSimulator() {
                       <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
                         Located Session
                       </p>
+
                       <p className="mt-1 text-lg font-black text-slate-900">
                         {exitSession.session_number}
                       </p>
@@ -1853,7 +2422,7 @@ export default function ANPRSimulator() {
 
                     <span
                       className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
-                        isCompletedAwaitingExit(exitSession)
+                        exitPaymentCompleted
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-amber-100 text-amber-700"
                       }`}
@@ -1867,6 +2436,7 @@ export default function ANPRSimulator() {
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         Vehicle
                       </p>
+
                       <p className="mt-1 text-sm font-black text-slate-800">
                         {exitSession.vehicle_registration}
                       </p>
@@ -1876,37 +2446,329 @@ export default function ANPRSimulator() {
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         Entry
                       </p>
+
                       <p className="mt-1 text-sm font-black text-slate-800">
                         {formatDateTime(exitSession.entry_time)}
                       </p>
                     </div>
                   </div>
 
-                  {!isCompletedAwaitingExit(exitSession) && (
-                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs leading-5 text-amber-800">
-                      <Clock3 size={15} className="mt-0.5 shrink-0" />
+                  {exitPaymentCompleted && (
+                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs leading-5 text-emerald-800">
+                      <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
+
                       <span>
-                        Payment must be settled first. The ANPR simulator does
-                        not bypass the payment workflow.
+                        Payment is settled. The vehicle is cleared for physical
+                        ANPR exit.
                       </span>
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => void handlePhysicalExit()}
-                    disabled={
-                      !isCompletedAwaitingExit(exitSession) || submitting
-                    }
-                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {submitting ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <ArrowUpFromLine size={16} />
-                    )}
-                    Record ANPR Physical Exit
-                  </button>
+                  {exitNeedsOperatorPayment && (
+                    <>
+                      <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs leading-5 text-amber-800">
+                        <Clock3 size={15} className="mt-0.5 shrink-0" />
+
+                        <span>
+                          This session is still ACTIVE and has not been settled.
+                          The operator can initiate payment without bypassing
+                          the normal payment workflow.
+                        </span>
+                      </div>
+
+                      {!paymentPanelOpen && (
+                        <button
+                          type="button"
+                          onClick={() => void openOperatorPayment()}
+                          disabled={submitting}
+                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <CreditCardIconFallback />
+                          Initiate Payment
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {paymentPanelOpen && exitNeedsOperatorPayment && (
+                    <div className="mt-3 rounded-xl border border-emerald-200 bg-white p-3">
+                      <div className="flex items-start gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-600">
+                          <Smartphone size={17} />
+                        </span>
+
+                        <div>
+                          <p className="text-sm font-black text-slate-900">
+                            Settle Parking Payment
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            The current bill is calculated by the backend. The
+                            operator cannot edit the amount.
+                          </p>
+                        </div>
+                      </div>
+
+                      {quoting ? (
+                        <div className="mt-4 flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-xs font-bold text-slate-600">
+                          <Loader2 size={15} className="animate-spin" />
+                          Calculating current parking charge...
+                        </div>
+                      ) : quote ? (
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                Current Parking Charge
+                              </p>
+
+                              <p className="mt-1 text-2xl font-black text-slate-950">
+                                {formatMoney(quote.total_amount)}
+                              </p>
+                            </div>
+
+                            <div className="text-right">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                Tariff
+                              </p>
+
+                              <p className="mt-1 text-xs font-black text-slate-700">
+                                {quote.tariff_name}
+                              </p>
+
+                              <p className="mt-1 text-[10px] text-slate-500">
+                                {quote.billable_minutes} billable min
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className="mt-4 flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                        <button
+                          type="button"
+                          onClick={() => setExitPaymentMethod("MPESA")}
+                          disabled={stkInitiating || cashProcessing}
+                          className={`flex-1 rounded-md px-3 py-2 text-xs font-black transition ${
+                            exitPaymentMethod === "MPESA"
+                              ? "bg-emerald-600 text-white shadow-sm"
+                              : "text-slate-600 hover:bg-white"
+                          }`}
+                        >
+                          M-Pesa STK
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setExitPaymentMethod("CASH")}
+                          disabled={stkInitiating || cashProcessing}
+                          className={`flex-1 rounded-md px-3 py-2 text-xs font-black transition ${
+                            exitPaymentMethod === "CASH"
+                              ? "bg-emerald-600 text-white shadow-sm"
+                              : "text-slate-600 hover:bg-white"
+                          }`}
+                        >
+                          Cash
+                        </button>
+                      </div>
+
+                      {exitPaymentMethod === "MPESA" && quote && (
+                        <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+                          <div className="flex items-start gap-2">
+                            <Smartphone
+                              size={16}
+                              className="mt-0.5 shrink-0 text-emerald-600"
+                            />
+
+                            <div>
+                              <p className="text-xs font-black text-slate-900">
+                                M-Pesa STK Push
+                              </p>
+
+                              <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                                The driver will receive the payment prompt and
+                                enters their M-Pesa PIN on their own phone.
+                              </p>
+                            </div>
+                          </div>
+
+                          {registeredDriver?.available ? (
+                            <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                                    Registered driver
+                                  </p>
+
+                                  <p className="mt-1 text-sm font-black text-slate-900">
+                                    {registeredDriver.name ??
+                                      "Registered customer"}
+                                  </p>
+
+                                  <p className="mt-0.5 text-xs font-semibold text-slate-600">
+                                    {registeredDriver.mobileMasked ??
+                                      "Registered M-Pesa number"}
+                                  </p>
+                                </div>
+
+                                <CheckCircle2
+                                  size={19}
+                                  className="text-emerald-600"
+                                />
+                              </div>
+
+                              <label className="mt-3 flex items-center gap-2 text-xs font-bold text-slate-700">
+                                <input
+                                  type="radio"
+                                  name="anpr-mpesa-target"
+                                  checked={mpesaTarget === "REGISTERED"}
+                                  onChange={() => setMpesaTarget("REGISTERED")}
+                                />
+                                Send to registered driver number
+                              </label>
+                            </div>
+                          ) : null}
+
+                          <label className="mt-3 flex items-center gap-2 text-xs font-bold text-slate-700">
+                            <input
+                              type="radio"
+                              name="anpr-mpesa-target"
+                              checked={mpesaTarget === "OTHER"}
+                              onChange={() => setMpesaTarget("OTHER")}
+                            />
+                            Use another Safaricom number
+                          </label>
+
+                          {mpesaTarget === "OTHER" && (
+                            <input
+                              type="tel"
+                              value={alternativeMpesaNumber}
+                              onChange={(event) =>
+                                setAlternativeMpesaNumber(event.target.value)
+                              }
+                              placeholder="0712 345 678"
+                              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
+                            />
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => void initiateOperatorMpesaPayment()}
+                            disabled={
+                              stkInitiating ||
+                              cashProcessing ||
+                              quoting ||
+                              !quote
+                            }
+                            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {stkInitiating ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <Send size={16} />
+                            )}
+
+                            {stkInitiating
+                              ? "Sending STK Push..."
+                              : `Send STK Push · ${formatMoney(
+                                  quote.total_amount,
+                                )}`}
+                          </button>
+
+                          {stkPayment && (
+                            <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                              <p className="text-[10px] font-black uppercase tracking-wider text-blue-700">
+                                Payment Status
+                              </p>
+
+                              <p className="mt-1 text-sm font-black text-blue-950">
+                                {String(stkPayment.status).toUpperCase()}
+                              </p>
+
+                              <p className="mt-1 text-[11px] leading-5 text-blue-800">
+                                {stkPolling
+                                  ? "Waiting for the driver's M-Pesa response..."
+                                  : stkPayment.message}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {exitPaymentMethod === "CASH" && quote && (
+                        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                          <div className="flex items-start gap-2">
+                            <Banknote
+                              size={17}
+                              className="mt-0.5 shrink-0 text-emerald-700"
+                            />
+
+                            <div>
+                              <p className="text-sm font-black text-emerald-900">
+                                Record Cash Payment
+                              </p>
+
+                              <p className="mt-1 text-xs leading-5 text-emerald-800">
+                                Confirm that the driver has paid the current
+                                parking charge in cash. SmartPark will record
+                                the authoritative amount and complete the
+                                payment workflow.
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => void recordOperatorCashPayment()}
+                            disabled={
+                              cashProcessing ||
+                              stkInitiating ||
+                              quoting ||
+                              !quote
+                            }
+                            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {cashProcessing ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <Banknote size={16} />
+                            )}
+
+                            {cashProcessing
+                              ? "Recording Cash Payment..."
+                              : `Record Cash Payment · ${formatMoney(
+                                  quote.total_amount,
+                                )}`}
+                          </button>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentPanelOpen(false)}
+                        disabled={stkInitiating || cashProcessing}
+                        className="mt-3 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        Cancel Payment
+                      </button>
+                    </div>
+                  )}
+
+                  {exitPaymentCompleted && (
+                    <button
+                      type="button"
+                      onClick={() => void handlePhysicalExit()}
+                      disabled={submitting}
+                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {submitting ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <ArrowUpFromLine size={16} />
+                      )}
+                      Record ANPR Physical Exit
+                    </button>
+                  )}
                 </div>
               )}
             </div>

@@ -1512,7 +1512,7 @@ export default function ManualEntryExit() {
                       </span>
                       <div>
                         <p className="font-extrabold text-slate-900">
-                          Operator payment
+                          Operator-Initiated Payment
                         </p>
                         <p className="mt-1 text-xs leading-5 text-slate-500">
                           The parking charge is calculated by the backend from
@@ -1535,7 +1535,7 @@ export default function ManualEntryExit() {
                         <div className="flex items-center gap-2">
                           <Smartphone size={16} className="text-emerald-600" />
                           <p className="text-sm font-extrabold text-slate-900">
-                            M-Pesa
+                            Lipa Na M-PESA
                           </p>
                         </div>
                         <p className="mt-1 text-xs text-slate-500">
@@ -1586,7 +1586,7 @@ export default function ManualEntryExit() {
                                 }`}
                               >
                                 <p className="text-sm font-extrabold text-slate-900">
-                                  Registered driver
+                                  Registered M-PESA Number
                                 </p>
                                 <p className="mt-1 text-xs text-slate-500">
                                   {registeredDriver.name
@@ -1611,10 +1611,10 @@ export default function ManualEntryExit() {
                               }`}
                             >
                               <p className="text-sm font-extrabold text-slate-900">
-                                Enter M-Pesa Number
+                                Other M-PESA Number
                               </p>
                               <p className="mt-1 text-xs text-slate-500">
-                                Send the request to the Safaricom number
+                                Send the request to other M-Pesa number
                                 supplied by the driver.
                               </p>
                             </button>
@@ -1624,7 +1624,7 @@ export default function ManualEntryExit() {
                         {mpesaTarget === "OTHER" &&
                           registeredDriver !== null && (
                             <div className="mt-4">
-                              <Field label="Safaricom mobile number" required>
+                              <Field label="Enter M-PESA Number" required>
                                 <input
                                   value={alternativeMpesaNumber}
                                   onChange={(event) =>
