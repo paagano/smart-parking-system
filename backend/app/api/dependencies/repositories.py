@@ -66,6 +66,10 @@ from app.repositories.revoked_token_repository import (
     RevokedTokenRepository,
 )
 
+from app.repositories.rfid_tag_repository import (
+    RFIDTagRepository,
+)
+
 
 # ==========================================================
 # Database Dependency
@@ -258,6 +262,23 @@ def get_revoked_token_repository(
 
 
 # ==========================================================
+# RFID Tag Repository
+# ==========================================================
+
+
+def get_rfid_tag_repository(
+    db: DbSession,
+) -> RFIDTagRepository:
+    """
+    Return an RFIDTagRepository instance.
+    """
+
+    return RFIDTagRepository(
+        db=db,
+    )
+
+
+# ==========================================================
 # Dependency Aliases
 # ==========================================================
 
@@ -330,4 +351,10 @@ NotificationRepositoryDep = Annotated[
 RevokedTokenRepositoryDep = Annotated[
     RevokedTokenRepository,
     Depends(get_revoked_token_repository),
+]
+
+
+RFIDTagRepositoryDep = Annotated[
+    RFIDTagRepository,
+    Depends(get_rfid_tag_repository),
 ]

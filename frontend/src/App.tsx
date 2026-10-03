@@ -62,6 +62,7 @@ import OccupancyStatistics from "./pages/operator/Occupancy/OccupancyStatistics"
 import OperatorModulePlaceholder from "./pages/operator/OperatorModulePlaceholder";
 import ManualEntryExit from "./pages/operator/Access/ManualEntryExit";
 import ANPRSimulator from "./pages/operator/Access/ANPRSimulator";
+import RFIDSimulator from "./pages/operator/Access/RFIDSimulator";
 
 // ==========================================================
 // ADMIN
@@ -525,6 +526,15 @@ function AuthenticatedApplication() {
           element={
             <RoleRoute allowedRoles={["operator"]}>
               <ANPRSimulator />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/operator/access/rfid"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <RFIDSimulator />
             </RoleRoute>
           }
         />

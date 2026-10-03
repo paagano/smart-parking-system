@@ -240,6 +240,8 @@ class ParkingSessionResponse(BaseModel):
 
     parking_bay_id: int
 
+    reservation_id: Optional[int] = None
+
     customer_id: Optional[int] = None
 
     vehicle_id: Optional[int] = None

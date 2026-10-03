@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.parking_reservation import ParkingReservation
     from app.models.parking_session import ParkingSession
+    from app.models.rfid_tag import RFIDTag
 
 from sqlalchemy import (
     Boolean,
@@ -158,6 +159,12 @@ class Vehicle(BaseModel):
         back_populates="vehicle",
     )
 
+    rfid_tag: Mapped["RFIDTag | None"] = relationship(
+        "RFIDTag",
+        back_populates="vehicle",
+        uselist=False,
+    )
+
     # parking_sessions: Mapped[list["ParkingSession"]] = relationship(
     #     "ParkingSession",
     #     back_populates="vehicle",
@@ -176,3 +183,4 @@ class Vehicle(BaseModel):
             f"registration_number='{self.registration_number}', "
             f"customer_id={self.customer_id})"
         )
+

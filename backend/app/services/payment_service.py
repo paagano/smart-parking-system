@@ -804,16 +804,22 @@ class PaymentService:
             # Wallet payment.
             #
             if payment.payment_method == PaymentMethod.WALLET:
-                wallet = await self._get_customer_wallet(payment.customer_id)
+                # A KES 0.00 RFID checkout is a valid grace-period
+                # payment. There is nothing to debit from the wallet
+                # when the authoritative parking charge is zero.
+                if payment.total_amount > Decimal("0.00"):
+                    wallet = await self._get_customer_wallet(
+                        payment.customer_id
+                    )
 
-                await self.wallet_service.debit_wallet(
-                    wallet_id=wallet.id,
-                    amount=payment.total_amount,
-                    payment_transaction_id=payment_transaction.id,
-                    created_by=payment.customer_id,
-                    reference=payment_transaction.transaction_number,
-                    description="Parking session payment",
-                )
+                    await self.wallet_service.debit_wallet(
+                        wallet_id=wallet.id,
+                        amount=payment.total_amount,
+                        payment_transaction_id=payment_transaction.id,
+                        created_by=payment.customer_id,
+                        reference=payment_transaction.transaction_number,
+                        description="Parking session payment",
+                    )
 
             #
             # ======================================================
@@ -956,6 +962,121 @@ class PaymentService:
         except Exception:
             await self.repository.rollback()
             raise
+
+    # ==========================================================
+    # RFID Wallet Checkout
+    # ==========================================================
+
+    async def get_rfid_wallet_checkout_quote(
+        self,
+        *,
+        parking_session_id: int,
+        customer_id: int,
+    ) -> dict:
+        """
+        Calculate the authoritative current parking charge and retrieve
+        the customer's current wallet balance for an RFID checkout.
+
+        No payment is created or committed by this method.
+        """
+        parking_session = await self.session_repository.get_by_id(
+            parking_session_id,
+        )
+
+        if parking_session is None:
+            raise ValueError("Parking session not found.")
+
+        if parking_session.customer_id != customer_id:
+            raise ValueError(
+                "Customer does not own this parking session."
+            )
+
+        if parking_session.status != SessionStatus.ACTIVE:
+            raise ValueError(
+                "Only ACTIVE parking sessions can be checked out using RFID."
+            )
+
+        if parking_session.is_paid:
+            raise ValueError("Parking session has already been paid.")
+
+        pricing_result = await self.pricing_service.calculate_for_session(
+            vehicle_type=parking_session.vehicle_type,
+            billing_type=parking_session.billing_type,
+            entry_time=parking_session.entry_time,
+            exit_time=datetime.now(timezone.utc),
+        )
+
+        current_bill = pricing_result.total_amount.quantize(
+            Decimal("0.01"),
+        )
+
+        wallet = await self._get_customer_wallet(customer_id)
+        wallet_balance = wallet.available_balance.quantize(
+            Decimal("0.01"),
+        )
+
+        return {
+            "parking_session_id": parking_session.id,
+            "vehicle_id": parking_session.vehicle_id,
+            "customer_id": parking_session.customer_id,
+            "current_bill": current_bill,
+            "wallet_balance": wallet_balance,
+            "wallet_sufficient": wallet_balance >= current_bill,
+        }
+
+    async def process_rfid_wallet_payment(
+        self,
+        *,
+        parking_session_id: int,
+        customer_id: int,
+    ) -> PaymentTransaction:
+        """
+        Automatically settle an RFID parking checkout using the
+        registered customer's wallet.
+
+        This method deliberately reuses the existing parking-session
+        payment workflow so wallet debiting, payment transaction
+        creation, session payment status, receipts, notifications and
+        loyalty processing remain governed by the existing PaymentService.
+
+        The current parking charge is calculated by the backend. No
+        amount supplied by the frontend is accepted.
+        """
+        quote = await self.get_rfid_wallet_checkout_quote(
+            parking_session_id=parking_session_id,
+            customer_id=customer_id,
+        )
+
+        current_bill = quote["current_bill"]
+        wallet_balance = quote["wallet_balance"]
+
+        # A zero current bill is valid when the parking session is
+        # still within the configured grace period. In that case,
+        # process_session_payment() creates a successful KES 0.00
+        # parking payment and completes the session so the vehicle
+        # can proceed to physical RFID exit.
+
+        if wallet_balance < current_bill:
+            raise ValueError(
+                "Insufficient wallet balance."
+            )
+
+        payment = SessionPaymentCreate(
+            parking_session_id=parking_session_id,
+            customer_id=customer_id,
+            payment_method=PaymentMethod.WALLET,
+            payment_provider=PaymentProvider.INTERNAL,
+            payment_purpose=PaymentPurpose.PARKING_SESSION,
+            payment_type=PaymentType.PAYMENT,
+            currency=Currency.KES,
+            subtotal_amount=current_bill,
+            discount_amount=Decimal("0.00"),
+            tax_amount=Decimal("0.00"),
+            total_amount=current_bill,
+            notes="RFID automatic wallet checkout payment",
+        )
+
+        return await self.process_session_payment(payment)
 
     # ==========================================================
     # Reservation Payments

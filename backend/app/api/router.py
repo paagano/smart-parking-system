@@ -84,6 +84,10 @@ from app.api.endpoints.forecasts import (
     router as forecasts_router,
 )
 
+from app.api.endpoints.rfid_tags import (
+    router as rfid_tags_router,
+)
+
 
 router = APIRouter()
 
@@ -263,6 +267,14 @@ router.include_router(
 
 router.include_router(
     forecasts_router,
+)
+
+# ==========================================================
+# RFID Tags
+# ==========================================================
+
+router.include_router(
+    rfid_tags_router,
 )
 
 

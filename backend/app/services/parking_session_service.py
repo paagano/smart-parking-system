@@ -621,6 +621,7 @@ class ParkingSessionService:
         self,
         reservation: ParkingReservation,
         entry_method: EntryMethod = EntryMethod.QR_CODE,
+        parking_bay_id: int | None = None,
     ) -> ParkingSession:
         """
         Convert a reservation into an active parking session.
@@ -642,9 +643,37 @@ class ParkingSessionService:
             reservation.vehicle_registration,
         )
 
+        selected_parking_bay_id = (
+            parking_bay_id
+            if parking_bay_id is not None
+            else reservation.parking_bay_id
+        )
+
+        # A reservation normally uses its reserved bay. An operator may
+        # deliberately select another available bay at check-in when the
+        # customer requests a change. The selected bay must still exist,
+        # be active and be free.
+        parking_bay = await self.parking_bay_repository.get_by_id(
+            selected_parking_bay_id,
+        )
+
+        if parking_bay is None:
+            raise NotFoundException(
+                "Parking bay not found."
+            )
+
+        if not parking_bay.is_active:
+            raise BadRequestException(
+                "Parking bay is inactive."
+            )
+
+        await self._ensure_bay_available(
+            selected_parking_bay_id,
+        )
+
         parking_session = ParkingSession(
             session_number=self._generate_session_number(),
-            parking_bay_id=reservation.parking_bay_id,
+            parking_bay_id=selected_parking_bay_id,
             customer_id=reservation.customer_id,
             reservation_id=reservation.id,
             vehicle_registration=reservation.vehicle_registration,
@@ -666,15 +695,6 @@ class ParkingSessionService:
         # ==========================================================
         # Bay Becomes OCCUPIED
         # ==========================================================
-
-        parking_bay = await self.parking_bay_repository.get_by_id(
-            parking_session.parking_bay_id,
-        )
-
-        if parking_bay is None:
-            raise NotFoundException(
-                "Parking bay not found."
-            )
 
         await self.parking_bay_repository.mark_occupied(
             parking_bay,

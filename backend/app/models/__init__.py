@@ -12,6 +12,7 @@ from .receipt import Receipt
 from .wallet import Wallet
 from .wallet_transaction import WalletTransaction
 from .vehicle import Vehicle
+from .rfid_tag import RFIDTag
 
 # ==========================================================
 # Authentication / Security Models
@@ -45,6 +46,7 @@ __all__ = [
     "Wallet",
     "WalletTransaction",
     "Vehicle",
+    "RFIDTag",
     "RevokedToken",
     "LoyaltyAccount",
     "LoyaltyPointTransaction",

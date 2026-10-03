@@ -34,6 +34,7 @@ from app.api.dependencies.repositories import (
     RevokedTokenRepositoryDep,
     UserRepositoryDep,
     VehicleRepositoryDep,
+    RFIDTagRepositoryDep,
 )
 
 from app.api.dependencies.wallet import (
@@ -51,9 +52,11 @@ from app.services.ai.chat_service import (
 from app.services.ai.smartpark_ai_tools import (
     SmartParkAITools,
 )
+
 from app.ml.production.observation_repository import (
     OccupancyObservationRepository,
 )
+
 from app.ml.production.service import (
     ProductionForecastService,
 )
@@ -96,6 +99,10 @@ from app.api.dependencies.loyalty_reward import (
 
 from app.services.vehicle_service import (
     VehicleService,
+)
+
+from app.services.rfid_tag_service import (
+    RFIDTagService,
 )
 
 
@@ -184,6 +191,7 @@ def get_smartpark_ai_tools(
         loyalty_service=loyalty_service,
         loyalty_reward_service=loyalty_reward_service,
     )
+
 
 SmartParkAIToolsDep = Annotated[
     SmartParkAITools,
@@ -311,6 +319,7 @@ def get_parking_reservation_service(
         notification_service=notification_service,
     )
 
+
 # ==========================================================
 # Payment Service
 # ==========================================================
@@ -377,6 +386,25 @@ def get_vehicle_service(
 
 
 # ==========================================================
+# RFID Tag Service
+# ==========================================================
+
+
+def get_rfid_tag_service(
+    repository: RFIDTagRepositoryDep,
+    vehicle_repository: VehicleRepositoryDep,
+) -> RFIDTagService:
+    """
+    Return an RFIDTagService instance.
+    """
+
+    return RFIDTagService(
+        repository=repository,
+        vehicle_repository=vehicle_repository,
+    )
+
+
+# ==========================================================
 # Dependency Aliases
 # ==========================================================
 
@@ -426,4 +454,10 @@ PaymentServiceDep = Annotated[
 VehicleServiceDep = Annotated[
     VehicleService,
     Depends(get_vehicle_service),
+]
+
+
+RFIDTagServiceDep = Annotated[
+    RFIDTagService,
+    Depends(get_rfid_tag_service),
 ]

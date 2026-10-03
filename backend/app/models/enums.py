@@ -188,6 +188,27 @@ class SessionSource(str, Enum):
     def label(self):
         return self.value.replace("_", " ").title()
 
+# ==========================================================
+# QR Access
+# ==========================================================
+class QRAccessPurpose(str, Enum):
+    """
+    Identifies the operational purpose of a temporary QR access token.
+
+    ENTRY:
+        Used by a driver to initiate QR-based parking entry.
+
+    EXIT:
+        Used by a driver to initiate QR-based parking exit.
+    """
+
+    ENTRY = "ENTRY"
+    EXIT = "EXIT"
+
+    @property
+    def label(self) -> str:
+        return self.value.replace("_", " ").title()
+
 
 # ==========================================================
 # Reservations
