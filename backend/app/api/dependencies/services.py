@@ -35,6 +35,7 @@ from app.api.dependencies.repositories import (
     UserRepositoryDep,
     VehicleRepositoryDep,
     RFIDTagRepositoryDep,
+    QRAccessTokenRepositoryDep,
 )
 
 from app.api.dependencies.wallet import (
@@ -103,6 +104,10 @@ from app.services.vehicle_service import (
 
 from app.services.rfid_tag_service import (
     RFIDTagService,
+)
+
+from app.services.qr_access_token_service import (
+    QRAccessTokenService,
 )
 
 
@@ -403,6 +408,17 @@ def get_rfid_tag_service(
         vehicle_repository=vehicle_repository,
     )
 
+# ==========================================================
+# QR Access Token Service
+# ==========================================================
+
+def get_qr_access_token_service(
+    repository: QRAccessTokenRepositoryDep,
+) -> QRAccessTokenService:
+    return QRAccessTokenService(
+        repository=repository,
+    )
+
 
 # ==========================================================
 # Dependency Aliases
@@ -460,4 +476,10 @@ VehicleServiceDep = Annotated[
 RFIDTagServiceDep = Annotated[
     RFIDTagService,
     Depends(get_rfid_tag_service),
+]
+
+
+QRAccessTokenServiceDep = Annotated[
+    QRAccessTokenService,
+    Depends(get_qr_access_token_service),
 ]

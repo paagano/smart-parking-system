@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from app.models.parking_session import ParkingSession
     from app.models.parking_reservation import ParkingReservation
     from app.models.occupancy_observation import OccupancyObservation
+    from app.models.qr_access_token import QRAccessToken
 
 from datetime import time
 
@@ -142,6 +143,13 @@ class ParkingFacility(BaseModel):
         "User",
         foreign_keys="User.facility_id",
         back_populates="facility",
+    )
+
+    qr_access_tokens: Mapped[list["QRAccessToken"]] = relationship(
+        "QRAccessToken",
+        back_populates="facility",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     zones: Mapped[list["ParkingZone"]] = relationship(

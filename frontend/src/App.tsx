@@ -63,6 +63,7 @@ import OperatorModulePlaceholder from "./pages/operator/OperatorModulePlaceholde
 import ManualEntryExit from "./pages/operator/Access/ManualEntryExit";
 import ANPRSimulator from "./pages/operator/Access/ANPRSimulator";
 import RFIDSimulator from "./pages/operator/Access/RFIDSimulator";
+import QRAccess from "./pages/operator/Access/QRAccess";
 
 // ==========================================================
 // ADMIN
@@ -75,6 +76,7 @@ import AdminDashboard from "./pages/admin/Dashboard/AdminDashboard";
 // ==========================================================
 
 import Settings from "./pages/shared/Settings";
+import FacilityStatus from "./pages/operator/FacilityStatus";
 
 // ==========================================================
 // APPLICATION
@@ -539,6 +541,15 @@ function AuthenticatedApplication() {
           }
         />
 
+        <Route
+          path="/operator/access/qr"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <QRAccess />
+            </RoleRoute>
+          }
+        />
+
         {/* ==================================================
             OPERATOR — WORKSPACE MODULES
 
@@ -569,6 +580,15 @@ function AuthenticatedApplication() {
           element={
             <RoleRoute allowedRoles={["operator"]}>
               <OccupancyStatistics />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/operator/facility-status"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <FacilityStatus />
             </RoleRoute>
           }
         />

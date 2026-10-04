@@ -670,7 +670,7 @@ export default function OperatorDashboard() {
           Icon={ClipboardCheck}
         />
         <QuickAction
-          to="/operator/access"
+          to="/operator/access/manual"
           label="Check-in / check-out"
           Icon={ScanLine}
         />

@@ -29,6 +29,7 @@ from .loyalty_point_transaction import LoyaltyPointTransaction
 from .loyalty_reward import LoyaltyReward
 from .loyalty_reward_redemption import LoyaltyRewardRedemption
 from .loyalty_coupon import LoyaltyCoupon
+from app.models.qr_access_token import QRAccessToken
 
 
 __all__ = [
@@ -53,4 +54,5 @@ __all__ = [
     "LoyaltyReward",
     "LoyaltyRewardRedemption",
     "LoyaltyCoupon",
+    "QRAccessToken",
 ]

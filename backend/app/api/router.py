@@ -88,6 +88,10 @@ from app.api.endpoints.rfid_tags import (
     router as rfid_tags_router,
 )
 
+from app.api.endpoints.qr_access_tokens import (
+    router as qr_access_tokens_router,
+)
+
 
 router = APIRouter()
 
@@ -275,6 +279,14 @@ router.include_router(
 
 router.include_router(
     rfid_tags_router,
+)
+
+# ==========================================================
+# QR Access Tokens
+# ==========================================================
+
+router.include_router(
+    qr_access_tokens_router,
 )
 
 

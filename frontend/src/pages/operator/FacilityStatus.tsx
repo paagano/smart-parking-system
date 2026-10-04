@@ -68,7 +68,11 @@ function formatPercentage(value: number): string {
 }
 
 function isActiveSession(session: ParkingSession): boolean {
-  return String(session.status ?? "").trim().toUpperCase() === "ACTIVE";
+  return (
+    String(session.status ?? "")
+      .trim()
+      .toUpperCase() === "ACTIVE"
+  );
 }
 
 function StatusBadge({
@@ -78,7 +82,11 @@ function StatusBadge({
   active: boolean;
   checking?: boolean;
 }) {
-  const label = checking ? "Checking status…" : active ? "Operational" : "Inactive";
+  const label = checking
+    ? "Checking status…"
+    : active
+      ? "Operational"
+      : "Inactive";
 
   return (
     <span
@@ -213,10 +221,11 @@ export default function FacilityStatus() {
         );
         setLastUpdated(new Date());
       } catch (loadError) {
-        console.error("[FacilityStatus] Failed to load facility status:", loadError);
-        setError(
-          "Unable to load live facility status. Please try again.",
+        console.error(
+          "[FacilityStatus] Failed to load facility status:",
+          loadError,
         );
+        setError("Unable to load live facility status. Please try again.");
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -308,10 +317,7 @@ export default function FacilityStatus() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge
-            active={operationalState}
-            checking={loading}
-          />
+          <StatusBadge active={operationalState} checking={loading} />
 
           {lastUpdated && (
             <span className="text-xs font-medium text-slate-500">
@@ -326,10 +332,7 @@ export default function FacilityStatus() {
           disabled={loading || refreshing}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <RefreshCw
-            size={15}
-            className={refreshing ? "animate-spin" : ""}
-          />
+          <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
@@ -602,10 +605,9 @@ export default function FacilityStatus() {
                       className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${rate}%`,
-                        background:
-                          highUtilization
-                            ? "linear-gradient(90deg, #f59e0b, #ef4444)"
-                            : "linear-gradient(90deg, #10b981, #14b8a6)",
+                        background: highUtilization
+                          ? "linear-gradient(90deg, #f59e0b, #ef4444)"
+                          : "linear-gradient(90deg, #10b981, #14b8a6)",
                       }}
                     />
                   </div>

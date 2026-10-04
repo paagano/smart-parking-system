@@ -70,6 +70,10 @@ from app.repositories.rfid_tag_repository import (
     RFIDTagRepository,
 )
 
+from app.repositories.qr_access_token_repository import (
+    QRAccessTokenRepository,
+)
+
 
 # ==========================================================
 # Database Dependency
@@ -277,6 +281,17 @@ def get_rfid_tag_repository(
         db=db,
     )
 
+# ==========================================================
+# QR Access Token Repository
+# ==========================================================
+
+def get_qr_access_token_repository(
+    db: DbSession,
+) -> QRAccessTokenRepository:
+    return QRAccessTokenRepository(
+        db=db,
+    )
+
 
 # ==========================================================
 # Dependency Aliases
@@ -357,4 +372,9 @@ RevokedTokenRepositoryDep = Annotated[
 RFIDTagRepositoryDep = Annotated[
     RFIDTagRepository,
     Depends(get_rfid_tag_repository),
+]
+
+QRAccessTokenRepositoryDep = Annotated[
+    QRAccessTokenRepository,
+    Depends(get_qr_access_token_repository),
 ]

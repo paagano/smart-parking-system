@@ -861,6 +861,121 @@ export const parkingReservationsApi = {
 };
 
 // ==========================================================
+// QR Access API
+// ==========================================================
+
+export type QRAccessPurpose = "ENTRY" | "EXIT";
+
+export interface QRAccessTokenCreateRequest {
+  purpose: QRAccessPurpose;
+  expires_in_seconds: number;
+}
+
+export interface QRAccessTokenResponse {
+  id: number;
+  facility_id: number;
+  purpose: QRAccessPurpose;
+  expires_at: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QRAccessTokenDisplayResponse extends QRAccessTokenResponse {
+  raw_token: string;
+  qr_url: string;
+}
+
+export const qrAccessApi = {
+  /**
+   * Generate a temporary QR access token.
+   *
+   * Backend:
+   *
+   * POST /qr-access/tokens
+   *
+   * The raw token is returned only when the token is created.
+   */
+  createToken: async (
+    purpose: QRAccessPurpose,
+    expiresInSeconds = 300,
+  ): Promise<QRAccessTokenDisplayResponse> => {
+    const payload: QRAccessTokenCreateRequest = {
+      purpose,
+      expires_in_seconds: expiresInSeconds,
+    };
+
+    const response = await api.post<QRAccessTokenDisplayResponse>(
+      "/qr-access/tokens",
+      payload,
+    );
+
+    return response.data;
+  },
+
+  /**
+   * Retrieve all QR access tokens belonging to
+   * the authenticated operator's facility.
+   *
+   * Backend:
+   *
+   * GET /qr-access/tokens
+   */
+  list: async (): Promise<QRAccessTokenResponse[]> => {
+    const response =
+      await api.get<QRAccessTokenResponse[]>("/qr-access/tokens");
+
+    return response.data;
+  },
+
+  /**
+   * Retrieve active QR access tokens belonging to
+   * the authenticated operator's facility.
+   *
+   * Backend:
+   *
+   * GET /qr-access/tokens/active
+   */
+  active: async (): Promise<QRAccessTokenResponse[]> => {
+    const response = await api.get<QRAccessTokenResponse[]>(
+      "/qr-access/tokens/active",
+    );
+
+    return response.data;
+  },
+
+  /**
+   * Deactivate a QR access token.
+   *
+   * Backend:
+   *
+   * PATCH /qr-access/tokens/{token_id}/deactivate
+   */
+  deactivate: async (tokenId: number): Promise<QRAccessTokenResponse> => {
+    const response = await api.patch<QRAccessTokenResponse>(
+      `/qr-access/tokens/${tokenId}/deactivate`,
+    );
+
+    return response.data;
+  },
+
+  /**
+   * Reactivate a QR access token.
+   *
+   * Backend:
+   *
+   * PATCH /qr-access/tokens/{token_id}/activate
+   */
+  activate: async (tokenId: number): Promise<QRAccessTokenResponse> => {
+    const response = await api.patch<QRAccessTokenResponse>(
+      `/qr-access/tokens/${tokenId}/activate`,
+    );
+
+    return response.data;
+  },
+};
+
+// ==========================================================
 // API Utility Helpers
 // ==========================================================
 
