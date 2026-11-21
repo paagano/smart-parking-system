@@ -172,7 +172,7 @@ export default function Login() {
             setCopiedValue(null);
             markModalActivity();
           }}
-          className="rounded-xl border border-emerald-300/40 bg-[#0b2942] px-4 py-2.5 text-xs font-bold text-emerald-300 shadow-lg transition hover:border-emerald-300 hover:bg-[#103651] sm:text-sm"
+          className="motion-safe:animate-pulse rounded-xl border border-emerald-300/40 bg-[#0b2942] px-4 py-2.5 text-xs font-bold text-emerald-300 shadow-lg transition hover:border-emerald-300 hover:bg-[#103651] sm:text-sm"
         >
           Click here to get sample login credentials
         </button>
@@ -498,7 +498,7 @@ export default function Login() {
                           <button
                             type="button"
                             onClick={() => useSampleCredentials(credential)}
-                            className="whitespace-nowrap rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                            className="motion-safe:animate-pulse whitespace-nowrap rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-100"
                           >
                             Click to Auto-Fill Login Form
                           </button>
