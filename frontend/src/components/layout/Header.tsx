@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthContext";
-import type { Role } from "../../auth/Role";
+import type { Role } from "../../auth/role";
 
 type HeaderProps = {
   role: Role;

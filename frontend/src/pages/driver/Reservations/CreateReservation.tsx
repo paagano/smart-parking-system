@@ -1646,7 +1646,7 @@ export default function CreateReservation() {
 
                               <div>
                                 <p className="font-semibold">
-                                  {space.space_number}
+                                  {space.bay_number}
                                 </p>
                                 <p className="text-xs text-slate-500">
                                   {space.code} · Available
@@ -1952,7 +1952,7 @@ export default function CreateReservation() {
                 <ReviewRow
                   icon={<MapPin size={18} />}
                   label="Parking space"
-                  value={selectedBay?.space_number ?? "Not selected"}
+                  value={selectedBay?.bay_number ?? "Not selected"}
                 />
 
                 <ReviewRow
@@ -2427,7 +2427,7 @@ export default function CreateReservation() {
 
             <SummaryItem
               label="Parking space"
-              value={selectedBay?.space_number ?? "Not selected"}
+              value={selectedBay?.bay_number ?? "Not selected"}
             />
 
             <SummaryItem

@@ -4,7 +4,7 @@ import type React from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import { useAuth } from "../../auth/AuthContext";
-import type { Role } from "../../auth/Role";
+import type { Role } from "../../auth/role";
 import { api } from "../../api";
 
 import Sidebar from "./Sidebar";

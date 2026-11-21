@@ -16,8 +16,8 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { api } from "../../api";
-import { useAuth } from "../../auth/AuthContext";
+import { api } from "../../../api";
+import { useAuth } from "../../../auth/AuthContext";
 import { useNavigate } from "react-router";
 
 // ==========================================================

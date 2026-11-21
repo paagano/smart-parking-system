@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuth } from "./AuthContext";
-import { normalizeRole, type Role } from "./Role";
+import { normalizeRole, type Role } from "./role";
 
 // ==========================================================
 // Frontend Roles

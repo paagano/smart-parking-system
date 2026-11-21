@@ -7,6 +7,7 @@ import { api } from "../client";
 export interface ParkingSession {
   id: number;
   parking_bay_id: number;
+  reservation_id?: number | null;
   customer_id: number | null;
   vehicle_id: number | null;
   vehicle_registration: string;
@@ -73,6 +74,13 @@ export const parkingSessionsApi = {
   active: async (): Promise<ParkingSessionListResponse> => {
     const response =
       await api.get<ParkingSessionListResponse>("/parking-sessions");
+    return response.data;
+  },
+
+  completed: async (): Promise<ParkingSessionListResponse> => {
+    const response = await api.get<ParkingSessionListResponse>(
+      "/parking-sessions/completed",
+    );
     return response.data;
   },
 
