@@ -517,7 +517,6 @@ function OperatorNavigationGroups({
       items: [
         ["Approve Reservations", "/operator/reservations", ClipboardCheck],
         ["Today's Arrivals", "/operator/reservations/arrivals", CalendarPlus],
-        ["Reservation History", "/operator/reservations/history", History],
       ],
     },
     {

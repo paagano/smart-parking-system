@@ -13,7 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../../auth/AuthContext";
 import {
   parkingBaysApi,
   parkingFacilitiesApi,
@@ -23,8 +23,8 @@ import {
   type ParkingFacility,
   type ParkingSession,
   type ParkingZone,
-} from "../../api";
-import Page, { Card, Metric } from "../../components/common/Page";
+} from "../../../api";
+import Page, { Card, Metric } from "../../../components/common/Page";
 
 function formatTime(value: string | null | undefined): string {
   if (!value) return "—";

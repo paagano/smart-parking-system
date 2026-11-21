@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     DATABASE_NAME: str
     DATABASE_USER: str
     DATABASE_PASSWORD: str
+    DATABASE_SSL: bool = False # Set to True for production databases
 
     # ==========================================================
     # Test Database
@@ -56,6 +57,7 @@ class Settings(BaseSettings):
     TEST_DATABASE_NAME: str
     TEST_DATABASE_USER: str
     TEST_DATABASE_PASSWORD: str
+    
 
     # ==========================================================
     # CORS
@@ -150,14 +152,11 @@ class Settings(BaseSettings):
         """
         Async SQLAlchemy database URL.
 
-        Used by:
-            - FastAPI
-            - Async SQLAlchemy
-            - Repositories
-            - Services
+        Used by FastAPI, async SQLAlchemy, repositories and services.
+        SSL is enabled for production databases when DATABASE_SSL=True.
         """
 
-        return (
+        url = (
             f"postgresql+asyncpg://"
             f"{self.DATABASE_USER}:"
             f"{self.DATABASE_PASSWORD}@"
@@ -166,16 +165,21 @@ class Settings(BaseSettings):
             f"{self.DATABASE_NAME}"
         )
 
+        if self.DATABASE_SSL:
+            url += "?ssl=require"
+
+        return url
+
     @property
     def SYNC_DATABASE_URL(self) -> str:
         """
         Synchronous SQLAlchemy database URL.
 
-        Used by:
-            - Alembic migrations
+        Used by Alembic migrations.
+        SSL is enabled for production databases when DATABASE_SSL=True.
         """
 
-        return (
+        url = (
             f"postgresql+psycopg2://"
             f"{self.DATABASE_USER}:"
             f"{self.DATABASE_PASSWORD}@"
@@ -183,6 +187,11 @@ class Settings(BaseSettings):
             f"{self.DATABASE_PORT}/"
             f"{self.DATABASE_NAME}"
         )
+
+        if self.DATABASE_SSL:
+            url += "?sslmode=require"
+
+        return url
 
     # ==========================================================
     # Test Database URLs

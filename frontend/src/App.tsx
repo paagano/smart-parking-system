@@ -55,6 +55,8 @@ import Profile from "./pages/driver/Profile/Profile";
 // ==========================================================
 
 import OperatorDashboard from "./pages/operator/Dashboard/OperatorDashboard";
+import ApproveReservations from "./pages/operator/Reservations/ApproveReservations";
+import TodaysArrivals from "./pages/operator/Reservations/TodaysArrivals";
 import Facilities from "./pages/operator/Facilities/Facilities";
 import LiveSlotMap from "./pages/operator/Occupancy/LiveSlotMap";
 import LiveOccupancy from "./pages/operator/Occupancy/LiveOccupancy";
@@ -64,6 +66,7 @@ import ManualEntryExit from "./pages/operator/Access/ManualEntryExit";
 import ANPRSimulator from "./pages/operator/Access/ANPRSimulator";
 import RFIDSimulator from "./pages/operator/Access/RFIDSimulator";
 import QRAccess from "./pages/operator/Access/QRAccess";
+
 
 // ==========================================================
 // ADMIN
@@ -76,7 +79,7 @@ import AdminDashboard from "./pages/admin/Dashboard/AdminDashboard";
 // ==========================================================
 
 import Settings from "./pages/shared/Settings";
-import FacilityStatus from "./pages/operator/FacilityStatus";
+import FacilityStatus from "./pages/operator/Occupancy/FacilityStatus";
 
 // ==========================================================
 // APPLICATION
@@ -493,6 +496,28 @@ function AuthenticatedApplication() {
           element={
             <RoleRoute allowedRoles={["operator"]}>
               <OperatorDashboard />
+            </RoleRoute>
+          }
+        />
+
+        {/* ==================================================
+            OPERATOR — RESERVATIONS
+        ================================================== */}
+
+        <Route
+          path="/operator/reservations"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <ApproveReservations />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/operator/reservations/arrivals"
+          element={
+            <RoleRoute allowedRoles={["operator"]}>
+              <TodaysArrivals />
             </RoleRoute>
           }
         />
