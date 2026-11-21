@@ -1,18 +1,39 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Link, useNavigate } from "react-router";
 
 import {
   ArrowRight,
   CarFront,
+  Check,
+  Copy,
   LockKeyhole,
   Mail,
   ParkingCircle,
+  X,
 } from "lucide-react";
 
 import { useAuth } from "./AuthContext";
 
 import { getDefaultRoute } from "./role";
+
+const SAMPLE_CREDENTIALS = [
+  {
+    role: "Driver",
+    username: "jack.wallet@test.com",
+    password: "Password@123",
+  },
+  {
+    role: "Parking Attendant",
+    username: "rhungu@test.com",
+    password: "Password@123",
+  },
+  {
+    role: "Administrator",
+    username: "agano@test.com",
+    password: "Password@123",
+  },
+];
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,6 +47,56 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
+  const [credentialsOpen, setCredentialsOpen] = useState(false);
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const [modalActivity, setModalActivity] = useState(0);
+
+  useEffect(() => {
+    if (!credentialsOpen) return;
+    const timeout = window.setTimeout(() => {
+      setCredentialsOpen(false);
+      setCopiedValue(null);
+    }, 10_000);
+    return () => window.clearTimeout(timeout);
+  }, [credentialsOpen, modalActivity]);
+
+  useEffect(() => {
+    if (!credentialsOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setCredentialsOpen(false);
+        setCopiedValue(null);
+      } else {
+        setModalActivity((activity) => activity + 1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [credentialsOpen]);
+
+  const markModalActivity = () => {
+    setModalActivity((activity) => activity + 1);
+  };
+
+  const copyCredential = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedValue(value);
+      markModalActivity();
+    } catch {
+      setCopiedValue(null);
+    }
+  };
+
+  const useSampleCredentials = (
+    credential: (typeof SAMPLE_CREDENTIALS)[number],
+  ) => {
+    setEmail(credential.username);
+    setPassword(credential.password);
+    setError(null);
+    setCredentialsOpen(false);
+    setCopiedValue(null);
+  };
 
   // ======================================================
   // Submit
@@ -92,7 +163,20 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#071a2d] p-4 sm:p-6 lg:p-8 grid place-items-center">
+    <div className="relative min-h-screen bg-[#071a2d] p-4 sm:p-6 lg:p-8 grid place-items-center">
+      <div className="absolute left-1/2 top-6 z-10 flex w-full max-w-6xl -translate-x-1/2 justify-end px-4 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          onClick={() => {
+            setCredentialsOpen(true);
+            setCopiedValue(null);
+            markModalActivity();
+          }}
+          className="rounded-xl border border-emerald-300/40 bg-[#0b2942] px-4 py-2.5 text-xs font-bold text-emerald-300 shadow-lg transition hover:border-emerald-300 hover:bg-[#103651] sm:text-sm"
+        >
+          Click here to get sample login credentials
+        </button>
+      </div>
       <div className="grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] lg:grid-cols-[1.02fr_0.98fr]">
         {/* ==================================================
                     BRAND PANEL
@@ -313,6 +397,137 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {credentialsOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-slate-950/65 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setCredentialsOpen(false);
+              setCopiedValue(null);
+            }
+          }}
+          onPointerDown={markModalActivity}
+          onKeyDown={markModalActivity}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sample-credentials-title"
+            className="w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 bg-[#071f35] px-6 py-5 text-white sm:px-8">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-[.18em] text-emerald-300">
+                  SmartPark AI
+                </div>
+                <h2
+                  id="sample-credentials-title"
+                  className="mt-1 text-xl font-extrabold sm:text-2xl"
+                >
+                  Sample Login Credentials
+                </h2>
+                <p className="mt-2 text-sm leading-5 text-slate-300">
+                  Copy a username or password, then paste it into the sign-in
+                  form OR click the auto-fill button.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close sample credentials"
+                onClick={() => {
+                  setCredentialsOpen(false);
+                  setCopiedValue(null);
+                }}
+                className="rounded-xl p-2 text-slate-300 transition hover:bg-white/10 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5 sm:p-8">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                <table className="w-full min-w-[820px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 font-bold">Role</th>
+                      <th className="px-4 py-3 font-bold">Username</th>
+                      <th className="px-4 py-3 font-bold">Password</th>
+                      <th className="px-4 py-3 text-right font-bold">Login</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {SAMPLE_CREDENTIALS.map((credential) => (
+                      <tr key={credential.role} className="align-middle">
+                        <th
+                          scope="row"
+                          className="px-4 py-4 font-semibold text-slate-700"
+                        >
+                          {credential.role}
+                        </th>
+                        {[credential.username, credential.password].map(
+                          (value) => (
+                            <td
+                              key={value + credential.role}
+                              className="px-4 py-4"
+                            >
+                              <div className="flex items-center gap-2">
+                                <code className="whitespace-nowrap rounded-lg bg-slate-50 px-2 py-1.5 text-xs text-slate-700">
+                                  {value}
+                                </code>
+                                <button
+                                  type="button"
+                                  onClick={() => void copyCredential(value)}
+                                  aria-label={`Copy ${value}`}
+                                  title={`Copy ${value}`}
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                                >
+                                  {copiedValue === value ? (
+                                    <Check size={14} />
+                                  ) : (
+                                    <Copy size={14} />
+                                  )}
+                                  <span>
+                                    {copiedValue === value ? "Copied" : "Copy"}
+                                  </span>
+                                </button>
+                              </div>
+                            </td>
+                          ),
+                        )}
+                        <td className="px-4 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => useSampleCredentials(credential)}
+                            className="whitespace-nowrap rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                          >
+                            Click to Auto-Fill Login Form
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-5 flex flex-col gap-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                <p>
+                  For demonstration access only. Please DO NOT delete any
+                  records in the system using the Admin credentials.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCredentialsOpen(false);
+                    setCopiedValue(null);
+                  }}
+                  className="self-end rounded-xl bg-[#071a2d] px-4 py-2.5 font-bold text-white transition hover:bg-[#0a2740] sm:self-auto"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
