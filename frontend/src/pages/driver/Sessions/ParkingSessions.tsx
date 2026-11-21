@@ -1128,7 +1128,7 @@ export default function ParkingSessions() {
                   : [];
 
             const sessionIds = Array.from(
-              new Set(
+              new Set<string>(
                 payments
                   .map((payment: any) => payment?.parking_session_id)
                   .filter(
@@ -1151,7 +1151,7 @@ export default function ParkingSessions() {
 
             const recoveredSessions = sessionResults
               .filter(
-                (result): result is PromiseFulfilledResult<{ data: any }> =>
+                (result) =>
                   result.status === "fulfilled",
               )
               .map((result) => {
@@ -1183,7 +1183,9 @@ export default function ParkingSessions() {
           const reason =
             activeResult.status === "rejected"
               ? activeResult.reason
-              : completedResult.reason;
+              : completedResult.status === "rejected"
+                ? completedResult.reason
+                : new Error("Session information could not be loaded.");
 
           throw reason;
         }

@@ -12,7 +12,7 @@ import {
 
 import { useAuth } from "./AuthContext";
 
-import { getDefaultRoute } from "./Role";
+import { getDefaultRoute } from "./role";
 
 export default function Login() {
   const navigate = useNavigate();

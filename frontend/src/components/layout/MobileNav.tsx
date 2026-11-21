@@ -13,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 
-import type { Role } from "../../auth/Role";
+import type { Role } from "../../auth/role";
 
 type MobileNavProps = {
   role: Role;

@@ -124,7 +124,6 @@ function extractQuoteAmount(quote: {
   payable_amount?: number | string | null;
   currency?: string | null;
   duration_minutes?: number | null;
-  [key: string]: unknown;
 }): number | null {
   const candidates = [
     quote.outstanding_amount,
@@ -394,7 +393,7 @@ export default function OperatorDashboard() {
             sessionId: session.id,
             quote: {
               amount: extractQuoteAmount(quote),
-              currency: quote.currency ?? "KES",
+              currency: "KES",
             },
           };
         }),

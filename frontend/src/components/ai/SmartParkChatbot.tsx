@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { type ReactElement, ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { aiApi, api, getApiErrorMessage } from "../../api";
@@ -792,7 +792,7 @@ const renderVehicleInventory = (content: string) => {
 
 const renderFriendlyMarkdown = (content: string) => {
   const lines = content.replace(/\r/g, "").split("\n");
-  const elements: JSX.Element[] = [];
+  const elements: ReactElement[] = [];
   let bulletItems: string[] = [];
   let numberedItems: string[] = [];
 
@@ -932,7 +932,7 @@ const parseReservationDetails = (content: string) => ({
 });
 
 const renderReservationDetail = (
-  icon: JSX.Element,
+  icon: ReactElement,
   label: string,
   value?: string,
 ) => {

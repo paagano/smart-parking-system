@@ -531,7 +531,7 @@ export default function OccupancyAnalytics() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Summary icon={CarFront} label="Vehicles processed" value={todayArrivals + todayDepartures} note="Arrivals + departures" />
           <Summary icon={CalendarClock} label="Arrivals" value={todayArrivals} note="Sessions started today" />
-          <Summary icon={ArrowOutIcon} label="Departures" value={todayDepartures} note="Sessions completed today" />
+          <Summary icon={ArrowUpFromLine} label="Departures" value={todayDepartures} note="Sessions completed today" />
           <Summary icon={Ticket} label="Reservation pressure" value={confirmedReservations.length} note="Confirmed not checked in" />
         </div>
       </Card>

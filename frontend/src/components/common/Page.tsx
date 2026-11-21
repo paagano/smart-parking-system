@@ -41,7 +41,7 @@ export function Metric({
   Icon,
 }: {
   label: string;
-  value: string;
+  value: string | number;
   note: string;
   Icon: ElementType;
 }) {
