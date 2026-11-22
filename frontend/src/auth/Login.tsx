@@ -154,7 +154,7 @@ export default function Login() {
         setError("Your account is not permitted to access SmartPark AI.");
       } else {
         setError(
-          "Server restarting... Please try again after 15 seconds. If problem persists, contact your system administrator for assistance.",
+          "Server restarting... Please try again after 15 seconds.",
         );
       }
     } finally {
